@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+public/
+*.tsbuildinfo
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Run artefacts (large; a curated sample lives in examples/)
+runs/
+sessions/
+
+# Local reports
+*.local.md
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
