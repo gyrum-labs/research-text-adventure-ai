@@ -821,7 +821,8 @@ transcript and one metrics record.
 | `goalsCompleted` | 0…2 (of the scenario's goals) |
 | `turnsUsed` | Turns consumed |
 | `goldPathLength` | 10 for this scenario |
-| `efficiency` | `goldPathLength / turnsUsed` (1.0 = optimal); report as `stepsToSolve / goldPathLength` (1.0 = optimal) as `wasteRatio` too |
+| `efficiency` | `goldPathLength / turnsUsed` — higher is better; 1.0 = a perfect run, 0.1 = ten times the optimal path |
+| `wasteRatio` | `turnsUsed / goldPathLength` — the inverse, for readers who think in overhead multiples (1.0 = optimal) |
 | `hintsUsed` | Hints consumed |
 
 **Process metrics (the interesting ones)**
