@@ -72,7 +72,7 @@ Where a figure is quoted, the paper is cited with its section number so it can b
 - **What it is:** The JavaScript re-implementation of the Quest engine — rooms, objects,
   attributes, dynamic text, a text command parser.
 - **Why we cite it:** the strongest alternative engine, and the subject of the Phase 8 comparison
-  (same scenario, same agent harness, different runtime).
+  (same adventure, same agent harness, different runtime).
 
 ### A6. ink
 
@@ -92,7 +92,7 @@ Where a figure is quoted, the paper is cited with its section number so it can b
   TALES environment with no informative feedback, no nearest-neighbour parser, no game resets and
   no dead state — and it answers every failed action with *"nothing happened"*. The TALES
   qualitative analysis attributes a large share of agent failure to exactly that: the agent cannot
-  infer why an action failed, so it cannot learn. Our scenario inverts all four properties.
+  infer why an action failed, so it cannot learn. Our adventure inverts all four properties.
 
 ### A8. ScienceWorld
 
@@ -199,9 +199,9 @@ Where a figure is quoted, the paper is cited with its section number so it can b
   One- or two-word commands, a simple parser, abbreviable directions.
 - **The design lesson:** the IF community's assessment — *"the first one conceived as a single
   puzzle that needs to be planned as a timed task… the difficulty is offset by the lack of options:
-  there are only so many things the player can try, so success is likely."* Our scenario keeps both
+  there are only so many things the player can try, so success is likely."* Our adventure keeps both
   halves: the move limit as the antagonist, and a deliberately narrow option space.
-- **Originality:** our scenario reproduces the *shape* only. No prose, names, layout, walkthrough
+- **Originality:** our adventure reproduces the *shape* only. No prose, names, layout, walkthrough
   or text is reproduced. See `RESEARCH-CONTEXT.md` §5.1.
 
 ---

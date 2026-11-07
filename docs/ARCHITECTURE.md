@@ -8,8 +8,8 @@ changes the research design is recorded here.
 
 ## 1. The one-paragraph version
 
-A **pure, deterministic state kernel** reduces a scenario and a command into a new state plus a
-stream of events. Scenarios are **data**. The agent never sees the scenario's authoring
+A **pure, deterministic state kernel** reduces an adventure and a command into a new state plus a
+stream of events. Adventures are **data**. The agent never sees the adventure's authoring
 information — it sees an **observation** built by a single function. A **runner** drives an
 **agent policy** against the kernel under budgets and guards, recording a **transcript** whose
 **hash chain** makes the run replayable. Three interfaces — human CLI, browser client, agent
@@ -38,7 +38,7 @@ runner — are thin shells over exactly that.
 ┌───────────────────────────────────────────────────────────────────────────┐
 │  KERNEL  — pure. No I/O. No clock. No unseeded randomness.                 │
 │                                                                          │
-│   Scenario (data) ──► reduce(state, command) ──► { state, events }        │
+│   Adventure (data) ──► reduce(state, command) ──► { state, events }        │
 │        │                      ▲                                           │
 │        │                      │                                           │
 │        │              ┌───────┴────────┐                                  │
@@ -66,7 +66,7 @@ runner — are thin shells over exactly that.
 ```
 
 **Dependency rule (enforced by test + lint):** arrows point inward only. `kernel` imports nothing
-from `agents`, `runner`, `cli`, `server` or `web`. `scenarios` imports only kernel *types*.
+from `agents`, `runner`, `cli`, `server` or `web`. `adventures` imports only kernel *types*.
 
 ---
 
@@ -76,7 +76,7 @@ from `agents`, `runner`, `cli`, `server` or `web`. `scenarios` imports only kern
 
 The kernel is where determinism lives, and determinism is what makes a result checkable. If the
 kernel could read the clock or the filesystem, every transcript would need a caveat. So the kernel
-is a pure function of `(scenario, state, command)`, and the hash chain is a function of the state
+is a pure function of `(adventure, state, command)`, and the hash chain is a function of the state
 alone.
 
 ### 3.2 The observation seam is the perception control
@@ -84,7 +84,7 @@ alone.
 One function — `src/kernel/observation.ts` — converts state into the agent's view. Two consequences
 follow, and both are tested rather than asserted:
 
-- A scenario author **cannot** leak the gold path by accident, because the observation builder
+- An adventure author **cannot** leak the gold path by accident, because the observation builder
   never receives the gold path, the hint table, or the action predicates.
 - The human view and the agent view can differ. The human sees prose; the agent may see JSON, or
   JSON plus the list of legal actions. Same state, different surface.
@@ -101,7 +101,7 @@ identical loop.
 
 ### 3.4 The session seam defers the deployment decision
 
-The kernel is pure, so it runs identically in Node and in a browser. `Session` is the swappable
+The kernel is pure, so it runs identically in Room and in a browser. `Session` is the swappable
 part: `InMemory` (default, zero infrastructure), `File` (persistence), `Http` (server-held state
 for the live agent demo and for future multi-agent work). See `SPEC.md` §14 for the full
 pros/cons analysis.
@@ -112,31 +112,34 @@ pros/cons analysis.
 
 Format: context → decision → consequences. Status is `Accepted` for all entries unless noted.
 
-### ADR-001 — Build a custom domain-neutral kernel
+### ADR-001 — Build a custom kernel
 
 **Context.** Adventure engines exist and are good (QuestJS, ink, TextWorld — see
 `docs/RESEARCH-CONTEXT.md` §2). Adopting one would fix the observation surface, the determinism
 guarantees and the vocabulary to whatever that engine chose. The research question is precisely
 about what an agent can perceive and do.
 
-**Decision.** Build a small pure kernel whose vocabulary is *nodes, entities, connections, flags,
-actions, goals, turns* — never *rooms, keys, bombs*.
+**Decision.** Build a small pure kernel in the game's own vocabulary: *rooms, objects, doors,
+flags, actions, goals, turns*.
 
-**Consequences.** We own determinism, the perception surface and the domain vocabulary. We pay for
-~15 mechanics of implementation, bounded by a 6-predicate / 8-effect DSL. The organisation-
-simulation goal (`SPEC.md` §18) becomes a data change rather than a rewrite. QuestJS and ink remain
+**Consequences.** We own determinism and the perception surface. We pay for ~15 mechanics of
+implementation, bounded by a 6-predicate / 8-effect DSL. The organisation-simulation goal
+(`SPEC.md` §18) becomes *another adventure* rather than a new engine. QuestJS and ink remain
 available as Phase 8 comparisons.
 
-### ADR-002 — The kernel speaks a domain-neutral vocabulary
+### ADR-002 — The kernel speaks an adventure vocabulary *(superseded by ADR-016)*
+
+**Status:** Superseded on 7 November 2026 by **ADR-016**, at the project owner's direction.
+The reasoning below is retained because it explains what changed and why.
 
 **Context.** A kernel that knows about rooms and keys cannot be pointed at a different domain
-without modification, which would forfeit the "reusable for organisation simulation" goal.
+without modification, which was thought to forfeit the "reusable for organisation simulation" goal.
 
-**Decision.** The kernel knows only `Node`, `Entity`, `Connection`, `WorldState.flags`,
-`ActionSpec`, `GoalSpec`, `turn`. Adventure semantics are expressed as scenario data.
+**Decision (as originally taken).** The kernel knows only generic terms — `Node`, `Entity`,
+`Connection`, `WorldState` — and adventure semantics are expressed as neutral data.
 
-**Consequences.** The vocabulary is less self-documenting for a reader expecting an adventure game.
-Mitigated by naming the domain-neutral terms and documenting the mapping in `SPEC.md` §18.1.
+**Consequences (as originally foreseen).** The vocabulary is less self-documenting for a reader
+expecting an adventure game. ADR-016 reverses this trade-off deliberately.
 
 ### ADR-003 — The observation is built by exactly one function
 
@@ -145,10 +148,10 @@ reasoning — acting on objects seen but not present in the current location —
 failures where an environment's uninformative feedback ("nothing happened") prevents learning.
 
 **Decision.** `src/kernel/observation.ts` is the only path from state to agent view. It receives the
-state plus *public* scenario fields only.
+state plus *public* adventure fields only.
 
 **Consequences.** "No privileged information" becomes a testable property (`tests/leakage.test.ts`)
-rather than an intention. The cost is that scenario authors cannot hand-tune the agent's view per
+rather than an intention. The cost is that adventure authors cannot hand-tune the agent's view per
 action; they must express visibility as state.
 
 ### ADR-004 — Error messages must be informative and recoverable
@@ -167,7 +170,7 @@ possible. The contract is specified in `SPEC.md` §8.2 and is a fixture-asserted
 **Context.** It is tempting for the parser to resolve "the keycard" to "keycard" or to guess a
 near-miss verb. Doing so would silently convert the agent's errors into successes.
 
-**Decision.** Alias resolution is allowed only via the scenario's **declared** alias table. Nothing
+**Decision.** Alias resolution is allowed only via the adventure's **declared** alias table. Nothing
 else is repaired, and a failed parse returns an error the agent can act on.
 
 **Consequences.** `invalidActionRate` and `hallucinationRate` measure the agent, not the parser.
@@ -298,6 +301,36 @@ This is recorded as threat V7 in `SPEC.md` §17.
 
 ---
 
+### ADR-016 — The kernel speaks the adventure's own vocabulary *(supersedes ADR-002)*
+
+**Status:** Accepted, 7 November 2026, at the project owner's direction.
+
+**Context.** ADR-002 kept the kernel in a neutral vocabulary (`node`, `entity`, `connection`,
+`world`) so it could be "pointed at other worlds" without modification. In practice this made the
+code and the specification harder to read, and it did not make the organisation simulation any
+easier to write — the mapping had to be written either way. The owner's stated long-term aim is
+that an organisation *is* an adventure game: state held centrally, each agent given its current
+situation and a command vocabulary. Under that aim, the adventure vocabulary is not a
+simplification to be engineered around — it is the model.
+
+**Decision.** The kernel speaks the game's own language: `Room`, `GameObject`, `Door`,
+`GameState`, `Adventure`, and verbs named as actions. The neutral vocabulary is removed. An
+organisation simulation is written as **another adventure** — teams as rooms, tickets as objects,
+handoffs as doors — and the question "does the metaphor hold?" becomes the Phase 7 research
+question rather than an engineering problem.
+
+**Consequences.**
+- The code reads like what it is. A reader can follow `SPEC.md` §6 without a translation table.
+- The kernel is no longer reusable for a non-adventure domain without an adapter. That cost is
+  accepted and made explicit: `SPEC.md` §18 now documents the mapping and the seam rather than
+  claiming the kernel is domain-neutral.
+- The predicate/effect DSL is unchanged in shape; only the names change (`in_room`,
+  `object_in_room`, `carrying`, `set_object_flag`, …). No new machinery.
+- `docs/ADVENTURES.md` replaces `docs/SCENARIOS.md`.
+- This supersedes ADR-002, which is retained for the record.
+
+---
+
 ## 5. Open decisions for the implementing agent
 
 Per `SPEC.md` §19, these have documented defaults. An implementer who changes one must record an
@@ -331,7 +364,7 @@ observe → decide → reduce → record → check goal → (repeat | finish)
 **The evaluation flow**:
 
 ```
-scenario ──► runner ──► transcript (JSONL) ──► replay ──► hash chain check
+adventure ──► runner ──► transcript (JSONL) ──► replay ──► hash chain check
                              │
                              ├──► metrics.json ──► sweep ──► summary.md
                              └──► classifier ──► F1..F9 histogram ──► failures.md
@@ -344,3 +377,4 @@ scenario ──► runner ──► transcript (JSONL) ──► replay ──�
 | Date | Change |
 |---|---|
 | 7 Nov 2026 | Created. ADR-001 … ADR-015 record the decisions taken during specification. |
+| 7 Nov 2026 | ADR-016 added: the kernel adopts the adventure vocabulary, superseding ADR-002. |

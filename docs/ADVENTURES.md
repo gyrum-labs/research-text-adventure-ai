@@ -1,20 +1,20 @@
-# Scenario Authoring Guide
+# Adventure Authoring Guide
 
-How to write a scenario for the kernel. The Mission Impossible scenario itself is specified in
+How to write an adventure for the kernel. The Mission Impossible adventure itself is specified in
 `SPEC.md` §7 — this document explains the *mechanics* you use to express it, and shows a worked
 example.
 
-A scenario is **pure data**. It contains no logic. Everything it can do is declared through the
+An adventure is **pure data**. It contains no logic. Everything it can do is declared through the
 predicate/effect vocabulary in `SPEC.md` §5.1.
 
 ---
 
-## 1. The shape of a scenario file
+## 1. The shape of an adventure file
 
 ```ts
-import type { Scenario } from '../../kernel/types';
+import type { Adventure } from '../../kernel/types';
 
-export const scenario: Scenario = {
+export const adventure: Adventure = {
   id: 'mission-impossible',
   title: 'Operation Nightingale',
   version: '1.0.0',
@@ -28,9 +28,9 @@ briefing room. Discover the rest by exploring.`,
     failure: 'The blast takes the vault with it. Mission failed.',
   },
 
-  nodes: { /* … */ },
-  entities: { /* … */ },
-  connections: { /* … */ },
+  rooms: { /* … */ },
+  objects: { /* … */ },
+  doors: { /* … */ },
   actions: [ /* … */ ],
   goals: [ /* … */ ],
   hints: [ /* … */ ],
@@ -43,12 +43,12 @@ and nothing about the method. `tests/leakage.test.ts` enforces the boundary; see
 
 ---
 
-## 2. Nodes, entities and connections
+## 2. Nodes, objects and doors
 
 ### Nodes
 
 ```ts
-nodes: {
+rooms: {
   corridor: {
     id: 'corridor',
     name: 'Service Corridor',
@@ -59,12 +59,12 @@ nodes: {
 }
 ```
 
-`contents` lists the entities present when the agent arrives. `exits` lists connection ids.
+`contents` lists the objects present when the agent arrives. `exits` lists door ids.
 
-### Entities
+### GameObjects
 
 ```ts
-entities: {
+objects: {
   locker: {
     id: 'locker',
     name: 'locker',
@@ -96,7 +96,7 @@ Notes:
 ### Connections
 
 ```ts
-connections: {
+doors: {
   corridor_to_vault: {
     id: 'corridor_to_vault',
     from: 'corridor',
@@ -104,12 +104,12 @@ connections: {
     direction: 'north',
     label: 'vault door',
     locked: true,
-    requiresAction: { verb: 'unlock', entity: 'keycard' },
+    requiresAction: { verb: 'unlock', object: 'keycard' },
   },
 }
 ```
 
-A locked connection refuses traversal until an action sets the matching flag. The connection's
+A locked door refuses traversal until an action sets the matching flag. The door's
 `label` is how it appears in the exits list, and how `go` resolves it.
 
 ---
@@ -122,11 +122,11 @@ Every action is an `ActionSpec` with arguments, preconditions, effects and prose
 {
   verb: 'take',
   synonyms: ['get', 'grab', 'pick up'],
-  args: [{ name: 'target', role: 'entity-in-node' }],
-  requires: [{ op: 'entity_at', entity: 'keycard', node: 'briefing' }],
+  args: [{ name: 'target', role: 'object-in-room' }],
+  requires: [{ op: 'object_in_room', object: 'keycard', room: 'briefing' }],
   effects: [
-    { op: 'remove_entity_from_node', entity: 'keycard' },   // see §5 for the actual op set
-    { op: 'add_inventory', entity: 'keycard' },
+    { op: 'remove_entity_from_node', object: 'keycard' },   // see §5 for the actual op set
+    { op: 'add_to_inventory', object: 'keycard' },
   ],
   text: {
     success: 'You pocket the keycard.',
@@ -142,7 +142,7 @@ The canonical op and predicate sets are fixed by `SPEC.md` §5.1:
 `remove_inventory`, `set_entity_state`, `finish`
 
 If a mechanic you need cannot be expressed with these, **extend the kernel deliberately and record
-an ADR** (`docs/ARCHITECTURE.md` §4). Do not smuggle logic into a scenario.
+an ADR** (`docs/ARCHITECTURE.md` §4). Do not smuggle logic into an adventure.
 
 ### 3.1 Worked examples of each mechanic
 
@@ -152,9 +152,9 @@ an ADR** (`docs/ARCHITECTURE.md` §4). Do not smuggle logic into a scenario.
 {
   verb: 'read',
   synonyms: ['study', 'peruse'],
-  args: [{ name: 'target', role: 'entity-in-node' }],
-  requires: [{ op: 'entity_flag', entity: 'manual', key: 'readable', value: true }],
-  effects: [{ op: 'set_entity_flag', entity: 'manual', key: 'read', value: true }],
+  args: [{ name: 'target', role: 'object-in-room' }],
+  requires: [{ op: 'object_flag', object: 'manual', key: 'readable', value: true }],
+  effects: [{ op: 'set_object_flag', object: 'manual', key: 'read', value: true }],
   text: {
     success: 'You read the defusal manual. Safe combination: 4821. The safe wire is the YELLOW one.',
     failure: "There's nothing written on that.",
@@ -162,7 +162,7 @@ an ADR** (`docs/ARCHITECTURE.md` §4). Do not smuggle logic into a scenario.
 }
 ```
 
-The fact is now in the world state *and* in the transcript, so the agent can refer to it later.
+The fact is now in the game state *and* in the transcript, so the agent can refer to it later.
 
 **Unlocking a door with a key:**
 
@@ -170,14 +170,14 @@ The fact is now in the world state *and* in the transcript, so the agent can ref
 {
   verb: 'unlock',
   args: [
-    { name: 'target', role: 'entity-in-node' },
+    { name: 'target', role: 'object-in-room' },
     { name: 'with', role: 'text' },
   ],
   requires: [
-    { op: 'entity_at', entity: 'keycard', node: 'briefing' },
+    { op: 'object_in_room', object: 'keycard', room: 'briefing' },
     { op: 'flag', key: 'has_keycard', value: true },
   ],
-  effects: [{ op: 'set_entity_flag', entity: 'vault_door', key: 'unlocked', value: true }],
+  effects: [{ op: 'set_object_flag', object: 'vault_door', key: 'unlocked', value: true }],
   text: {
     success: 'The keycard chirps and the vault door clicks open.',
     failure: 'The vault door needs a keycard. You do not have one.',
@@ -190,12 +190,12 @@ The fact is now in the world state *and* in the transcript, so the agent can ref
 ```ts
 {
   verb: 'unlock',
-  // same verb, distinguished by a `requires` on the entity flag
+  // same verb, distinguished by a `requires` on the object flag
   requires: [
-    { op: 'entity_at', entity: 'safe', node: 'vault' },
+    { op: 'object_in_room', object: 'safe', room: 'vault' },
     { op: 'flag', key: 'manual_read', value: true },
   ],
-  effects: [{ op: 'set_entity_flag', entity: 'safe', key: 'open', value: true }],
+  effects: [{ op: 'set_object_flag', object: 'safe', key: 'open', value: true }],
   text: {
     success: '4821. The safe clicks open.',
     failure: 'The safe needs a four-digit code. You do not have one.',
@@ -214,13 +214,13 @@ The fact is now in the world state *and* in the transcript, so the agent can ref
 {
   verb: 'cut',
   args: [
-    { name: 'target', role: 'entity-in-node' },
-    { name: 'with', role: 'entity-in-inventory' },
+    { name: 'target', role: 'object-in-room' },
+    { name: 'with', role: 'object-in-inventory' },
   ],
   requires: [
-    { op: 'in_inventory', entity: 'cutters' },
+    { op: 'carrying', object: 'cutters' },
     { op: 'flag', key: 'manual_read', value: true },   // the manual is a hard gate
-    { op: 'entity_flag', entity: 'bomb', key: 'wire_is_yellow', value: true },
+    { op: 'object_flag', object: 'bomb', key: 'wire_is_yellow', value: true },
   ],
   effects: [
     { op: 'set_flag', key: 'bomb_defused', value: true },
@@ -241,7 +241,7 @@ and the state does not change: **a recoverable mistake**, not a loss. Contrast w
 wrong wire, which is irreversible.
 
 That distinction — recoverable failure vs irreversible failure — is the single most important
-lever for making a scenario hard but fair, and it is worth getting right in every scenario you
+lever for making an adventure hard but fair, and it is worth getting right in every adventure you
 write.
 
 ---
@@ -285,7 +285,7 @@ hints: [
 ]
 ```
 
-A hint must be **true and vague**. It must not name the entity to act on, the correct order, or the
+A hint must be **true and vague**. It must not name the object to act on, the correct order, or the
 solution. "The defusal manual is in the corridor locker" is a hint; "read the manual then cut the
 yellow wire" is a spoiler and must never be a hint.
 
@@ -295,9 +295,9 @@ yellow wire" is a spoiler and must never be a hint.
 
 ```ts
 initial: {
-  nodeId: 'briefing',
+  roomId: 'briefing',
   inventory: [],
-  entities: {
+  objects: {
     keycard: { at: 'briefing', flags: {}, state: {} },
     manual:  { at: null, flags: {}, state: {} },   // null = inside the locker
     // …
@@ -309,48 +309,48 @@ initial: {
 }
 ```
 
-Entities inside a container have `at: null`; opening the container sets their `at` to the current
-node and closing it sets it back to `null`.
+GameObjects inside a container have `at: null`; opening the container sets their `at` to the current
+room and closing it sets it back to `null`.
 
 ---
 
 ## 7. The authoring checklist
 
-Before a scenario is accepted, every box must be ticked:
+Before an adventure is accepted, every box must be ticked:
 
-- [ ] **Brief states objectives, not method.** No entity names, no order, no solution.
+- [ ] **Brief states objectives, not method.** No object names, no order, no solution.
 - [ ] **Every fact the agent needs is discoverable in-world** (a readable, an examinable detail, or
       an observable). Nothing required is only in the brief.
 - [ ] **At least one fact requires reading.** Otherwise the task reduces to a navigation problem.
-- [ ] **The gold path exists and is recorded** in the scenario's `gold-path.ts`.
+- [ ] **The gold path exists and is recorded** in the adventure's `gold-path.ts`.
 - [ ] **BFS confirms the gold path is shortest.** (`SPEC.md` P1.3)
-- [ ] **A random policy cannot solve it.** (`SPEC.md` P1.4) If it can, the scenario is too easy.
+- [ ] **A random policy cannot solve it.** (`SPEC.md` P1.4) If it can, the adventure is too easy.
 - [ ] **There is at least one recoverable failure** (wrong order, missing prerequisite) and at
       least one irreversible one — or a deliberate, documented decision not to.
 - [ ] **No brute-force path exists** within the turn budget. A 4-digit code with 30 turns is safe;
       a 2-digit code is not.
-- [ ] **The scenario loads under Zod validation** and fails fast with a readable message if not.
+- [ ] **The adventure loads under Zod validation** and fails fast with a readable message if not.
 - [ ] **It contains no adventure-specific logic.** Only data.
 
 ---
 
-## 8. Writing the second scenario (Phase 7)
+## 8. Writing the second adventure (Phase 7)
 
-The organisation-simulation scenario is written with the same vocabulary. The mapping is in
+The organisation-simulation adventure is written with the same vocabulary. The mapping is in
 `SPEC.md` §18.1; in brief:
 
 | Kernel term | Organisation term |
 |---|---|
-| Node | A team, a system, a queue |
-| Entity | A ticket, an artefact, a credential, a message |
-| Connection | A handoff, a dependency, an escalation path |
+| Room | A team, a system, a queue |
+| GameObject | A ticket, an artefact, a credential, a message |
+| Door | A handoff, a dependency, an escalation path |
 | Flag | Ticket status, budget consumed, SLA state |
 | Goal | An objective or KPI |
 | Observation | "Your dashboard": your queue, your blockers, your standing instructions |
 | Command | A tool call |
 
-**The test is simple:** if writing the second scenario requires a change to `src/kernel`, the
-kernel was not domain-neutral, and ADR-002 was wrong. That is the whole point of Phase 7.
+**The test is simple:** if writing the second adventure requires a change to `src/kernel`, the
+kernel was not truly adventure-native, and ADR-002 was wrong. That is the whole point of Phase 7.
 
 ---
 
@@ -361,4 +361,4 @@ The fastest way to catch a leak is to ask, for each required fact:
 > *Can the agent learn this without being told?*
 
 If the answer is no — because the fact only exists in `requires`/`effects` or in the gold path —
-the scenario is broken, and `tests/leakage.test.ts` will say so.
+the adventure is broken, and `tests/leakage.test.ts` will say so.

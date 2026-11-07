@@ -12,7 +12,7 @@ repair are part of the record.
 
 | Aspect | Approach |
 |---|---|
-| Scope | (a) Which open-source adventure engine to build on; (b) what the existing literature says about LLM agents in stateful text environments; (c) the genre lineage of the scenario fixture |
+| Scope | (a) Which open-source adventure engine to build on; (b) what the existing literature says about LLM agents in stateful text environments; (c) the genre lineage of the adventure fixture |
 | Primary sources | arXiv papers (full text, not abstracts), GitHub repository licence fields via the REST API, official project pages, the IFWiki / IF database for the genre history |
 | Licence verification | Read from the GitHub API `license.spdx_id` field, not from a badge or a README claim |
 | Excluded | Blog posts and second-hand summaries, except where they aggregate a primary result that was not accessible (flagged where used) |
@@ -38,7 +38,7 @@ determinism, replay format and the kernel's vocabulary all become someone else's
 | **ink** — [`inkle/ink`](https://github.com/inkle/ink) | **MIT** (`spdx_id: MIT`) | Narrative scripting language for branching interactive fiction. Excellent at story structure and conditional text. | **Future experiment.** A *story runtime*, not a world-state simulator. It does not model inventories, locks, tool possession or world flags, and has no notion of "the agent does not yet know which wire is safe". Deriving a state kernel from ink means building the kernel anyway, on top of ink. |
 | **TextWorld** — [`microsoft/TextWorld`](https://github.com/microsoft/TextWorld) | **Microsoft Research License** — the GitHub API reports `NOASSERTION`, **not** an OSI-approved licence | RL sandbox for training and evaluating agents on text games. Its *information mask* is exactly the perception control we want. | **Research reference only.** Python; heavy install (Java needed for TextWorld-Express and ScienceWorld); non-commercial licence. **Correction:** an earlier draft of this project assumed TextWorld was MIT. It is not, and that assumption must not be carried forward. |
 | **TALES** — [`microsoft/tale-suite`](https://github.com/microsoft/tale-suite) | MIT | Benchmark unifying Jericho, ALFWorld, ScienceWorld, TextWorld and TextWorldExpress, plus the synthetic "Simon Says" screening task | **Primary yardstick and design vocabulary.** See §3. |
-| **Minimal TypeScript kernel** | MIT (ours) | Purpose-built pure state-transition kernel with a declarative scenario format | **Chosen for v1.** |
+| **Minimal TypeScript kernel** | MIT (ours) | Purpose-built pure state-transition kernel with a declarative adventure format | **Chosen for v1.** |
 
 ### 2.2 The cost we accept
 
@@ -126,9 +126,9 @@ The paper's own findings that matter to our design:
 
 | Finding | Our design consequence |
 |---|---|
-| *"LLMs often fail to discover implicit game dynamics through inductive reasoning"* | Our scenario must teach its rules **through the environment**, not the prompt — hence the manual in the locker, and the `hint` affordance. |
+| *"LLMs often fail to discover implicit game dynamics through inductive reasoning"* | Our adventure must teach its rules **through the environment**, not the prompt — hence the manual in the locker, and the `hint` affordance. |
 | ALFWorld returns *"nothing happened"* for **any** failure, including parse failure — so the agent cannot learn why it failed. | `SPEC.md` §8.2 mandates an **informative error contract**: what was attempted, what was wrong, what is possible. This is a direct, evidence-backed design decision, and ALFWorld is the counterexample. |
-| Grounded failures: acting on objects **seen but not present in the current location**. | `SPEC.md` §9.2 confines the observation to node contents ∪ inventory, and `hallucinationRate` measures exactly this failure. |
+| Grounded failures: acting on objects **seen but not present in the current location**. | `SPEC.md` §9.2 confines the observation to room contents ∪ inventory, and `hallucinationRate` measures exactly this failure. |
 | Inductive failures: repeating failed actions, cycling between locations. | `SPEC.md` §11.3 adds **loop detection** (≥3 repeated state hashes) and the `repeatStateRate` metric. |
 | *"basing current action and reasoning in outdated or incorrect game state facts, especially in later steps"*; *"failure to abstract failure modes from repeated attempts"*. | Directly motivates **H5** and the `structured` context strategy (`SPEC.md` §10.4): a known-facts block beats a growing transcript. |
 | Step cap: **100 steps**, 5 repeats per game, temperature 0 where supported plus multiple seeds. | Our experiment uses a **30-turn** budget (gold path 10) and ≥10 seeds per cell, and records the exact model id and date. |
@@ -220,7 +220,7 @@ Hausknecht, Ammanabrolu, Côté & Yuan, *Interactive Fiction Games: A Colossal A
 - The **masked-action condition** (`SPEC.md` §12.4, condition C) is the LLM analogue of TDQN's
   template action space, and this is now an explicit comparison rather than an invention.
 - Jericho's **state load/save** is the precedent for our hash chain and replay (`SPEC.md` §13).
-- The random-policy baseline is expected to score ~0 — our scenario must preserve that property
+- The random-policy baseline is expected to score ~0 — our adventure must preserve that property
   (acceptance criterion P1.4).
 
 ### 4.4 Voyager — skill libraries, and the shape of the long-term goal
@@ -237,7 +237,7 @@ arXiv:2305.16291. <https://github.com/MineDojo/Voyager>
   generalise.
 
 **What we take:** this is the closest published analogue to the organisation-simulation ambition.
-The `SPEC.md` §18 mapping (nodes → teams, entities → artefacts, skills → procedures) borrows its
+The `SPEC.md` §18 mapping (rooms → teams, objects → artefacts, skills → procedures) borrows its
 shape. A skill library is explicitly **not** in v1 scope, but `SPEC.md` §18.3 names it as the
 natural next mechanism, and the "reuses its library in a new world" result is the evidence that
 such transfer is achievable at all.
@@ -272,7 +272,7 @@ These matter to us through the **attribute table in §3.2**, not through their s
 the only environment in TALES with *no informative feedback, no nearest-neighbour parser, no game
 resets and no dead state* — and the paper's qualitative analysis attributes much of its agents'
 failure to exactly that: the environment says *"nothing happened"* and the agent cannot infer why.
-Our scenario deliberately inverts all four properties — informative feedback, alias resolution,
+Our adventure deliberately inverts all four properties — informative feedback, alias resolution,
 irreversible failure (detonation), and a dead state.
 
 ### 4.7 BenchTrace — failure localisation as a first-class metric
@@ -296,10 +296,10 @@ the taxonomy a first-class deliverable and `AC-R4` requires annotated transcript
 
 ---
 
-## 5. The genre lineage of the scenario fixture
+## 5. The genre lineage of the adventure fixture
 
 The brief for this project referenced "the Mission Impossible text adventure game". That line of
-descent is real, and its mechanics shaped our scenario.
+descent is real, and its mechanics shaped our adventure.
 
 **Origin.** *Mission Impossible* was Adventure #3 in Scott Adams' Adventure series, first
 published by TRS-80 Software Exchange in **1979** and issued by Adventure International across
@@ -317,24 +317,24 @@ to a single letter; coloured text separating descriptions, actions and prompts.
 
 **The design lesson.** The IF community's own assessment of the original: *"This adventure looks
 like the first one conceived as a single puzzle that needs to be planned as a timed task. These
-kinds of scenarios are usually harder, but in this one the difficulty is offset by the lack of
+kinds of adventures are usually harder, but in this one the difficulty is offset by the lack of
 options: there are only so many things the player can try, so success is likely."*
 
 Two things follow for us, and both are deliberate:
 
-1. **The move limit is the real antagonist.** Our scenario keeps a tight turn budget (`SPEC.md`
+1. **The move limit is the real antagonist.** Our adventure keeps a tight turn budget (`SPEC.md`
    §11.2, default 30) and a lethal failure state, exactly as the original's timed-task design
    intends. The budget is the difficulty, not the prose.
 2. **A narrow, well-signposted option space is what makes it fair.** The original's difficulty was
-   "offset by the lack of options". Our scenario keeps that property deliberately: three areas,
-   nine entities, thirteen verbs, one gold path of ten commands.
+   "offset by the lack of options". Our adventure keeps that property deliberately: three areas,
+   nine objects, thirteen verbs, one gold path of ten commands.
 
 ### 5.1 Originality statement
 
-Our scenario is an **original homage**. It reproduces the *shape* of the 1979 adventure — a
+Our adventure is an **original homage**. It reproduces the *shape* of the 1979 adventure — a
 three-area, lock-and-key, bomb-disposal mission under a move limit — and nothing else. No prose,
-room names, entity names, puzzle layout, walkthrough or text from any existing game is reproduced.
-The setting is a corporate server vault rather than a nuclear plant, the entities are a keycard, a
+room names, object names, puzzle layout, walkthrough or text from any existing game is reproduced.
+The setting is a corporate server vault rather than a nuclear plant, the objects are a keycard, a
 wire cutter, a defusal manual and a safe rather than security keys and a bomb detector, and the
 dependency chain is our own. This is stated in `SPEC.md` §7.1 and enforced by review.
 
@@ -344,8 +344,8 @@ dependency chain is our own. This is stated in `SPEC.md` §7.1 and enforced by r
 
 | # | Decision | Evidence | Where it lands |
 |---|---|---|---|
-| D1 | Build a custom domain-neutral kernel instead of adopting an engine | Coupling argument (§2); the org-simulation goal needs a domain-neutral vocabulary | `SPEC.md` §3, §4.4 |
-| D2 | The kernel knows nodes/entities/flags, never rooms/keys/bombs | The whole point of D1; makes Phase 7 a data change | `SPEC.md` §6.1 |
+| D1 | Build a custom kernel instead of adopting an engine | Coupling argument (§2); the kernel must read like the thing it models | `SPEC.md` §3, §4.4 |
+| D2 | The kernel speaks the adventure's vocabulary — rooms, objects, doors, flags | The game's own language is the point; Phase 7 writes the organisation as another adventure | `SPEC.md` §6.1 |
 | D3 | The agent's view is built by exactly one function | TextWorld's information mask; TALES' grounded-reasoning failures | `SPEC.md` §9 |
 | D4 | Informative error messages are mandatory | ALFWorld's "nothing happened" is the counterexample that produces unlearnable failures | `SPEC.md` §8.2 |
 | D5 | The parser never repairs the agent's intent | Otherwise `invalidActionRate` measures the parser, not the agent | `SPEC.md` §8.2, §10.5 |
@@ -371,7 +371,7 @@ Stated so that nobody misreads our numbers as TALES numbers.
 |---|---|---|
 | K1 | Our prompt supplies a mission brief and the command grammar; TALES supplies almost nothing | Our absolute success rate will be **higher** than TALES' and does not measure the same capability |
 | K2 | Our metric is binary goal completion; TALES' is normalised score with milestones | Not convertible without a mapping. We report our own metric and cite TALES qualitatively |
-| K3 | Our scenario is one game, hand-built, with a 10-command gold path; Jericho is 54 human-written games with an 87.15-step average walkthrough | A single scenario cannot support a population claim. Phase 7 adds a second scenario; Phase 8 adds QuestJS |
+| K3 | Our adventure is one game, hand-built, with a 10-command gold path; Jericho is 54 human-written games with an 87.15-step average walkthrough | A single adventure cannot support a population claim. Phase 7 adds a second adventure; Phase 8 adds QuestJS |
 | K4 | Our turn budget is 30; TALES' is 100, and only 57% of Jericho's score is reachable in 100 steps | Our task is *shorter* but *more tightly budgeted*. Both directions of difficulty are present; report both |
 | K5 | We use a newer model generation than the paper's initial release | The 2025 figures are a baseline, not a live leaderboard (§3.7) |
 
@@ -380,7 +380,7 @@ Stated so that nobody misreads our numbers as TALES numbers.
 ## 8. What we deliberately did **not** conclude
 
 - We did **not** conclude that agents "fail 85% of the time". See §3.6.
-- We did **not** conclude that scenario difficulty transfers from TALES to ours. See K1–K5.
+- We did **not** conclude that adventure difficulty transfers from TALES to ours. See K1–K5.
 - We did **not** conclude that WebArena's 14.41% predicts our org-simulation outcome. We cite it as
   a reference point for the *shape* of the problem, not as a forecast.
 - We did **not** assume TextWorld's information-mask design is available to us under a permissive
@@ -407,4 +407,4 @@ Full citations with licences and dates accessed: [`REFERENCES.md`](./REFERENCES.
 | ALFWorld (arXiv:2010.03768) | The environment-attribute table; the "nothing happened" counterexample |
 | ScienceWorld (arXiv:2203.07540) | Environment attributes; horizon-length degradation |
 | BenchTrace (arXiv:2605.29225) | Failure diagnosis as the bottleneck; obs+inv+action shape |
-| Scott Adams Adventure #3 | The scenario's genre lineage and its move-limit design lesson |
+| Scott Adams Adventure #3 | The adventure's genre lineage and its move-limit design lesson |

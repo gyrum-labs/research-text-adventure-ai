@@ -39,7 +39,7 @@ Status legend: `[ ]` not started · `[~]` in progress · `[x]` complete
 ### T0.6 Observation builder
 - [ ] `src/kernel/observation.ts` — the **only** function that converts state → agent view
 - [ ] Implements `SPEC.md` §9.1 exactly; produces `legalActions` only when requested
-- [ ] **Done when:** unit tests assert the entity set is confined to node contents ∪ inventory
+- [ ] **Done when:** unit tests assert the object set is confined to room contents ∪ inventory
 
 ### T0.7 Renderers, goals, hints
 - [ ] `src/kernel/render.ts` — `text`, `json` (stable key order), `text-structured`
@@ -48,25 +48,25 @@ Status legend: `[ ]` not started · `[~]` in progress · `[x]` complete
 - [ ] **Done when:** renderer output snapshots are committed under `tests/fixtures/`
 
 ### T0.8 Architecture boundary
-- [ ] `tests/architecture.test.ts` — proves `src/kernel` imports nothing outside `src/kernel` + `node:crypto`
+- [ ] `tests/architecture.test.ts` — proves `src/kernel` imports nothing outside `src/kernel` + `room:crypto`
 - [ ] **Done when:** the test fails if a prohibited import is introduced
 
 ---
 
-## Phase 1 — Scenario
+## Phase 1 — Adventure
 
-### T1.1 Scenario data
-- [ ] `src/scenarios/mission-impossible/scenario.ts` — the full data from `SPEC.md` §7
-- [ ] Zod schema validates it at load; an invalid scenario fails fast with a readable message
-- [ ] **Done when:** the scenario loads and `reduce` can execute every action spec
+### T1.1 Adventure data
+- [ ] `src/adventures/mission-impossible/adventure.ts` — the full data from `SPEC.md` §7
+- [ ] Zod schema validates it at load; an invalid adventure fails fast with a readable message
+- [ ] **Done when:** the adventure loads and `reduce` can execute every action spec
 
 ### T1.2 Prose and hints
-- [ ] `src/scenarios/mission-impossible/text.ts` — descriptions, success/failure text
-- [ ] `src/scenarios/mission-impossible/hints.ts` — 3 hints, vague but true
+- [ ] `src/adventures/mission-impossible/text.ts` — descriptions, success/failure text
+- [ ] `src/adventures/mission-impossible/hints.ts` — 3 hints, vague but true
 - [ ] **Done when:** the mission brief contains the objectives and no method information (§9.2)
 
 ### T1.3 Gold path and BFS oracle
-- [ ] `src/scenarios/mission-impossible/gold-path.ts` — the 10 commands
+- [ ] `src/adventures/mission-impossible/gold-path.ts` — the 10 commands
 - [ ] A BFS oracle over the action space that finds the shortest success path
 - [ ] **Done when:** the gold path succeeds; BFS independently confirms 10 is minimal
 
@@ -75,7 +75,7 @@ Status legend: `[ ]` not started · `[~]` in progress · `[x]` complete
 - [ ] Detonating ends the run irreversibly as `failure`
 - [ ] Cutting a wire before reading the manual is refused (not fatal)
 - [ ] Brute-forcing the safe code cannot complete within the 30-turn budget
-- [ ] **Done when:** all four hold, asserted in `tests/scenarios/`
+- [ ] **Done when:** all four hold, asserted in `tests/adventures/`
 
 ---
 
@@ -104,10 +104,10 @@ Status legend: `[ ]` not started · `[~]` in progress · `[x]` complete
 - [ ] **Done when:** `MockProvider` drives a full run with zero network calls; each adapter has a contract test against a recorded response fixture
 
 ### T3.2 Prompt assembly
-- [ ] `src/agents/llm/prompt.ts` — pure function `(scenario, observation, context, options) → { system, messages }`
+- [ ] `src/agents/llm/prompt.ts` — pure function `(adventure, observation, context, options) → { system, messages }`
 - [ ] Implements the envelope `THINK:` / `COMMAND:`; `thinking` toggle
 - [ ] Prompt hash computed and recorded
-- [ ] **Done when:** unit-tested without network; the prompt contains no scenario solution content
+- [ ] **Done when:** unit-tested without network; the prompt contains no adventure solution content
 
 ### T3.3 Action extraction
 - [ ] `src/agents/llm/extract.ts` — the four-rung fallback chain from `SPEC.md` §10.5, recording `extraction_route`
@@ -159,7 +159,7 @@ Status legend: `[ ]` not started · `[~]` in progress · `[x]` complete
 - [ ] **Done when:** the same game logic works against all three session implementations
 
 ### T5.2 Server
-- [ ] `src/server/` — `node:http` + a small router; routes per `SPEC.md` §14.3
+- [ ] `src/server/` — `room:http` + a small router; routes per `SPEC.md` §14.3
 - [ ] Server-held sessions; SSE endpoint for live agent runs
 - [ ] **Done when:** a browser session and an in-process session produce identical hash chains
 
@@ -190,7 +190,7 @@ Status legend: `[ ]` not started · `[~]` in progress · `[x]` complete
 
 ## Phase 7 — Generality probe (stretch)
 
-- [ ] A miniature organisation scenario (2 teams, 1 shared artefact, 1 dependency, 1 budget) authored **without kernel changes**
+- [ ] A miniature organisation adventure (2 teams, 1 shared artefact, 1 dependency, 1 budget) authored **without kernel changes**
 - [ ] Run the same harness against it; compare the two worlds in `RESULTS.md`
 - [ ] **Done when:** P7.1–P7.3 pass
 
@@ -198,7 +198,7 @@ Status legend: `[ ]` not started · `[~]` in progress · `[x]` complete
 
 ## Phase 8 — Engine comparison (stretch)
 
-- [ ] Port the scenario to QuestJS; run the same agent harness against it
+- [ ] Port the adventure to QuestJS; run the same agent harness against it
 - [ ] Compare agent success rate and authoring cost
 - [ ] **Done when:** P8.1–P8.2 pass
 
@@ -216,5 +216,5 @@ Status legend: `[ ]` not started · `[~]` in progress · `[x]` complete
 | Budgets enforced | `tests/budgets.test.ts` |
 | No secrets in artefacts | `tests/secrets.test.ts` (scan transcripts for key-shaped strings) |
 | Decisions that change the research design are recorded | An ADR in `docs/ARCHITECTURE.md` — **do not change the design silently** |
-| Scenario mechanics follow the published checklist | `docs/SCENARIOS.md` §7 |
+| Adventure mechanics follow the published checklist | `docs/SCENARIOS.md` §7 |
 | External licences checked before adding a dependency | `docs/REFERENCES.md` §D |

@@ -2,7 +2,7 @@
 
 **Repository:** `gyrum-labs/research-text-adventure-ai`
 **Status:** Approved for implementation. This document is the authoritative requirements source.
-**Language:** TypeScript (strict), Node 20+, ESM.
+**Language:** TypeScript (strict), Room 20+, ESM.
 **Type:** Standalone research proof of concept.
 
 > **Read this first.** The adventure game is *not* the deliverable. The deliverable is evidence about
@@ -21,7 +21,7 @@
 4. [Architecture](#4-architecture)
 5. [Design patterns](#5-design-patterns)
 6. [Data model](#6-data-model)
-7. [The Mission Impossible scenario](#7-the-mission-impossible-scenario)
+7. [The Mission Impossible adventure](#7-the-mission-impossible-adventure)
 8. [Command grammar](#8-command-grammar)
 9. [Observation contract](#9-observation-contract)
 10. [Agent protocol](#10-agent-protocol)
@@ -50,7 +50,7 @@ stateful text environment, **given no privileged information about the solution*
 
 | # | Objective | Why it matters |
 |---|---|---|
-| S1 | Build a **world-agnostic** state kernel: no adventure vocabulary in the core | The kernel must survive re-pointing at an organisation simulation (§18) |
+| S1 | Build an **adventure-native** state kernel: rooms, objects, doors, flags — the game's own vocabulary, used directly | The kernel should read like the thing it models, and must survive being pointed at an organisation simulation expressed as an adventure (§18) |
 | S2 | Prove **one engine, three interfaces**: human CLI, browser UI, autonomous agent — same reducer, same rules | Confirms the environment is the controlled variable, not the UI |
 | S3 | Produce a **failure taxonomy** for LLM agents in stateful environments | The taxonomy is the reusable artefact; the win-rate is not |
 | S4 | Measure the effect of **context strategy** and **action masking** | Directly informs how an org-simulation agent should be built |
@@ -67,7 +67,9 @@ stateful text environment, **given no privileged information about the solution*
 - **RQ3 (prompt sensitivity).** How much does success rate move across context strategies
   (`none` / `full` / `window` / `structured`) and between free-form and masked action spaces?
 - **RQ4 (scale).** What is the cost per solved mission, and how does it scale with task depth?
-- **RQ5 (generality).** Does the kernel — unchanged — support a second, non-adventure world?
+- **RQ5 (generality).** Does the adventure vocabulary hold up as a model for a second domain —
+  specifically, can an organisation be expressed **as** an adventure (teams as rooms, tickets as
+  objects, handoffs as doors) without changing the kernel?
 
 ### 1.4 Hypotheses (to be falsified, not confirmed)
 
@@ -89,7 +91,7 @@ H1 holds.
 ### 2.1 In scope
 
 - A generic, deterministic state kernel in TypeScript.
-- One authored scenario ("Mission Impossible"-style) expressed purely as data.
+- One authored adventure ("Mission Impossible"-style) expressed purely as data.
 - Three interfaces over the same kernel: human CLI, browser UI, autonomous AI agent.
 - An LLM adapter layer (≥ 2 providers) with no SDK lock-in.
 - A measurement harness: metrics, experiment matrix, aggregated results, failure taxonomy.
@@ -101,18 +103,18 @@ H1 holds.
 |---|---|
 | Adopting QuestJS / ink / TextWorld as the runtime | Coupling the experiment to an engine defeats the S1 goal. §3. |
 | Training or fine-tuning models | Evaluation only. |
-| Reproducing an existing commercial adventure game's text | The scenario is an original homage; see §7.1. |
+| Reproducing an existing commercial adventure game's text | The adventure is an original homage; see §7.1. |
 | Multiplayer, accounts, persistence beyond a session file | Unnecessary for the research question. |
 | GUI beyond a plain browser client | The environment must stay inspectable and cheap to run. |
 | An NLP-based command parser | Parsing must be deterministic and free so that failures are attributable to the agent, not the parser. §8.2. |
-| Real-world org simulation in v1 | That is Phase 7 / a follow-on repo. §18 specifies the seam. |
+| Real-world org simulation in v1 | That is Phase 7 / a follow-on repo. §18 specifies the mapping and the seam. |
 
 ### 2.3 Constraints
 
 | ID | Constraint |
 |---|---|
 | C1 | The kernel performs **no I/O**, no wall-clock reads, no unseeded randomness. Determinism is enforced by test and by architecture test (§16, P0). |
-| C2 | The agent **never** receives scenario-authoring data (gold path, hint tables, predicate source). Enforced by a dedicated observation builder + leakage test. |
+| C2 | The agent **never** receives adventure-authoring data (gold path, hint tables, predicate source). Enforced by a dedicated observation builder + leakage test. |
 | C3 | All LLM traffic is **opt-in** and cost-capped. A `MockProvider` must allow the full harness to run with zero network and zero cost. |
 | C4 | The kernel must not import from `src/agents`, `src/cli`, `src/server` or `src/web`. Enforced by an architecture test. |
 | C5 | Every run writes a machine-readable transcript with model, prompt hash, condition, seed and outcome. |
@@ -128,17 +130,22 @@ Summary of findings (full detail and citations in `docs/RESEARCH-CONTEXT.md`):
 | Option | What it is | Licence | Advantages | Disadvantages | Decision |
 |---|---|---|---|---|---|
 | **QuestJS** (`textadventures/quest`) | JavaScript adventure engine: rooms, objects, text commands, runs in browser | **MIT** | Substantial existing framework; browser-native | Existing game architecture (attributes, dynamic text) complicates controlled agent testing; adds a dependency we do not control | Alternative — Phase 8 comparison |
-| **ink** (`inkle/ink`) | Narrative scripting language for branching stories | **MIT** | Excellent branching narrative; browser/Node | Optimised for storytelling, not for general world-state simulation or agent evaluation | Future experiment |
+| **ink** (`inkle/ink`) | Narrative scripting language for branching stories | **MIT** | Excellent branching narrative; browser/Room | Optimised for storytelling, not for general world-state simulation or agent evaluation | Future experiment |
 | **TextWorld** (`microsoft/TextWorld`) | RL sandbox for text games: training + evaluation of agents | **Microsoft Research License** (not OSI-approved) | Purpose-built for evaluating agents in stateful text environments | Python ecosystem; heavy install; licence is non-commercial-restricted | Research reference only |
 | **TALES** (`microsoft/tale-suite`) | Benchmark of curated text games across Jericho/TextWorld/TextWorld-Express/ScienceWorld/ALFWorld | MIT | Real numbers: on human-written games (Jericho — the suite's only non-synthetic environment) the best agents reach only **13.4%** of maximum normalised score, vs 76–100 on synthetic environments | Python; heavyweight; its metric is a normalised score, not per-game success | **Primary reference for expected effect sizes** |
 | **Minimal TypeScript reducer (this repo)** | Purpose-built pure state-transition kernel | MIT | Total control, deterministic, dependency-light, reusable for the org-simulation goal | We must implement ~15 mechanics ourselves | **Chosen for v1** |
 
-**Decision:** build a small, generic TypeScript kernel. The adventure content is a *scenario* — data
-describing nodes, entities, actions, goals — evaluated by the kernel. QuestJS and ink are deferred
+**Decision:** build a small, generic TypeScript kernel. The adventure content is a *adventure* — data
+describing rooms, objects, actions, goals — evaluated by the kernel. QuestJS and ink are deferred
 comparisons (Phase 8). TextWorld/TALES are read for calibration: TALES' result — a roughly
 tenfold score collapse between synthetic and human-written games — sets our expectation that
 **human-shaped worlds are where agents break**, and that failure analysis matters more than a
 headline win-rate.
+
+> **Note on the vocabulary.** The kernel deliberately speaks the game's own language — rooms,
+> objects, doors, flags — rather than a neutral abstraction. An organisation simulation is
+> therefore written as another adventure (teams as rooms, tickets as objects, handoffs as doors),
+> not as a new engine. See §3.1 and §18.
 
 > **Note on comparability.** TALES deliberately gives its agent almost no domain information, and
 > scores a normalised 0–100 per environment rather than binary success. Our prompt supplies a
@@ -148,9 +155,20 @@ headline win-rate.
 
 ### 3.1 The design decision that follows from this
 
-If the game engine is removed entirely, the kernel must speak a **domain-neutral vocabulary**. The
-core knows *nodes, entities, connections, flags, actions, goals, turns* — never *rooms, keys,
-bombs*. This is what makes §18 (organisation simulation) a configuration change rather than a rewrite.
+If the game engine is removed entirely, the kernel still speaks an **adventure vocabulary**, and
+that is deliberate. The core knows *rooms, objects, doors, flags, actions, goals, turns* — the
+language of the game it runs, not a neutral abstraction over it.
+
+The reasoning: the adventure is not merely the fixture, it is the **model**. The longer-term aim
+is to run an organisation the way this game runs, and that works best when the organisation is
+expressed *as* an adventure — teams as rooms, tickets as objects, handoffs as doors. An
+abstraction layer between "the game" and "the kernel" would have to be taught to every reader and
+every agent, for no benefit. §18 sets out the mapping and the seam.
+
+This reverses an earlier draft of this specification, which kept the kernel domain-neutral so it
+could be pointed at other worlds. That was over-engineering: it made the code harder to read
+without making the organisation simulation any easier to write. See `docs/ARCHITECTURE.md`
+ADR-002 (superseded) and ADR-016.
 
 ---
 
@@ -173,7 +191,7 @@ bombs*. This is what makes §18 (organisation simulation) a configuration change
                                             │
                     ┌───────────────────────▼───────────────────────┐
                     │            KERNEL  (pure, no I/O)            │
-                    │  Scenario ──► reduce(state, command) ──► new  │
+                    │  Adventure ──► reduce(state, command) ──► new  │
                     │      ▲                    │                  │
                     │      │                    ▼                  │
                     │  goalTable        CommandParser             │
@@ -201,10 +219,10 @@ bombs*. This is what makes §18 (organisation simulation) a configuration change
 | Module | Responsibility | Must not do |
 |---|---|---|
 | `src/kernel` | Pure state transition, parsing, goal/hint evaluation, hashing | I/O, clock, randomness, imports from edges |
-| `src/scenarios` | Scenario *data* + prose + gold path | Contain logic beyond declarative data |
-| `src/session` | Holds a session (state + scenario + id); create/reset/snapshot | Contain scenario logic |
+| `src/adventures` | Adventure *data* + prose + gold path | Contain logic beyond declarative data |
+| `src/session` | Holds a session (state + adventure + id); create/reset/snapshot | Contain adventure logic |
 | `src/agents` | Policies and LLM providers; prompt assembly; action extraction | Mutate kernel internals |
-| `src/runner` | Turn loop, budgets, guards, transcript recording, metrics | Know about specific scenarios |
+| `src/runner` | Turn loop, budgets, guards, transcript recording, metrics | Know about specific adventures |
 | `src/cli` | Argument parsing, REPL, human play, agent runs, eval sweeps | Contain game rules |
 | `src/server` | HTTP routes over a server-held session | Contain game rules |
 | `src/web` | Browser client | Contain game rules |
@@ -213,7 +231,7 @@ bombs*. This is what makes §18 (organisation simulation) a configuration change
 
 This is the single most important structural property of the repo. It must be **testable**:
 
-> **REQ-EQUIV-1.** For a given scenario and the same sequence of commands, the human CLI, the web
+> **REQ-EQUIV-1.** For a given adventure and the same sequence of commands, the human CLI, the web
 > client and the agent runner must produce **identical state hash chains** (§13.2).
 
 Enforced by a single golden transcript (`tests/fixtures/golden.jsonl`) replayed through all three
@@ -221,10 +239,10 @@ interfaces, asserting the final hash chain matches.
 
 ### 4.4 Dependency rules
 
-- `kernel` → nothing (except `node:crypto` for hashing).
-- `scenarios` → `kernel` types only.
+- `kernel` → nothing (except `room:crypto` for hashing).
+- `adventures` → `kernel` types only.
 - `session` → `kernel`.
-- `agents` → `kernel` types, `scenarios` data.
+- `agents` → `kernel` types, `adventures` data.
 - `runner` → `kernel`, `agents`, `session`.
 - `cli` / `server` / `web` → `runner`, `session`, `kernel`.
 
@@ -236,17 +254,17 @@ Enforced by `tests/architecture.test.ts` (C4).
 
 | Pattern | Where | Why |
 |---|---|---|
-| **Pure reducer / state transition function** | `kernel.reduce(state, command) → { state, events }` | Determinism, testability, replay, hash chaining, and the ability to run the identical transition in Node and in a browser |
+| **Pure reducer / state transition function** | `kernel.reduce(state, command) → { state, events }` | Determinism, testability, replay, hash chaining, and the ability to run the identical transition in Room and in a browser |
 | **Command pattern** | Every player intent is a parsed `Command { verb, args }` before any effect | Uniform error handling; illegal actions become data, not exceptions |
-| **Specification / rule DSL** | `Predicate[]` + `Effect[]` on each action | Scenario authors declare *what* is true; the kernel decides *how* to evaluate it. Keeps adventure semantics out of the core |
+| **Specification / rule DSL** | `Predicate[]` + `Effect[]` on each action | Adventure authors declare *what* is true; the kernel decides *how* to evaluate it. Keeps adventure semantics out of the core |
 | **Strategy** | `AgentPolicy { next(observation, history): Promise<Command \| null> }` | Human, scripted, random and LLM agents are interchangeable; the runner cannot tell them apart |
 | **Ports & adapters (hexagonal)** | `LlmProvider`, `Session` | Swap Anthropic ↔ OpenAI ↔ Ollama ↔ Mock; swap in-memory ↔ HTTP session, with no change to the kernel |
 | **Observer / event stream** | `reduce` emits `Event[]`; the transcript is the event log | Lets the UI animate, the evaluator classify failures, and the replayer assert — all from one stream |
 | **Repository / snapshot** | `Session.save()/load()` as plain JSON | State is fully serialisable; sessions are files; no database |
-| **Fixture + golden-file testing** | `tests/fixtures/*.jsonl` | Scenario behaviour and interface equivalence are pinned to readable files, not to assertions scattered across code |
+| **Fixture + golden-file testing** | `tests/fixtures/*.jsonl` | Adventure behaviour and interface equivalence are pinned to readable files, not to assertions scattered across code |
 | **Circuit breaker / budget guard** | Runner stop conditions + parse-failure backoff | An agent that loops or babbles must not run up a bill |
 | **Structured output with repair** | LLM asked for a strict envelope; extractor falls back through a defined chain | Model-specific formatting drift is handled centrally, and every failure is counted (§12.3) |
-| **Seeded PRNG** | Any randomness (random policy, jittered scenarios) takes an injected seed | Reproducibility |
+| **Seeded PRNG** | Any randomness (random policy, jittered adventures) takes an injected seed | Reproducibility |
 
 ### 5.1 The specification DSL (kernel vocabulary)
 
@@ -254,21 +272,21 @@ The kernel understands exactly these six predicates and eight effects. Nothing e
 
 ```ts
 type Predicate =
-  | { op: 'at'; node: Id }
-  | { op: 'entity_at'; entity: Id; node: Id }
-  | { op: 'in_inventory'; entity: Id }
+  | { op: 'at'; room: Id }
+  | { op: 'object_in_room'; object: Id; room: Id }
+  | { op: 'carrying'; object: Id }
   | { op: 'flag'; key: string; value: boolean }
-  | { op: 'entity_flag'; entity: Id; key: string; value: boolean }
+  | { op: 'object_flag'; object: Id; key: string; value: boolean }
   | { op: 'goal_complete'; goal: Id };
 
 type Effect =
-  | { op: 'move'; to: Id }
+  | { op: 'move_to'; room: Id }
   | { op: 'set_flag'; key: string; value: boolean }
-  | { op: 'set_entity_flag'; entity: Id; key: string; value: boolean }
-  | { op: 'set_entity_at'; entity: Id; node: Id | null }
-  | { op: 'add_inventory'; entity: Id }
-  | { op: 'remove_inventory'; entity: Id }
-  | { op: 'set_entity_state'; entity: Id; key: string; value: string }
+  | { op: 'set_object_flag'; object: Id; key: string; value: boolean }
+  | { op: 'set_object_room'; object: Id; room: Id | null }
+  | { op: 'add_to_inventory'; object: Id }
+  | { op: 'remove_from_inventory'; object: Id }
+  | { op: 'set_object_state'; object: Id; key: string; value: string }
   | { op: 'finish'; outcome: 'success' | 'failure'; reason: string };
 ```
 
@@ -283,40 +301,40 @@ This is the whole engine. Everything else is data.
 ```ts
 export type Id = string;
 
-// ---------- Scenario (data only) ----------
+// ---------- Adventure (data only) ----------
 
-export interface Scenario {
+export interface Adventure {
   id: string;
   title: string;
   version: string;
   /** The mission briefing. Given to the agent verbatim. Must not reveal the solution. */
   brief: string;
-  /** Shown when the scenario is solved/failed. */
+  /** Shown when the adventure is solved/failed. */
   outcomeText: { success: string; failure: string };
-  nodes: Record<Id, Node>;
-  entities: Record<Id, Entity>;
-  connections: Record<Id, Connection>;
+  rooms: Record<Id, Room>;
+  objects: Record<Id, GameObject>;
+  doors: Record<Id, Door>;
   actions: ActionSpec[];
   goals: GoalSpec[];
   hints: HintSpec[];
-  initial: WorldState;
+  initial: GameState;
 }
 
-export interface Node {
+export interface Room {
   id: Id;
   name: string;
   /** Prose shown on arrival. */
   description: string;
-  /** Entity ids present in this node. */
+  /** GameObject ids present in this room. */
   contents: Id[];
-  /** Connection ids leading out of this node. */
+  /** Door ids leading out of this room. */
   exits: Id[];
 }
 
-export interface Entity {
+export interface GameObject {
   id: Id;
   name: string;
-  /** Extra words that resolve to this entity (e.g. "cutter", "pliers"). */
+  /** Extra words that resolve to this object (e.g. "cutter", "pliers"). */
   aliases?: string[];
   description: string;
   /** Rendered only when `examine`d — may reveal detail not in `description`. */
@@ -327,16 +345,16 @@ export interface Entity {
   readable?: boolean;
 }
 
-export interface Connection {
+export interface Door {
   id: Id;
   from: Id;
   to: Id;
   /** Direction word shown to the player, e.g. "north", "back", "vault door". */
   direction: string;
   label: string;
-  /** If set, traversing requires an action (e.g. `unlock`) with this entity. */
-  requiresAction?: { verb: string; entity: Id };
-  /** If true, traversal is refused until the connection is unlocked. */
+  /** If set, traversing requires an action (e.g. `unlock`) with this object. */
+  requiresAction?: { verb: string; object: Id };
+  /** If true, traversal is refused until the door is unlocked. */
   locked?: boolean;
 }
 
@@ -359,7 +377,7 @@ export interface ActionSpec {
 
 export type ArgSpec = {
   name: string;
-  role: 'node' | 'entity' | 'entity-in-node' | 'entity-in-inventory' | 'text';
+  role: 'room' | 'object' | 'object-in-room' | 'object-in-inventory' | 'text';
 };
 
 export interface GoalSpec {
@@ -379,11 +397,11 @@ export interface HintSpec {
 
 // ---------- Runtime state ----------
 
-export interface WorldState {
-  nodeId: Id;
+export interface GameState {
+  roomId: Id;
   inventory: Id[];
-  /** Per-entity runtime facts: where it is, and mutable flags. */
-  entities: Record<Id, EntityState>;
+  /** Per-object runtime facts: where it is, and mutable flags. */
+  objects: Record<Id, GameObjectState>;
   /** World-level facts (e.g. `bomb_defused`). */
   flags: Record<string, boolean>;
   /** Turn counter. The kernel's only notion of time. */
@@ -393,8 +411,8 @@ export interface WorldState {
   status: 'running' | 'success' | 'failure';
 }
 
-export interface EntityState {
-  at: Id | null;              // node id, or null when carried
+export interface GameObjectState {
+  at: Id | null;              // room id, or null when carried
   flags: Record<string, boolean>;
   state: Record<string, string>;
 }
@@ -420,7 +438,7 @@ export type Event =
   | { type: 'run_ended'; outcome: 'success' | 'failure' | 'budget_exhausted' | 'loop_detected' | 'provider_error'; reason: string; turn: number };
 
 export interface Transition {
-  state: WorldState;
+  state: GameState;
   events: Event[];
   /** True when the transition changed nothing (illegal action). */
   changed: boolean;
@@ -436,11 +454,11 @@ whitespace. The chain is written into every transcript, which makes runs tamper-
 
 ---
 
-## 7. The Mission Impossible scenario
+## 7. The Mission Impossible adventure
 
 ### 7.1 Provenance and originality
 
-This scenario is an **original homage** to the classic Mission Impossible text adventures (a
+This adventure is an **original homage** to the classic Mission Impossible text adventures (a
 three-area, lock-and-key, bomb-disposal mission). No existing game's prose, room names, puzzle
 layout or text is reproduced. The purpose is to reproduce the *shape* of the puzzle — a short
 dependency chain with a lethal trap — not any specific work.
@@ -464,12 +482,12 @@ dependency chain with a lethal trap — not any specific work.
    │  • desk              │        │      ↳ defusal manual│        │      ↳ case          │
    │                      │        │  • extinguisher      │        │  • shelving         │
    └──────────────────────┘        └──────────────────────┘        └──────────────────────┘
-         node: briefing                 node: corridor                  node: vault
+         room: briefing                 room: corridor                  room: vault
 ```
 
 ### 7.4 Objects
 
-| Entity | Node | Properties | Role |
+| GameObject | Room | Properties | Role |
 |---|---|---|---|
 | `keycard` | briefing | takeable | Opens the vault door |
 | `bulletin` | briefing | readable | Narrative texture; mentions "the maintenance locker in the corridor" (weak hint) |
@@ -516,7 +534,7 @@ probability ≈ 0.
                     → both goals complete → SUCCESS
 ```
 
-`tests/scenarios/mission-impossible.gold.test.ts` asserts this path succeeds, that it is the
+`tests/adventures/mission-impossible.gold.test.ts` asserts this path succeeds, that it is the
 shortest success under BFS over the action space (the harness includes a BFS oracle), and that the
 random policy fails 20/20 seeds.
 
@@ -540,17 +558,17 @@ random policy fails 20/20 seeds.
 
 | Verb | Synonyms | Args | Notes |
 |---|---|---|---|
-| `look` | `l` | — | Re-describe the current node |
-| `inventory` | `i`, `inv` | — | List carried entities |
-| `examine` | `x`, `inspect` | `target: entity-in-node` | Reveals `detail` if present |
-| `go` | `walk`, `move`, `enter` | `target: node` | Direction words map to connections |
-| `take` | `get`, `grab`, `pick up` | `target: entity-in-node` | |
-| `drop` | — | `target: entity-in-inventory` | |
-| `open` | — | `target: entity-in-node` | Containers |
-| `read` | — | `target: entity-in-node` | Readables |
-| `unlock` | — | `target: entity-in-node`, `with: text` | Key entity **or** numeric code |
-| `cut` | — | `target: entity-in-node`, `with: entity-in-inventory` | Tool must be carried |
-| `use` | — | `tool: entity-in-inventory`, `on: entity-in-node` | Generic two-arg form |
+| `look` | `l` | — | Re-describe the current room |
+| `inventory` | `i`, `inv` | — | List carried objects |
+| `examine` | `x`, `inspect` | `target: object-in-room` | Reveals `detail` if present |
+| `go` | `walk`, `move`, `enter` | `target: room` | Direction words map to doors |
+| `take` | `get`, `grab`, `pick up` | `target: object-in-room` | |
+| `drop` | — | `target: object-in-inventory` | |
+| `open` | — | `target: object-in-room` | Containers |
+| `read` | — | `target: object-in-room` | Readables |
+| `unlock` | — | `target: object-in-room`, `with: text` | Key object **or** numeric code |
+| `cut` | — | `target: object-in-room`, `with: object-in-inventory` | Tool must be carried |
+| `use` | — | `tool: object-in-inventory`, `on: object-in-room` | Generic two-arg form |
 | `hint` | — | — | Costs one turn; consumes a hint credit (§7.4) |
 | `wait` | — | — | Costs one turn |
 | `help` | `?` | — | Lists verbs; no state change |
@@ -562,9 +580,9 @@ connective (`on` / `with` / `to`) and splits accordingly.
 
 1. Normalise: trim, lower-case, collapse whitespace.
 2. Strip a leading `>` or `>` prompt marker.
-3. Match the first token against the verb table (canonical + synonyms + scenario-extended verbs).
+3. Match the first token against the verb table (canonical + synonyms + adventure-extended verbs).
 4. If the verb takes two args, split on the connective.
-5. Resolve entity arguments against: current node contents → inventory → connections (by label).
+5. Resolve object arguments against: current room contents → inventory → doors (by label).
    Resolution is exact alias match first, then case-insensitive prefix match if unambiguous.
 6. Unresolvable argument → `parse_error` with a message naming the failure.
 7. Unknown verb → `parse_error` listing the valid verbs.
@@ -594,9 +612,9 @@ agent is allowed to know and nothing else (C2).
 export interface Observation {
   turn: number;
   location: { id: Id; name: string; description: string };
-  /** Entities present and visible in the current node. */
+  /** GameObjects present and visible in the current room. */
   visible: Array<{ id: Id; name: string; description: string; readable?: boolean; container?: boolean }>;
-  /** Carried entities. */
+  /** Carried objects. */
   inventory: Array<{ id: Id; name: string; description: string }>;
   /** Exits and their status. 'locked' is observable (a locked door is visible and closed). */
   exits: Array<{ direction: string; label: string; toName: string; status: 'open' | 'locked' | 'closed' }>;
@@ -611,18 +629,18 @@ export interface Observation {
 
 ### 9.2 What the observation must NEVER contain
 
-- The gold path, the hint table, the scenario's `requires`/`effects`, or any other entity that is
-  not in the current node or the inventory.
+- The gold path, the hint table, the adventure's `requires`/`effects`, or any other object that is
+  not in the current room or the inventory.
 - The contents of a closed container (only that it is closed and that it *might* contain something).
 - The identity of the safe wire before the manual is read.
 - Any flag the agent has not observed.
-- Internal ids that leak authoring structure beyond stable entity names (ids are fine — they are
+- Internal ids that leak authoring structure beyond stable object names (ids are fine — they are
   stable and opaque; authoring predicates are not).
 
-**Enforcement:** `tests/leakage.test.ts` asserts that, for every reachable state in the scenario,
-the observation's entity set ⊆ (node contents ∪ inventory), and that no observation ever contains
+**Enforcement:** `tests/leakage.test.ts` asserts that, for every reachable state in the adventure,
+the observation's object set ⊆ (room contents ∪ inventory), and that no observation ever contains
 the substrings of the gold path or hint text before the corresponding hint is issued. The
-observation builder is a **separate module** that receives only `WorldState` + public scenario
+observation builder is a **separate module** that receives only `GameState` + public adventure
 fields, so authors cannot leak by accident.
 
 ### 9.3 Renderer variants
@@ -700,14 +718,14 @@ vendor SDKs — so provider churn does not become a dependency problem.
 
 ### 10.3 Prompt assembly and the action envelope
 
-The system prompt is assembled from the scenario (brief, verbs, rules) plus the strategy, and is
+The system prompt is assembled from the adventure (brief, verbs, rules) plus the strategy, and is
 **versioned and hashed**; the hash is stored in every transcript so a result can be tied to the
 exact prompt.
 
 Required prompt elements:
 
-1. Your mission (the scenario brief).
-2. The world model at a high level (nodes and entities exist; travel, take, open, read, unlock,
+1. Your mission (the adventure brief).
+2. The world model at a high level (rooms and objects exist; travel, take, open, read, unlock,
    cut; a turn is a single command).
 3. The available verbs and argument shapes.
 4. The rules: issue exactly one command; only refer to things you can currently see or carry; if
@@ -733,13 +751,13 @@ fences and `>` prompts.
 | `none` | The current observation only. The control: pure reactive behaviour |
 | `full` | The entire transcript: brief, every observation, every command and outcome |
 | `window` | The last *N* turns (N = 5) plus the brief |
-| `structured` | A compact "known facts" block (location, inventory, visible entities, disclosed goals, revealed facts) + the last 2 outcomes + the brief |
+| `structured` | A compact "known facts" block (location, inventory, visible objects, disclosed goals, revealed facts) + the last 2 outcomes + the brief |
 
 `structured` is the recommended default and the direct analogue of the organisation-simulation
 requirement ("the AI agent gets your current details about where you are"). `full` tests H5.
 
 **Known-facts block** (the `structured` strategy) is derived only from the agent's own observation
-history — it is a *summary of what the agent has seen*, never scenario-authoring data.
+history — it is a *summary of what the agent has seen*, never adventure-authoring data.
 
 ### 10.5 Action extraction and repair
 
@@ -759,14 +777,14 @@ variable.
 
 **Never** repair a command by fuzzy-matching it into a legal one. If the agent said "take the
 keycard", the kernel must not helpfully interpret "the keycard" as "keycard" by fiat — but alias
-resolution inside the scenario's alias table is legitimate and must be declared in the scenario.
+resolution inside the adventure's alias table is legitimate and must be declared in the adventure.
 
 ### 10.6 Prompt template
 
 Keep it in one file, `src/agents/llm/prompt.ts`, as a pure function of
-`(scenario, observation, context, options) → { system, messages }`. It must be unit-testable
-without a network call, and must contain a placeholder for the scenario description so a second
-scenario needs no prompt change.
+`(adventure, observation, context, options) → { system, messages }`. It must be unit-testable
+without a network call, and must contain a placeholder for the adventure description so a second
+adventure needs no prompt change.
 
 ---
 
@@ -775,7 +793,7 @@ scenario needs no prompt change.
 ### 11.1 The turn loop
 
 ```
-create session → state = scenario.initial
+create session → state = adventure.initial
 loop:
   observation = buildObservation(state)          // §9
   if all goals achieved → finish(success)
@@ -816,7 +834,7 @@ guards:
 
 ### 12.1 The unit of measurement
 
-A **run** = one (scenario, policy, provider, model, condition, seed) tuple, producing one
+A **run** = one (adventure, policy, provider, model, condition, seed) tuple, producing one
 transcript and one metrics record.
 
 ### 12.2 Metrics
@@ -825,9 +843,9 @@ transcript and one metrics record.
 | Metric | Definition |
 |---|---|
 | `outcome` | `success` \| `failure` \| `budget_exhausted` \| `loop_detected` \| `provider_error` \| `provider_stopped` |
-| `goalsCompleted` | 0…2 (of the scenario's goals) |
+| `goalsCompleted` | 0…2 (of the adventure's goals) |
 | `turnsUsed` | Turns consumed |
-| `goldPathLength` | 10 for this scenario |
+| `goldPathLength` | 10 for this adventure |
 | `efficiency` | `goldPathLength / turnsUsed` — higher is better; 1.0 = a perfect run, 0.1 = ten times the optimal path |
 | `wasteRatio` | `turnsUsed / goldPathLength` — the inverse, for readers who think in overhead multiples (1.0 = optimal) |
 | `hintsUsed` | Hints consumed |
@@ -835,9 +853,9 @@ transcript and one metrics record.
 **Process metrics (the interesting ones)**
 | Metric | Definition |
 |---|---|
-| `invalidActionRate` | Invalid actions ÷ total commands — proxies "does it ground its actions in the world?" |
+| `invalidActionRate` | Invalid actions ÷ total commands — proxies "does it ground its actions in the game?" |
 | `unparsableRate` | Responses the extractor could not turn into a command ÷ total turns |
-| `hallucinationRate` | Commands referencing an entity not present in node ∪ inventory ÷ total commands — the grounding proxy |
+| `hallucinationRate` | Commands referencing an object not present in room ∪ inventory ÷ total commands — the grounding proxy |
 | `repeatStateRate` | Commands that changed nothing ÷ total commands |
 | `explorationSteps` | Turns before the first state-changing action |
 | `recoveryRate` | After a failure, did the agent try something different within 2 turns? (0…1) |
@@ -853,7 +871,7 @@ Every unsuccessful run is classified into exactly one primary category, in this 
 | Code | Category | Definition |
 |---|---|---|
 | `F1` | Parsing | The model could not produce a command the parser accepted |
-| `F2` | Hallucination | The model referenced entities that do not exist in scope |
+| `F2` | Hallucination | The model referenced objects that do not exist in scope |
 | `F3` | Planning | The model acted against its own stated plan, or repeated a failed action |
 | `F4` | Ordering / precondition | The model attempted a gated action before discovering the gate (e.g. cut before read) |
 | `F5` | Exploration failure | The model never found a required fact within the budget |
@@ -906,7 +924,7 @@ The experiment is complete when:
 
 ### 13.1 Determinism guarantees
 
-**Guaranteed (engine):** given the same scenario and the same command sequence, the kernel
+**Guaranteed (engine):** given the same adventure and the same command sequence, the kernel
 produces byte-identical state and event sequences. Guaranteed by C1 and verified by replay.
 
 **Not guaranteed (model):** LLM sampling is non-deterministic unless a provider supports a fixed
@@ -922,7 +940,7 @@ reproducible, and the agent's trajectory is fully recorded".
 
 `npm run replay -- <transcript.jsonl>`:
 
-1. Re-create the session from the scenario referenced in the transcript header.
+1. Re-create the session from the adventure referenced in the transcript header.
 2. Re-apply each recorded command through the same reducer.
 3. Recompute the hash chain and compare to the recorded chain.
 4. Exit non-zero on any mismatch.
@@ -931,7 +949,7 @@ This is the executable form of §4.3's equivalence contract.
 
 ### 13.3 Session persistence
 
-A session is `{ id, scenarioId, scenarioVersion, state, transcript[] }` and is stored as plain JSON.
+A session is `{ id, adventureId, adventureVersion, state, transcript[] }` and is stored as plain JSON.
 
 - `FileSession` — writes to `sessions/<id>.json`.
 - `InMemorySession` — for tests and the browser client.
@@ -945,15 +963,15 @@ It is **not** required for v1 to be useful.
 JSON Lines. One record per line. The first line is the header:
 
 ```jsonl
-{"type":"header","runId":"...","scenario":"mission-impossible","scenarioVersion":"1.0.0","scenarioHash":"sha256:...","policy":"llm","provider":"anthropic","model":"claude-sonnet-4.5","condition":"C","contextStrategy":"structured","seed":7,"promptHash":"sha256:...","startedAt":"2026-01-01T00:00:00.000Z","gitCommit":"...","engineVersion":"1.0.0"}
+{"type":"header","runId":"...","adventure":"mission-impossible","adventureVersion":"1.0.0","adventureHash":"sha256:...","policy":"llm","provider":"anthropic","model":"claude-sonnet-4.5","condition":"C","contextStrategy":"structured","seed":7,"promptHash":"sha256:...","startedAt":"2026-01-01T00:00:00.000Z","gitCommit":"...","engineVersion":"1.0.0"}
 {"type":"observation","turn":0,"data":{...}}
 {"type":"command","turn":1,"raw":"take keycard","verb":"take","args":{"target":"keycard"}}
 {"type":"events","turn":1,"data":[...]}
-{"type":"state","turn":1,"hash":"sha256:...","summary":{"nodeId":"briefing","inventory":["keycard"]}}
+{"type":"state","turn":1,"hash":"sha256:...","summary":{"roomId":"briefing","inventory":["keycard"]}}
 {"type":"metrics","turn":10,"data":{...}}
 ```
 
-`scenarioHash` and `promptHash` pin the exact environment and prompt; `gitCommit` pins the code.
+`adventureHash` and `promptHash` pin the exact environment and prompt; `gitCommit` pins the code.
 
 ---
 
@@ -968,7 +986,7 @@ pros, cons"* — is answered here.
 | | **A. Browser-only** | **B. Server-held state** | **C. Pure kernel + swappable session (chosen)** |
 |---|---|---|---|
 | Shape | Kernel bundled into the page; state in JS memory (optionally `localStorage`) | Kernel on the server; browser is a thin client over HTTP | Kernel is a library; `Session` is an interface with `InMemory` and `Http` implementations |
-| Infra | None | A running Node process | None required; a server is optional |
+| Infra | None | A running Room process | None required; a server is optional |
 | Latency | Zero | One round trip per command | Zero locally; one round trip in HTTP mode |
 | State survives refresh | Only via `localStorage` | Yes, server-side | Depends on the session implementation |
 | The agent can drive the *same* session the human watches | No | **Yes** | Yes, when the session is HTTP-backed |
@@ -990,7 +1008,7 @@ expire), and an implicit network dependency into the *demo* path. It risks the p
 on its deployment rather than its findings. It also tempts the kernel to become stateful in a
 server-ish way, weakening the "pure, portable kernel" property.
 
-**For the chosen option (C):** the kernel is pure, so it runs identically in Node and in the
+**For the chosen option (C):** the kernel is pure, so it runs identically in Room and in the
 browser. The `Session` interface means the browser client can start in `InMemory` mode (zero
 infra, GitHub Pages deployable) and switch to `Http` mode with one configuration flag when the
 live agent demo is wanted. The decision is deferred rather than forced — which is the correct
@@ -1000,12 +1018,12 @@ posture when the two modes have genuinely different costs.
 
 **Implement C. Concretely:**
 
-- `src/session/types.ts` — `Session { id, scenario, state, send(command), snapshot(), reset() }`.
+- `src/session/types.ts` — `Session { id, adventure, state, send(command), snapshot(), reset() }`.
 - `src/session/in-memory.ts` — `InMemorySession` (default; used by tests, the CLI, and the browser
   client).
 - `src/session/http.ts` — `HttpSession` (browser client talking to `src/server`).
 - `src/server/routes.ts` — `POST /api/session`, `POST /api/session/:id/command`,
-  `GET /api/session/:id`, `GET /api/scenario/:id`, `GET /api/health`.
+  `GET /api/session/:id`, `GET /api/adventure/:id`, `GET /api/health`.
 - The web client reads `VITE_SESSION_MODE=memory|http` (or a runtime config object) and picks the
   implementation.
 
@@ -1038,8 +1056,8 @@ research-text-adventure-ai/
 ├── docs/
 │   ├── RESEARCH-CONTEXT.md      ← engine survey, prior art, evidence per decision
 │   ├── REFERENCES.md            ← annotated bibliography with licences
-│   ├── ARCHITECTURE.md          ← layer map + ADR-001…ADR-015
-│   └── SCENARIOS.md             ← scenario authoring guide + checklist
+│   ├── ARCHITECTURE.md          ← layer map + ADR-001…ADR-016
+│   └── ADVENTURES.md            ← adventure authoring guide + checklist
 ├── src/
 │   ├── kernel/
 │   │   ├── types.ts
@@ -1052,9 +1070,9 @@ research-text-adventure-ai/
 │   │   ├── goals.ts
 │   │   ├── hash.ts              ← canonical JSON + hash chain
 │   │   └── index.ts
-│   ├── scenarios/
+│   ├── adventures/
 │   │   └── mission-impossible/
-│   │       ├── scenario.ts      ← pure data
+│   │       ├── adventure.ts      ← pure data
 │   │       ├── text.ts          ← prose
 │   │       ├── gold-path.ts
 │   │       └── hints.ts
@@ -1098,13 +1116,13 @@ research-text-adventure-ai/
 │       └── styles.css
 ├── tests/
 │   ├── kernel/*.test.ts
-│   ├── scenarios/*.test.ts
+│   ├── adventures/*.test.ts
 │   ├── architecture.test.ts     ← C4 dependency rules
 │   ├── leakage.test.ts          ← C2 no privileged info
 │   ├── equivalence.test.ts      ← REQ-EQUIV-1 across the three interfaces
 │   └── fixtures/
 │       ├── golden.jsonl
-│       └── scenarios/*.json
+│       └── adventures/*.json
 ├── scripts/
 │   └── seed-results.ts
 ├── examples/
@@ -1122,14 +1140,14 @@ research-text-adventure-ai/
 | Tool | Choice | Rationale |
 |---|---|---|
 | Language | TypeScript 5.x, `strict: true`, `noUncheckedIndexedAccess: true` | The spec *is* the contract; the type system should enforce it |
-| Module system | ESM (`"type": "module"`), Node 20+ | Current default; `tsx` handles TS directly |
-| Runtime | Node 20+ | `node:test` not needed — Vitest is used |
+| Module system | ESM (`"type": "module"`), Room 20+ | Current default; `tsx` handles TS directly |
+| Runtime | Room 20+ | `room:test` not needed — Vitest is used |
 | Test runner | Vitest | Fast, TS-native, good snapshot support |
 | Dev runner | `tsx` | Zero-config TS execution |
-| Validation | Zod | Runtime validation of scenario files and provider responses; scenarios are data and must be validated at load |
+| Validation | Zod | Runtime validation of adventure files and provider responses; adventures are data and must be validated at load |
 | CLI | `commander` | Argument parsing, subcommands, help text |
 | Web build | esbuild | One bundle, no framework, fast |
-| Server | `node:http` + a ~60-line router | Avoids a framework dependency; the API is 6 routes |
+| Server | `room:http` + a ~60-line router | Avoids a framework dependency; the API is 6 routes |
 | Lint | ESLint flat config | Enforce the architecture boundary as a lint rule *and* a test |
 | CI | GitHub Actions | `npm ci && npm run typecheck && npm run test && npm run lint` |
 
@@ -1143,7 +1161,7 @@ artifact auditable and cheap to fork.
 {
   "scripts": {
     "dev": "tsx src/cli/index.ts",
-    "play": "tsx src/cli/index.ts play --scenario mission-impossible",
+    "play": "tsx src/cli/index.ts play --adventure mission-impossible",
     "agent": "tsx src/cli/index.ts agent --provider anthropic --model claude-sonnet-4.5",
     "sweep": "tsx src/cli/index.ts sweep --matrix configs/matrix.default.json",
     "replay": "tsx src/cli/index.ts replay",
@@ -1180,11 +1198,11 @@ renderer; goal evaluation.
 | P0.4 | The parser resolves aliases, handles `use X on Y` / `cut X with Y`, and produces informative errors |
 | P0.5 | `tests/architecture.test.ts` proves the dependency rules of §4.4 |
 
-### Phase 1 — Scenario
+### Phase 1 — Adventure
 
 | ID | Acceptance criterion |
 |---|---|
-| P1.1 | The MI scenario is pure data, validated by Zod at load |
+| P1.1 | The MI adventure is pure data, validated by Zod at load |
 | P1.2 | The gold path (10 commands) reaches `success` |
 | P1.3 | A BFS oracle confirms 10 is the shortest success path |
 | P1.4 | `RandomPolicy` fails 20/20 seeds |
@@ -1240,7 +1258,7 @@ renderer; goal evaluation.
 
 | ID | Acceptance criterion |
 |---|---|
-| P7.1 | A second scenario — a miniature organisation simulation (2 teams, 1 shared artefact, 1 dependency, 1 budget constraint) — is authored **without changing the kernel** |
+| P7.1 | A second adventure — a miniature organisation simulation (2 teams as rooms, 1 shared artefact, 1 dependency, 1 budget constraint) — is authored **without changing the kernel** |
 | P7.2 | The same agent harness runs it, and `RESULTS.md` compares the two worlds |
 | P7.3 | A one-page "what this means for org simulation" section is written |
 
@@ -1248,7 +1266,7 @@ renderer; goal evaluation.
 
 | ID | Acceptance criterion |
 |---|---|
-| P8.1 | The same scenario is ported to QuestJS, and the agent harness runs against it |
+| P8.1 | The same adventure is ported to QuestJS, and the agent harness runs against it |
 | P8.2 | A short comparison of agent success rate and authoring cost is written |
 
 ---
@@ -1257,8 +1275,8 @@ renderer; goal evaluation.
 
 | # | Risk | Mitigation |
 |---|---|---|
-| V1 | **The scenario is too easy.** A 10-command mission may not stress long-horizon reasoning | Report the step-dependency depth; add a harder variant (Phase 7) |
-| V2 | **The scenario is too hard / has an unintended dead end** | Automated reachability check: every node and every entity is reachable; BFS confirms solvability; the gold path passes |
+| V1 | **The adventure is too easy.** A 10-command mission may not stress long-horizon reasoning | Report the step-dependency depth; add a harder variant (Phase 7) |
+| V2 | **The adventure is too hard / has an unintended dead end** | Automated reachability check: every room and every object is reachable; BFS confirms solvability; the gold path passes |
 | V3 | **Prompt sensitivity dominates the result** | Pin and hash the prompt; report results per prompt version; treat prompt changes as a new experiment |
 | V4 | **Model version drift** | Record the exact model id, provider, and date in every transcript; report the run date |
 | V5 | **Small sample** | ≥ 10 seeds per cell; Wilson intervals; do not claim significance below that |
@@ -1266,7 +1284,7 @@ renderer; goal evaluation.
 | V7 | **Observer effect** — the observation format helps more than the reasoning | Include the `none` control condition and a `text` observation condition so format effects are separable from reasoning effects |
 | V8 | **Parser leniency inflates success** | Report `invalidActionRate`; the parser never rewrites an agent's intent (§10.5) |
 | V9 | **Cost** | Budgets per §11.2; `--provider mock` for all development and CI |
-| V10 | **Single-scenario overfitting** | Phase 7's second scenario; the kernel must not be tuned to the MI scenario's specifics |
+| V10 | **Single-adventure overfitting** | Phase 7's second adventure; the kernel must not be tuned to the MI adventure's specifics |
 
 ---
 
@@ -1280,9 +1298,9 @@ command vocabulary.
 
 | Kernel concept | Adventure instance | Organisation instance |
 |---|---|---|
-| Node | Room | Team, system, queue, or meeting |
-| Entity | Object, tool, document | Ticket, artefact, credential, message, account |
-| Connection | Door, corridor | Handoff, dependency, escalation, approval path |
+| Room | Room | Team, system, queue, or meeting |
+| GameObject | Object, tool, document | Ticket, artefact, credential, message, account |
+| Door | Door, corridor | Handoff, dependency, escalation, approval path |
 | Flag | Puzzle state | Ticket status, budget consumed, SLA breach |
 | Goal | Mission objective | Objective, KPI, or assigned task |
 | Observation | Room description | "Your dashboard": your queue, your blockers, your standing instructions |
@@ -1294,8 +1312,9 @@ command vocabulary.
 
 ### 18.2 What already transfers
 
-Because the kernel is domain-neutral (§3.1), the following are already built by Phase 0 and need no
-change to serve an organisation simulation:
+Because the kernel speaks the game's own vocabulary (§3.1), an organisation simulation is written
+as *another adventure* rather than as a new engine. The following are already built by Phase 0 and
+need no change to serve it:
 
 - The state machine, hash chain, replay, and transcript format — the audit trail for agent actions.
 - The observation contract — the "current details about where you are" payload.
@@ -1310,7 +1329,7 @@ change to serve an organisation simulation:
 |---|---|
 | Live state from real systems | `Session` implementations that read/write a real backend rather than a JSON file |
 | Asynchronous agents | The runner becomes an event consumer; `turn` becomes wall-clock + ordering |
-| Multiple agents | `Session` per agent, plus a shared world; the kernel already supports per-session state |
+| Multiple agents | `Session` per agent, plus a shared game; the kernel already supports per-session state |
 | Permissions and approvals | An `Effect` that suspends a transition pending an external decision |
 | Success metrics beyond goals | The `GoalSpec` mechanism generalises to arbitrary predicates |
 

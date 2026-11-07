@@ -17,25 +17,27 @@ multi-step mission in a deterministic, stateful text environment, using only the
 actions available to it, with no privileged knowledge of the solution?*
 
 **What the project is NOT.** The adventure game is not the product. The product is (a) a generic,
-deterministic, world-agnostic state kernel and (b) measurable, replayable evidence about how LLM
+deterministic, adventure-native state kernel and (b) measurable, replayable evidence about how LLM
 agents behave inside it. The text adventure is the test fixture that makes the evidence cheap.
 
-**The test fixture.** A short, original "Mission Impossible"-style scenario — a three-area
+**The test fixture.** A short, original "Mission Impossible"-style adventure — a three-area
 lock-and-key bomb-disposal mission with a four-step dependency chain, a lethal trap, and a 10-command
-gold path. Its full specification is in `SPEC.md` §7. Do not substitute a different scenario.
+gold path. Its full specification is in `SPEC.md` §7. Do not substitute a different adventure.
 
 ## Non-negotiables
 
-1. **TypeScript, strict mode, ESM, Node 20+.** Runtime dependencies limited to `zod` and
+1. **TypeScript, strict mode, ESM, Room 20+.** Runtime dependencies limited to `zod` and
    `commander`. Dev dependencies: `typescript`, `tsx`, `vitest`, `esbuild`, `eslint`,
    `@typescript-eslint/*`. **No LLM vendor SDKs** — implement providers with plain `fetch`.
 2. **The kernel is pure.** `src/kernel` must contain no I/O, no `Date.now()`, no `Math.random()`,
    no `fs`, and no imports from `src/agents`, `src/cli`, `src/server`, `src/web`. Enforce this with
    both an ESLint rule and `tests/architecture.test.ts`.
-3. **The kernel is domain-neutral.** It knows nodes, entities, connections, flags, actions, goals,
-   turns. It must never mention rooms, keys, bombs or wires. The adventure scenario is *data*.
-4. **No privileged information leaks to the agent.** The agent's view of the world is built by
-   exactly one function (`src/kernel/observation.ts`) from the world state and public scenario
+3. **The kernel speaks the adventure's own vocabulary.** It knows rooms, objects, doors, flags,
+   actions, goals and turns. Do not abstract these into neutral terms — no `node`, no `entity`, no
+   `connection`, no `world`. The game's language is the point. The adventure's *content* is still
+   pure data.
+4. **No privileged information leaks to the agent.** The agent's view of the game is built by
+   exactly one function (`src/kernel/observation.ts`) from the game state and public adventure
    fields. The gold path, the hint table, the action predicates/effects, and the contents of closed
    containers must never appear. Enforce with `tests/leakage.test.ts`.
 5. **One engine, three interfaces.** Human CLI, browser UI, and agent runner all drive the same
@@ -51,7 +53,7 @@ gold path. Its full specification is in `SPEC.md` §7. Do not substitute a diffe
 ## The architecture you are building
 
 ```
-kernel (pure)  ← scenarios (data) ← session (InMemory | File | Http)
+kernel (pure)  ← adventures (data) ← session (InMemory | File | Http)
      ↑                                        ↑
    agents (LlmPolicy | ScriptedPolicy | RandomPolicy)   cli | server | web
                     ↓
@@ -71,7 +73,7 @@ the decision as a short ADR in `docs/ARCHITECTURE.md`.
 | [`docs/RESEARCH-CONTEXT.md`](./docs/RESEARCH-CONTEXT.md) | Why a custom kernel, what TALES actually shows, the prior art we borrow from, and the **evidence behind each design decision** (D1–D16) |
 | [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | The layer map and **ADR-001…ADR-015** — the decisions already taken, and why. Do not re-litigate them silently |
 | [`docs/REFERENCES.md`](./docs/REFERENCES.md) | Annotated bibliography with licences. Check a licence before you add a dependency |
-| [`docs/SCENARIOS.md`](./docs/SCENARIOS.md) | How to write scenario data, with worked examples of every mechanic and an authoring checklist |
+| [`docs/SCENARIOS.md`](./docs/SCENARIOS.md) | How to write adventure data, with worked examples of every mechanic and an authoring checklist |
 
 Two rules that follow from the research and are easy to get wrong:
 
@@ -85,7 +87,7 @@ Two rules that follow from the research and are easy to get wrong:
 ## How to work
 
 **Read first, then build.** `SPEC.md` §4 (architecture), §5 (patterns), §6 (data model), §7
-(scenario), §8 (grammar), §9 (observation), §10 (agent protocol), §11 (runner), §12 (evaluation),
+(adventure), §8 (grammar), §9 (observation), §10 (agent protocol), §11 (runner), §12 (evaluation),
 §15 (layout), §16 (phases) are the build-relevant sections.
 
 **Build in phases, merge each phase green.** The phase gates are `SPEC.md` §16 (P0–P8). Each phase
@@ -108,7 +110,7 @@ The complete set is `SPEC.md` §16. The ones that most often get skipped:
 
 - **P0.1 / P0.5** — kernel purity and the dependency rules are enforced automatically, not just intended.
 - **P1.2 / P1.3 / P1.4** — the gold path succeeds, a BFS oracle proves 10 is the shortest path, and
-  the random policy fails 20/20 seeds. These three together validate the scenario.
+  the random policy fails 20/20 seeds. These three together validate the adventure.
 - **P2.3 / P5.4** — transcripts from every interface replay to identical hash chains.
 - **P3.2** — the mock provider runs the entire harness with no network access.
 - **P4.2** — the failure classifier assigns exactly one code to every failed run.
@@ -117,7 +119,7 @@ The complete set is `SPEC.md` §16. The ones that most often get skipped:
 ## Definition of done for the whole project
 
 1. `npm run check` passes.
-2. `npm run play -- --scenario mission-impossible` is playable to completion by a human.
+2. `npm run play -- --adventure mission-impossible` is playable to completion by a human.
 3. `npm run agent -- --provider mock` completes a full run and writes a transcript + metrics file.
 4. `npm run replay -- <transcript>` verifies the hash chain and exits 0.
 5. `npm run sweep` runs the matrix and writes `results/summary.json` and `results/summary.md`.
@@ -129,7 +131,7 @@ The complete set is `SPEC.md` §16. The ones that most often get skipped:
 
 - Prefer a smaller, working, tested implementation over a complete, untested one. A partial matrix
   with honest reporting beats a fabricated complete one.
-- If a `SPEC.md` detail is ambiguous, choose the reading that keeps the kernel domain-neutral and
+- If a `SPEC.md` detail is ambiguous, choose the reading that keeps the kernel in the game's own
   the agent unprivileged, then note it in `docs/ARCHITECTURE.md`.
 - If a phase proves infeasible as specified, stop, document what you found, and deliver the
   remaining phases. Do not silently change the research design.
