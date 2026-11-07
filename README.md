@@ -57,11 +57,17 @@ benchmark. The short version: an existing adventure framework couples the experi
 we do not control, and TextWorld's licence is non-commercial. A small purpose-built kernel gives
 total control over determinism and over exactly what the agent is allowed to see.
 
-The benchmark that matters for calibration is **TALES**, where even top LLM agents fail the large
-majority of human-designed text adventures — long chains of dependent decisions are genuinely hard,
-which is why this experiment measures *how* agents fail, not just whether they succeed.
+The benchmark that matters for calibration is **TALES**, where the same models score 76–100 on
+synthetic games and collapse to **13.4%** of maximum score on Jericho — the suite's only
+human-written environment. Human-shaped worlds are where agents break, and the *why* (grounded and
+inductive reasoning failures, context dilution, uninformative feedback) is the reusable finding.
 
-Survey and citations: [`docs/RESEARCH-CONTEXT.md`](./docs/RESEARCH-CONTEXT.md).
+> Our numbers are **not** comparable to TALES': their agent gets almost no domain information and
+> is scored on a normalised 0–100 scale, while ours gets a mission brief and a command grammar and
+> is scored on binary goal completion. See [`docs/RESEARCH-CONTEXT.md` §3.5](./docs/RESEARCH-CONTEXT.md#35-two-methodological-choices-in-tales-that-differ-from-ours).
+
+Survey, evidence per decision, and the correction log: [`docs/RESEARCH-CONTEXT.md`](./docs/RESEARCH-CONTEXT.md).
+Annotated bibliography: [`docs/REFERENCES.md`](./docs/REFERENCES.md).
 
 ## Repository layout
 
@@ -70,9 +76,10 @@ SPEC.md                  ← authoritative requirements (start here)
 AGENT_BRIEF.md           ← copy-paste brief for an implementing agent
 TASKS.md                 ← phase and task cards with acceptance criteria
 RESULTS.md               ← findings write-up (Phase 6)
-docs/RESEARCH-CONTEXT.md ← engine survey, licences, citations
-docs/ARCHITECTURE.md     ← diagrams + ADRs (Phase 0)
-docs/SCENARIOS.md        ← scenario authoring guide (Phase 1)
+docs/RESEARCH-CONTEXT.md ← engine survey, prior art, evidence per decision, correction log
+docs/REFERENCES.md       ← annotated bibliography with licences and dates accessed
+docs/ARCHITECTURE.md     ← layer map + ADR-001…ADR-015 (why it is shaped this way)
+docs/SCENARIOS.md        ← scenario authoring guide + checklist
 src/                     ← kernel · scenarios · session · agents · runner · cli · server · web
 tests/                   ← kernel, scenario, architecture, leakage, equivalence, replay
 examples/runs/           ← a few committed example transcripts
@@ -123,7 +130,13 @@ MIT.
 
 ## References
 
+Full annotated bibliography with licences and dates accessed: [`docs/REFERENCES.md`](./docs/REFERENCES.md).
+
 - TALES — Text Adventure Learning Environment Suite: <https://github.com/microsoft/tale-suite> · <https://arxiv.org/abs/2504.14128>
-- QuestJS (MIT): <https://github.com/textadventures/quest>
-- ink (MIT): <https://github.com/inkle/ink>
-- TextWorld: <https://github.com/microsoft/TextWorld>
+- Jericho: <https://arxiv.org/abs/1909.05398> · NAIL: <https://arxiv.org/abs/1902.04259>
+- ALFWorld: <https://arxiv.org/abs/2010.03768> · ScienceWorld: <https://arxiv.org/abs/2203.07540>
+- ReAct: <https://arxiv.org/abs/2210.03629> · Reflexion: <https://arxiv.org/abs/2303.11366>
+- Voyager: <https://arxiv.org/abs/2305.16291> · WebArena: <https://arxiv.org/abs/2307.13854>
+- BenchTrace: <https://arxiv.org/abs/2605.29225>
+- QuestJS (MIT): <https://github.com/textadventures/quest> · ink (MIT): <https://github.com/inkle/ink>
+- TextWorld (Microsoft Research Licence): <https://github.com/microsoft/TextWorld>

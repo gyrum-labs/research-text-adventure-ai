@@ -215,3 +215,6 @@ Status legend: `[ ]` not started · `[~]` in progress · `[x]` complete
 | Strict typing | `npm run typecheck` |
 | Budgets enforced | `tests/budgets.test.ts` |
 | No secrets in artefacts | `tests/secrets.test.ts` (scan transcripts for key-shaped strings) |
+| Decisions that change the research design are recorded | An ADR in `docs/ARCHITECTURE.md` — **do not change the design silently** |
+| Scenario mechanics follow the published checklist | `docs/SCENARIOS.md` §7 |
+| External licences checked before adding a dependency | `docs/REFERENCES.md` §D |

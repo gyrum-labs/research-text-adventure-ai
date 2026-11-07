@@ -130,14 +130,21 @@ Summary of findings (full detail and citations in `docs/RESEARCH-CONTEXT.md`):
 | **QuestJS** (`textadventures/quest`) | JavaScript adventure engine: rooms, objects, text commands, runs in browser | **MIT** | Substantial existing framework; browser-native | Existing game architecture (attributes, dynamic text) complicates controlled agent testing; adds a dependency we do not control | Alternative — Phase 8 comparison |
 | **ink** (`inkle/ink`) | Narrative scripting language for branching stories | **MIT** | Excellent branching narrative; browser/Node | Optimised for storytelling, not for general world-state simulation or agent evaluation | Future experiment |
 | **TextWorld** (`microsoft/TextWorld`) | RL sandbox for text games: training + evaluation of agents | **Microsoft Research License** (not OSI-approved) | Purpose-built for evaluating agents in stateful text environments | Python ecosystem; heavy install; licence is non-commercial-restricted | Research reference only |
-| **TALES** (`microsoft/tale-suite`) | Benchmark of curated text games across Jericho/TextWorld/TextWorld-Express/ScienceWorld/ALFWorld | MIT | Real numbers: even top LLM agents fail **~85%** of human-designed games | Python; heavyweight | **Primary reference for expected effect sizes** |
+| **TALES** (`microsoft/tale-suite`) | Benchmark of curated text games across Jericho/TextWorld/TextWorld-Express/ScienceWorld/ALFWorld | MIT | Real numbers: on human-written games (Jericho — the suite's only non-synthetic environment) the best agents reach only **13.4%** of maximum normalised score, vs 76–100 on synthetic environments | Python; heavyweight; its metric is a normalised score, not per-game success | **Primary reference for expected effect sizes** |
 | **Minimal TypeScript reducer (this repo)** | Purpose-built pure state-transition kernel | MIT | Total control, deterministic, dependency-light, reusable for the org-simulation goal | We must implement ~15 mechanics ourselves | **Chosen for v1** |
 
 **Decision:** build a small, generic TypeScript kernel. The adventure content is a *scenario* — data
 describing nodes, entities, actions, goals — evaluated by the kernel. QuestJS and ink are deferred
-comparisons (Phase 8). TextWorld/TALES are read for calibration: TALES' headline result (top agents
-failing ~85% of human-designed games) sets our expectation that **a hand-built scenario may be the
-hardest kind of test**, and that failure analysis matters more than a headline win-rate.
+comparisons (Phase 8). TextWorld/TALES are read for calibration: TALES' result — a roughly
+tenfold score collapse between synthetic and human-written games — sets our expectation that
+**human-shaped worlds are where agents break**, and that failure analysis matters more than a
+headline win-rate.
+
+> **Note on comparability.** TALES deliberately gives its agent almost no domain information, and
+> scores a normalised 0–100 per environment rather than binary success. Our prompt supplies a
+> mission brief and a command grammar, and our metric is binary goal completion. **Our numbers are
+> not comparable to TALES numbers** and must not be plotted on the same axis
+> (`docs/RESEARCH-CONTEXT.md` §3.5–§3.7).
 
 ### 3.1 The design decision that follows from this
 
@@ -1029,9 +1036,10 @@ research-text-adventure-ai/
 ├── TASKS.md                     ← phase/task cards with acceptance criteria
 ├── RESULTS.md                   ← findings write-up (filled in Phase 6)
 ├── docs/
-│   ├── RESEARCH-CONTEXT.md      ← engine survey, citations, licence notes
-│   ├── ARCHITECTURE.md          ← diagrams and the reasoning behind §4
-│   └── SCENARIOS.md             ← scenario authoring guide + the MI scenario spec
+│   ├── RESEARCH-CONTEXT.md      ← engine survey, prior art, evidence per decision
+│   ├── REFERENCES.md            ← annotated bibliography with licences
+│   ├── ARCHITECTURE.md          ← layer map + ADR-001…ADR-015
+│   └── SCENARIOS.md             ← scenario authoring guide + checklist
 ├── src/
 │   ├── kernel/
 │   │   ├── types.ts
@@ -1337,11 +1345,37 @@ the *research design* must be recorded in `docs/ARCHITECTURE.md` as an ADR.
 
 ## 20. Source references
 
-- TALES — Text Adventure Learning Environment Suite (Microsoft Research):
-  https://www.microsoft.com/en-us/research/publication/tales-text-adventure-learning-environment-suite/
-  · https://github.com/microsoft/tale-suite · paper: https://arxiv.org/abs/2504.14128
-- QuestJS (MIT): https://github.com/textadventures/quest
-- ink (MIT): https://github.com/inkle/ink
-- TextWorld (Microsoft Research License): https://github.com/microsoft/TextWorld
+Full annotated bibliography with licences and dates accessed: **[`docs/REFERENCES.md`](./docs/REFERENCES.md)**.
 
-See `docs/RESEARCH-CONTEXT.md` for the full survey, licence notes and per-source findings.
+**Benchmarks and environments**
+
+- TALES — Text Adventure Learning Environment Suite (Microsoft Research):
+  <https://www.microsoft.com/en-us/research/publication/tales-text-adventure-learning-environment-suite/>
+  · <https://github.com/microsoft/tale-suite> · paper: <https://arxiv.org/abs/2504.14128>
+- Jericho — <https://arxiv.org/abs/1909.05398> · <https://github.com/microsoft/jericho>
+- NAIL — <https://arxiv.org/abs/1902.04259>
+- ALFWorld — <https://arxiv.org/abs/2010.03768>
+- ScienceWorld — <https://arxiv.org/abs/2203.07540>
+
+**Engines**
+
+- QuestJS (MIT): <https://github.com/textadventures/quest>
+- ink (MIT): <https://github.com/inkle/ink>
+- TextWorld (Microsoft Research License — **not** MIT): <https://github.com/microsoft/TextWorld>
+
+**Agent methods**
+
+- ReAct — <https://arxiv.org/abs/2210.03629>
+- Reflexion — <https://arxiv.org/abs/2303.11366>
+- Voyager — <https://arxiv.org/abs/2305.16291>
+- WebArena — <https://arxiv.org/abs/2307.13854>
+- BenchTrace — <https://arxiv.org/abs/2605.29225>
+
+**Genre history**
+
+- Scott Adams' Adventure #3, *Mission Impossible* / *Secret Mission* (1979):
+  <https://www.ifwiki.org/Scott_Adams>
+
+See [`docs/RESEARCH-CONTEXT.md`](./docs/RESEARCH-CONTEXT.md) for the survey, the evidence behind
+each design decision, and the correction log; [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) for
+the ADRs.

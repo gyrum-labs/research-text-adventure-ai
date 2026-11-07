@@ -64,6 +64,24 @@ Follow them literally — the spec is written to be implementable without interp
 spec leaves something open, choose the simplest option that satisfies the constraints, and record
 the decision as a short ADR in `docs/ARCHITECTURE.md`.
 
+**The "why" lives in `docs/`.** Before you build, read:
+
+| Document | Read it for |
+|---|---|
+| [`docs/RESEARCH-CONTEXT.md`](./docs/RESEARCH-CONTEXT.md) | Why a custom kernel, what TALES actually shows, the prior art we borrow from, and the **evidence behind each design decision** (D1–D16) |
+| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | The layer map and **ADR-001…ADR-015** — the decisions already taken, and why. Do not re-litigate them silently |
+| [`docs/REFERENCES.md`](./docs/REFERENCES.md) | Annotated bibliography with licences. Check a licence before you add a dependency |
+| [`docs/SCENARIOS.md`](./docs/SCENARIOS.md) | How to write scenario data, with worked examples of every mechanic and an authoring checklist |
+
+Two rules that follow from the research and are easy to get wrong:
+
+- **Do not treat our success rate as comparable to TALES'.** Their metric is a normalised score
+  and their agent gets almost no domain information; ours gets a mission brief and a grammar. If
+  you cite TALES in `RESULTS.md`, cite it qualitatively and say why the numbers differ.
+- **Informative error messages are a feature, not polish.** ALFWorld's "nothing happened"
+  feedback is the documented cause of a large share of agent failure in the literature. An error
+  message must say what was attempted, what was wrong, and what is possible.
+
 ## How to work
 
 **Read first, then build.** `SPEC.md` §4 (architecture), §5 (patterns), §6 (data model), §7
