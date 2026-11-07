@@ -50,6 +50,16 @@ gold path. Its full specification is in `SPEC.md` §7. Do not substitute a diffe
 8. **No secrets in the repo.** Provider keys come from environment variables only. Commit
    `.env.example`; git-ignore `.env`.
 
+## Where the work is
+
+The build is cut into **six numbered experiments**, each teaching one idea and runnable on its
+own. Start at [`experiments/README.md`](./experiments/README.md). Experiment 01 — *The game* — is
+the one to begin with: it gets the adventure working so that a human **and** the AI system can
+both play it, which is the foundation everything else stands on.
+
+Each experiment README carries the idea, the tests **in the order they get written**, and its
+acceptance criteria. Read the experiment first, then `SPEC.md` for the detail.
+
 ## The architecture you are building
 
 ```

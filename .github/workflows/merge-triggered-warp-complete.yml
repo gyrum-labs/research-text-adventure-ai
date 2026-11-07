@@ -1,0 +1,40 @@
+# merge-triggered-warp-complete.yml — complete this repo's warp ticket when a
+# [ID:warp#NNNN] PR merges, independent of any live agent (warp#8132).
+#
+# Installed by gyrum-setup. This is a thin caller of the reusable workflow in
+# gyrum-labs/devtools so the completion logic improves fleet-wide with one
+# edit on main — never copy the logic here. The workflow ref is @main, NOT a
+# floating major tag: no automation moves such tags, and the frozen v1 pin is
+# how warp#9546 broke every fleet merge (the reusable workflow did not even
+# exist at the stale tag). The reusable workflow checks out its helper script
+# at main too, so workflow and helper ride ONE ref and cannot skew.
+#
+# Trigger: a PR closing AND having merged. The caller reads the merged PR's
+# title + url from its own pull_request event context (the reusable workflow,
+# being workflow_call, cannot see the event) and passes them through. A PR that
+# closed WITHOUT merging is filtered out by the `if`. A PR whose title carries
+# no [ID:warp#NNNN] is a clean no-op inside the helper.
+#
+# Secrets: needs an admin-scope WARP_ADMIN_TOKEN (force-complete is admin-only,
+# warp#3075) + WARP_URL. Because the reusable workflow also checks out private
+# gyrum-labs/devtools, fleet repos must inherit CI_CHECKOUT_APP_PRIVATE_KEY;
+# the public client ID is workflow-pinned. GYRUM_DEVTOOLS_READ_TOKEN remains
+# (fallback). `secrets: inherit` forwards them to the reusable workflow.
+
+name: merge-triggered-warp-complete
+
+"on":
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+
+jobs:
+  complete-ticket:
+    if: github.event.pull_request.merged == true
+    uses: gyrum-labs/devtools/.github/workflows/merge-triggered-warp-complete.yml@main
+    with:
+      pr-title: ${{ github.event.pull_request.title }}
+      pr-url: ${{ github.event.pull_request.html_url }}
+    secrets: inherit

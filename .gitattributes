@@ -1,0 +1,9 @@
+# >>> gyrum-managed:start (telemetry merge=ours — see warp#1234)
+# Per-branch telemetry — a merge from main must NOT clobber the branch's
+# local copy. `merge=ours` keeps the local version on every merge, while
+# normal commits on the feature branch flow through to main as usual.
+# See warp#1014 (gitignore for new clones) and warp#1234 (this driver
+# for repos that committed the file before gitignore caught up).
+.gyrum/branch-meta.json merge=ours
+.gyrum/branch-meta/** merge=ours
+# >>> gyrum-managed:end

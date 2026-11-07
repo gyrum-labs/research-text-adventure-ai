@@ -1,9 +1,9 @@
 # research-text-adventure-ai
 
 > **Status: specification complete, implementation pending.**
-> This repository currently contains the full requirements for a research proof of concept. The
-> build work is specified, task-carded and ready to hand to an implementing agent — see
-> [`AGENT_BRIEF.md`](./AGENT_BRIEF.md) and [`TASKS.md`](./TASKS.md).
+> This repository contains the full requirements for a research proof of concept, cut into a
+> series of small experiments. Nothing is implemented yet — the build work is specified,
+> task-carded and ready to hand to an implementing agent.
 
 **Can an AI agent autonomously complete a multi-step mission in a deterministic, stateful text
 environment — using only the information and actions available to it, with no privileged knowledge
@@ -12,6 +12,24 @@ of the solution?**
 The adventure game is not the point. The point is the evidence about how LLM agents behave inside
 a controlled, replayable state machine — and a kernel written in the game's own language, so that
 an organisation can later be modelled *as* an adventure (teams as rooms, tickets as objects).
+
+---
+
+## Start here
+
+Pick the door that matches why you are here.
+
+| I want to… | Read |
+|---|---|
+| **Understand the idea** | [`SPEC.md` Part 0 — Orientation](./SPEC.md#part-0--orientation-start-here). It teaches the whole project from zero: the question, why a text adventure, the six words the design rests on, and one full turn end to end. |
+| **Build it** | [`experiments/README.md`](./experiments/README.md). Six numbered experiments, one idea each, every one runnable on its own. Experiment 01 gets the game working so a human *and* an AI can play it. |
+| **Review the design** | [`docs/proposal.md`](./docs/proposal.md) (what and why), [`docs/RESEARCH-CONTEXT.md`](./docs/RESEARCH-CONTEXT.md) (the evidence), [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) (the ADRs), [`SPEC.md` §17](./SPEC.md) (what could make the result wrong). |
+| **Hand it to an agent** | [`AGENT_BRIEF.md`](./AGENT_BRIEF.md) — copy-paste and go. |
+| **Play with it** | [`docs/userguide.md`](./docs/userguide.md). |
+
+The whole thing is built **test-first**: every experiment lists its tests in the order they get
+written, and the rule is that nothing ships without a test that would catch the failure it
+guards against. The reasoning is in [`docs/TESTING.md`](./docs/TESTING.md).
 
 ---
 
@@ -72,14 +90,20 @@ Annotated bibliography: [`docs/REFERENCES.md`](./docs/REFERENCES.md).
 ## Repository layout
 
 ```
-SPEC.md                  ← authoritative requirements (start here)
+SPEC.md                  ← authoritative requirements (start with Part 0)
+experiments/             ← the build, as six numbered experiments, one idea each
 AGENT_BRIEF.md           ← copy-paste brief for an implementing agent
 TASKS.md                 ← phase and task cards with acceptance criteria
 RESULTS.md               ← findings write-up (Phase 6)
+docs/proposal.md         ← what this project is and why (living document)
+docs/userguide.md       ← how to use it (living document)
+docs/TESTING.md          ← the testing doctrine and what each layer guarantees
+docs/docs-guide.md       ← how the docs fit together (living document)
 docs/RESEARCH-CONTEXT.md ← engine survey, prior art, evidence per decision, correction log
 docs/REFERENCES.md       ← annotated bibliography with licences and dates accessed
-docs/ARCHITECTURE.md     ← layer map + ADR-001…ADR-015 (why it is shaped this way)
-docs/SCENARIOS.md        ← adventure authoring guide + checklist
+docs/ARCHITECTURE.md     ← layer map + ADR-001…ADR-016 (why it is shaped this way)
+docs/ADVENTURES.md       ← adventure authoring guide + checklist
+docs-viewer/             ← the shared Devtools docs reader (Gyrum convention)
 src/                     ← kernel · adventures · session · agents · runner · cli · server · web
 tests/                   ← kernel, adventure, architecture, leakage, equivalence, replay
 examples/runs/           ← a few committed example transcripts

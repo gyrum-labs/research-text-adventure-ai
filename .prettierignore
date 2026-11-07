@@ -1,0 +1,9 @@
+
+# >>> gyrum-managed-docs (warp#8054) — do not hand-edit
+# Auto-generated docs synced from gyrum-labs/devtools by update-docs.sh
+# (docs/shared/) and gyrum-setup --sync-claudemd (docs/gyrum/). Not source;
+# regenerated on every sync and not prettier-clean. Excluded so a doc-sync
+# does not break the consumer's prettier lint gate.
+docs/shared/
+docs/gyrum/
+# >>> gyrum-managed-docs end

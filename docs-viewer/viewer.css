@@ -1,0 +1,316 @@
+/*
+ * Viewer styling. Uses CSS custom properties driven by prefers-color-scheme so
+ * the page reads correctly on both light and dark systems without a theme
+ * toggle. System fonts only — no web-font CDN — to keep the viewer usable
+ * offline and to avoid a second network dependency beyond the JS libraries.
+ */
+
+:root {
+  --bg: #ffffff;
+  --fg: #1f2328;
+  --muted: #57606a;
+  --border: #d0d7de;
+  --sidebar-bg: #f6f8fa;
+  --code-bg: #f6f8fa;
+  --link: #0969da;
+  --banner-bg: #fff8c5;
+  --banner-fg: #4d3800;
+  --diagram-border: #d0d7de;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1117;
+    --fg: #e6edf3;
+    --muted: #8b949e;
+    --border: #30363d;
+    --sidebar-bg: #161b22;
+    --code-bg: #161b22;
+    --link: #58a6ff;
+    --banner-bg: #3b2e00;
+    --banner-fg: #f2e6a1;
+    --diagram-border: #30363d;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--sidebar-bg);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+header .path {
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.search input {
+  width: 16rem;
+  max-width: 40vw;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 0.9rem;
+}
+
+.search select {
+  padding: 0.3rem 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 0.85rem;
+}
+
+nav#tree .search-results {
+  list-style: none;
+  padding-left: 0;
+}
+
+nav#tree .search-results li {
+  margin: 0.5rem 0;
+  word-break: break-word;
+}
+
+nav#tree .search-snippet {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+nav#tree .search-empty {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+mark {
+  background: var(--banner-bg);
+  color: var(--banner-fg);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.banner {
+  padding: 0.6rem 1.25rem;
+  background: var(--banner-bg);
+  color: var(--banner-fg);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.layout {
+  display: flex;
+  min-height: calc(100vh - 120px);
+}
+
+nav#tree {
+  width: 260px;
+  flex-shrink: 0;
+  padding: 1rem;
+  border-right: 1px solid var(--border);
+  background: var(--sidebar-bg);
+  overflow-y: auto;
+  max-height: calc(100vh - 95px);
+  position: sticky;
+  top: 0;
+}
+
+nav#tree ul {
+  list-style: none;
+  padding-left: 1rem;
+  margin: 0.25rem 0;
+}
+
+nav#tree > ul {
+  padding-left: 0;
+}
+
+nav#tree li {
+  margin: 0.15rem 0;
+}
+
+nav#tree .dir-toggle {
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+}
+
+nav#tree .dir-toggle:hover {
+  color: var(--link);
+}
+
+nav#tree .dir-toggle::before {
+  content: "▸ ";
+  display: inline-block;
+  width: 1em;
+  transition: transform 0.1s ease;
+}
+
+nav#tree .dir-toggle.open::before {
+  content: "▾ ";
+}
+
+nav#tree a {
+  color: var(--link);
+  text-decoration: none;
+  display: inline-block;
+  padding: 0.1rem 0.25rem;
+  border-radius: 3px;
+}
+
+nav#tree a:hover {
+  text-decoration: underline;
+}
+
+nav#tree a.active {
+  background: var(--border);
+  color: var(--fg);
+  font-weight: 600;
+}
+
+main#content {
+  flex: 1;
+  padding: 1.5rem 2rem;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+main#content .placeholder {
+  color: var(--muted);
+  font-style: italic;
+}
+
+main#content .inner {
+  max-width: 72ch;
+}
+
+main#content pre,
+main#content .mermaid,
+main#content table {
+  max-width: 100%;
+}
+
+main#content h1,
+main#content h2,
+main#content h3,
+main#content h4 {
+  line-height: 1.25;
+  margin-top: 1.5em;
+}
+
+main#content h1 {
+  font-size: 1.8rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.3em;
+}
+
+main#content h2 {
+  font-size: 1.4rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.2em;
+}
+
+main#content a {
+  color: var(--link);
+}
+
+main#content code {
+  background: var(--code-bg);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+main#content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+}
+
+main#content pre code {
+  background: transparent;
+  padding: 0;
+  font-size: 0.85rem;
+}
+
+main#content .mermaid {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+  border: 1px solid var(--diagram-border);
+  border-radius: 6px;
+  background: var(--bg);
+  margin: 1rem 0;
+}
+
+main#content table {
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+main#content th,
+main#content td {
+  border: 1px solid var(--border);
+  padding: 0.4em 0.8em;
+}
+
+main#content th {
+  background: var(--sidebar-bg);
+}
+
+main#content .error {
+  color: #b00020;
+  padding: 1rem;
+  border: 1px solid #b00020;
+  border-radius: 6px;
+  background: var(--code-bg);
+}
+
+footer {
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+footer a {
+  color: var(--link);
+}

@@ -1,0 +1,11 @@
+# .gyrum/system-card.yaml — see <devtools>/docs/system-card-schema.md
+tier: unclassified      # core | product | archive — TODO: set the real tier
+summary: TODO           # one line: what this repo is + the problem it solves
+readme: README.md
+userguide: docs/userguide.md
+# exposes: { openapi: api/openapi.yaml }   # uncomment if this repo serves a REST API
+# calls: []            # outbound deps: [{service, why, via}]
+# db: {}               # {engine, migrations, owns:[]} if it touches a DB
+consumes: []
+consumed_by: []
+status: unknown
