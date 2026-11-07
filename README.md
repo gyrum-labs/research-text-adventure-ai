@@ -78,6 +78,27 @@ tests/                   ← kernel, scenario, architecture, leakage, equivalenc
 examples/runs/           ← a few committed example transcripts
 ```
 
+## How to run the build
+
+The work is tracked as nine phase issues, each carrying its own acceptance criteria, grouped into
+matching milestones:
+
+| Issue | Phase | Gate |
+|---|---|---|
+| [#1](https://github.com/gyrum-labs/research-text-adventure-ai/issues/1) | P0 — Kernel | Pure reducer, DSL, parser, observation builder, architecture rules enforced |
+| [#2](https://github.com/gyrum-labs/research-text-adventure-ai/issues/2) | P1 — Scenario | Gold path solves it, BFS proves it is shortest, random policy fails |
+| [#3](https://github.com/gyrum-labs/research-text-adventure-ai/issues/3) | P2 — Human CLI | Playable end-to-end, transcripts replay identically |
+| [#4](https://github.com/gyrum-labs/research-text-adventure-ai/issues/4) | P3 — Agent harness | Provider adapters, prompt, extraction, context strategies, budgets |
+| [#5](https://github.com/gyrum-labs/research-text-adventure-ai/issues/5) | P4 — Measurement | Metrics, failure taxonomy, sweep, Wilson intervals, replay |
+| [#6](https://github.com/gyrum-labs/research-text-adventure-ai/issues/6) | P5 — Web + server | Browser client, swappable session, live agent view |
+| [#7](https://github.com/gyrum-labs/research-text-adventure-ai/issues/7) | P6 — Results | The matrix, `RESULTS.md`, failure annotations, cost per solve |
+| [#8](https://github.com/gyrum-labs/research-text-adventure-ai/issues/8) | P7 — Generality probe | Org-simulation scenario on the *unchanged* kernel |
+| [#9](https://github.com/gyrum-labs/research-text-adventure-ai/issues/9) | P8 — Engine comparison | Same scenario on QuestJS, same harness |
+
+To hand the work to an agent: point it at [`AGENT_BRIEF.md`](./AGENT_BRIEF.md), tell it that
+`SPEC.md` is authoritative, and have it work the issues in order. Each issue is self-contained
+enough to be picked up on its own.
+
 ## Key design rules
 
 | Rule | Why |
