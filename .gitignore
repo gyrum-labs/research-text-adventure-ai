@@ -23,3 +23,6 @@ sessions/
 .idea/
 .vscode/
 *.swp
+
+# Local screenshots (not repo content)
+.screenshots/
