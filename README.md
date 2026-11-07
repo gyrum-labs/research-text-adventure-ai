@@ -10,8 +10,8 @@ environment — using only the information and actions available to it, with no 
 of the solution?**
 
 The adventure game is not the point. The point is the evidence about how LLM agents behave inside
-a controlled, replayable state machine — and a generic kernel that can later be pointed at a
-different world (e.g. simulating an organisation with autonomous agents).
+a controlled, replayable state machine — and a kernel written in the game's own language, so that
+an organisation can later be modelled *as* an adventure (teams as rooms, tickets as objects).
 
 ---
 

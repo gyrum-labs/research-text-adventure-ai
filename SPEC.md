@@ -2,14 +2,15 @@
 
 **Repository:** `gyrum-labs/research-text-adventure-ai`
 **Status:** Approved for implementation. This document is the authoritative requirements source.
-**Language:** TypeScript (strict), Room 20+, ESM.
+**Language:** TypeScript (strict), Node 20+, ESM.
 **Type:** Standalone research proof of concept.
 
 > **Read this first.** The adventure game is *not* the deliverable. The deliverable is evidence about
 > whether an LLM agent can operate reliably inside a deterministic, stateful environment using only
-> the information and actions available to it — and a **generic, reusable state kernel** that can
-> later be pointed at a different world (e.g. an organisation simulation). The game is the *test
-> fixture* that makes the evidence cheap to produce. See §1.3 and §18.
+> the information and actions available to it — and a **state kernel written in the game's own
+> language** (rooms, objects, doors, flags), which an organisation simulation can then be
+> expressed *as*. The game is the *test fixture* that makes the evidence cheap to produce. See
+> §1.3, §3.1 and §18.
 
 ---
 
@@ -1140,8 +1141,8 @@ research-text-adventure-ai/
 | Tool | Choice | Rationale |
 |---|---|---|
 | Language | TypeScript 5.x, `strict: true`, `noUncheckedIndexedAccess: true` | The spec *is* the contract; the type system should enforce it |
-| Module system | ESM (`"type": "module"`), Room 20+ | Current default; `tsx` handles TS directly |
-| Runtime | Room 20+ | `room:test` not needed — Vitest is used |
+| Module system | ESM (`"type": "module"`), Node 20+ | Current default; `tsx` handles TS directly |
+| Runtime | Node 20+ | `node:test` not needed — Vitest is used |
 | Test runner | Vitest | Fast, TS-native, good snapshot support |
 | Dev runner | `tsx` | Zero-config TS execution |
 | Validation | Zod | Runtime validation of adventure files and provider responses; adventures are data and must be validated at load |

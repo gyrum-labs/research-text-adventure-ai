@@ -26,7 +26,7 @@ gold path. Its full specification is in `SPEC.md` §7. Do not substitute a diffe
 
 ## Non-negotiables
 
-1. **TypeScript, strict mode, ESM, Room 20+.** Runtime dependencies limited to `zod` and
+1. **TypeScript, strict mode, ESM, Node 20+.** Runtime dependencies limited to `zod` and
    `commander`. Dev dependencies: `typescript`, `tsx`, `vitest`, `esbuild`, `eslint`,
    `@typescript-eslint/*`. **No LLM vendor SDKs** — implement providers with plain `fetch`.
 2. **The kernel is pure.** `src/kernel` must contain no I/O, no `Date.now()`, no `Math.random()`,
