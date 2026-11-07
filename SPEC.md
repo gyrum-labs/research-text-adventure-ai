@@ -11,10 +11,242 @@
 > language** (rooms, objects, doors, flags), which an organisation simulation can then be
 > expressed *as*. The game is the *test fixture* that makes the evidence cheap to produce. See
 > §1.3, §3.1 and §18.
+>
+> **New here?** Start with [Part 0 — Orientation](#part-0--orientation-start-here): it teaches the
+> whole idea from the beginning, with a worked example, and needs nothing else. The
+> [glossary](#glossary) follows it. Sections §1 onward are the precise reference an implementer
+> works from.
+
+---
+
+## Part 0 — Orientation: start here
+
+*This part teaches the material from the beginning. If you are new to this project, read it in
+order and you will need nothing else before you can read the rest of the document. Everything from
+§1 onward is the precise reference that an implementer works from.*
+
+### 0.1 The question, in plain words
+
+Here is a thing we want to know:
+
+> **Can a large language model drive itself through a task that has rules, without being told the
+> answer?**
+
+Concretely: we build a small computer game. The game has rooms, objects, doors, and a goal. An AI
+model is dropped into it with no instructions beyond the rules of the game and the mission it was
+given. We watch what it does. We record everything. Then we can say something honest about how
+reliable AI agents are when the work is *stateful* — when what happened three moves ago decides
+what is possible now.
+
+Why not just ask the model? Because a model can produce a confident, fluent, wrong answer in one
+shot. A game does not let it do that. The game **checks**. If the model claims to have disarmed the
+bomb, the bomb's state says otherwise. That is the whole point: we are not measuring how good the
+model's prose is, we are measuring whether it can keep track of a world and act correctly inside it.
+
+### 0.2 Why a text adventure is a good laboratory
+
+Text adventures are games where you type commands like `take keycard` or `go corridor`, and the
+game describes what happened. They are a surprisingly good testbed for AI agents, and the research
+literature agrees — the [TALES benchmark](https://arxiv.org/abs/2504.14128) exists precisely to
+measure AI agents this way.
+
+Three properties make a text adventure useful here:
+
+1. **The rules are fixed and checkable.** The world does not negotiate. A door is locked until a
+   keycard is used. There is no ambiguity to hide behind.
+2. **The state is small enough to read.** We can hold the entire world in memory and print it. When
+   an agent fails, we can show you the exact state it failed in.
+3. **It is deterministic.** The same commands always produce the same result. So a run can be
+   replayed exactly, and a finding can be checked rather than trusted.
+
+And there is a fourth reason, which is the one that matters most long-term: **the vocabulary of an
+adventure game is the vocabulary of an organisation.** Rooms become teams, objects become tickets
+and artefacts, doors become handoffs and dependencies, the goal becomes an objective, and an agent
+in a room is an agent with a queue and a context. That mapping is written out in §18. This project
+is, in part, a rehearsal for that.
+
+### 0.3 The six words you need
+
+Everything in this project is built from six concepts. Learn these and the rest is detail.
+
+| Word | What it means | Example from our adventure |
+|---|---|---|
+| **Room** | A place the agent can be in. | The *Service Corridor*. |
+| **Object** | A thing that exists in a room, or that the agent is carrying. | The *wire cutters*, the *defusal manual*, the *keycard*. |
+| **Door** | A connection between two rooms. It may be open, closed, or locked. | The *vault door*, locked until a keycard is used. |
+| **Action** | One command the agent issues, which may change the world or may not. | `take keycard`, `open locker`, `cut yellow wire with cutters`. |
+| **Goal** | A condition that must become true for the adventure to be won. | *Disarm the bomb.* *Recover the case.* |
+| **Turn** | One action and its consequences. The game's only unit of time. | Reading `take keycard` and seeing what happened is one turn. |
+
+Two more appear constantly, so:
+
+- **State** — the complete description of the world right now: which room the agent is in, what it
+  is carrying, which doors are open, which goals are done. The state is a value, not a process.
+- **Observation** — the slice of that state the agent is allowed to see. This is deliberately
+  *smaller* than the state. The agent cannot see the contents of a closed locker until it opens it.
+  That gap is the entire experiment.
+
+### 0.4 One turn, end to end
+
+Here is a single turn of our adventure, in full, so the shape of the system is concrete.
+
+**The adventure.** The agent starts in the *Briefing Room*. It has been told only this:
+
+> A booby-trapped case is locked in the server vault. Two objectives: disarm the bomb, and recover
+> the case. Nothing else is known. You are in the briefing room. Discover the rest by exploring.
+
+**What the agent sees** (this is the observation — the *only* thing it gets):
+
+```
+Turn 0
+Location: Briefing Room
+A windowless office. A desk, a wall notice, and a door south to the service corridor.
+You can see: keycard, bulletin, desk
+Exits: south → Service Corridor
+Carrying: (nothing)
+Objectives:
+  - Disarm the bomb  [not done]
+  - Recover the case  [not done]
+```
+
+**What the agent replies** (one command, optionally preceded by its reasoning):
+
+```
+THINK: The keycard is on the desk. The vault will need it, and I should take what I can see
+before moving on.
+COMMAND: take keycard
+```
+
+**What the engine does.** The engine is a *pure function*. It takes the state and the command, and
+produces a new state and a list of events. It never guesses, never asks the model anything, and
+never changes its mind:
+
+```
+You pocket the keycard.
+
+Turn 1
+Location: Briefing Room
+Carrying: keycard
+```
+
+The new state is fingerprinted so that the run can be checked later:
+
+```
+h1 = sha256(h0 + ':' + canonicalJson(state1))
+```
+
+That is the whole loop, repeated until the agent wins, loses, or runs out of turns:
+
+```
+   ┌──────────────────────────────────────────────────────────────┐
+   │                                                              │
+   ▼                                                              │
+ observe  ──►  decide  ──►  reduce  ──►  record  ──►  check goals ─┘
+ (the state)   (the model)  (the engine) (the log)   (win / continue)
+```
+
+Notice what the engine does **not** do. It does not decide what the agent should do, it does not
+fix up a malformed command, and it does not reward or punish. It is a rulebook. All the
+interesting behaviour is in the middle box — and that is exactly what we want to measure.
+
+### 0.5 Three ways to play, one engine
+
+The same adventure is playable three ways, and all three drive the *same* engine:
+
+| Interface | Who is playing | Why it exists |
+|---|---|---|
+| **Human CLI** (`npm run play`) | You | Proves the adventure is actually solvable, and produces the transcripts the agent is compared against. |
+| **Browser** (`npm run web:dev`) | You | The same thing, with a screen. Also the place to *watch* an agent play. |
+| **Agent runner** (`npm run agent`) | The model | The experiment. Headless, scripted, recorded, scored. |
+
+This matters for the integrity of the result. Because a human transcript and an agent transcript
+are produced by the same engine, "the agent solved it" means the same thing as "a human solved
+it". We can compare them directly, and we can prove the three interfaces agree (§4.3).
+
+### 0.6 How we will know whether it worked
+
+The obvious measure is a success rate: *did the agent complete the mission?* We will report it. But
+we expect it to be low and noisy, and a bare number is a poor research result — it cannot tell you
+what to fix.
+
+So the primary artefact is a **failure taxonomy**: every unsuccessful run is classified into
+exactly one category, computed automatically from the transcript (§12.3). Was the agent's command
+malformed? Did it invent an object that was not there? Did it act before it had discovered the fact
+it needed? Did it cut the wrong wire? Did it loop? Did it run out of turns?
+
+That taxonomy is the thing worth having. It tells you what to fix, and it transfers: the same
+categories apply to an agent working inside an organisation.
+
+Alongside it we record the cheap, objective numbers: how many turns it took, how many commands
+were invalid, how many tokens it cost, and — crucially — whether the engine behaved itself. The
+environment is fully deterministic, so **every** run must replay to an identical state history
+(§13). If the environment is not trustworthy, the agent's results mean nothing.
+
+### 0.7 What this project is not
+
+- It is **not** a game. The adventure is a fixture — a small, controlled world we can reason about.
+- It is **not** a model training project. We evaluate; we do not fine-tune.
+- It is **not** a claim about AI capability in general. One hand-built adventure is a narrow claim.
+  §17 lists the threats to validity honestly, and Phase 7 adds a second world.
+- It is **not** an organisation simulator yet. §18 describes the seam, and Phase 7 tests whether the
+  adventure metaphor actually holds for an organisation.
+
+### 0.8 How to read the rest of this document
+
+| If you are… | Read |
+|---|---|
+| **New to the project** | This part, then §1 (what we are trying to find out), then §7 (the adventure itself). That is enough to understand the whole idea. |
+| **Going to implement it** | §1–§16 in order, implementing phase by phase (§16). The data model (§6) is the part to read most carefully. |
+| **Reviewing the research design** | §1 (questions and hypotheses), §12 (what is measured), §17 (what could make the result wrong). |
+| **Sceptical / new to the team** | §3 (why we built our own engine), `docs/RESEARCH-CONTEXT.md` (the evidence), and §17. |
+
+---
+
+## Glossary
+
+Terms used throughout this document, in the order a newcomer meets them.
+
+| Term | Meaning |
+|---|---|
+| **Adventure** | The complete definition of one game: its rooms, objects, doors, actions and goals. Pure data — no logic. |
+| **Room** | A place the agent can be in. |
+| **Object** | A thing in a room or carried by the agent. |
+| **Door** | A connection between two rooms; it may be open, closed or locked. |
+| **Action** | One command, with the conditions under which it succeeds and the effects when it does. |
+| **Goal** | A condition that must hold for the adventure to be won. Checked on the end state, not the route. |
+| **State** | The complete description of the world at one moment. A plain value, fully serialisable. |
+| **Observation** | The part of the state the agent may see. Smaller than the state, on purpose. |
+| **Turn** | One action and its consequences. The engine's only unit of time. |
+| **Kernel** | The pure engine: `(state, command) → { state, events }`. No I/O, no clock, no randomness. |
+| **Reducer** | The specific function that is the kernel. Named for the Redux/Elm idea of folding a state forward. |
+| **Pure function** | A function whose output depends only on its inputs — no clock, no randomness, no side effects. This is what makes a run replayable. |
+| **Event** | Something that happened: an action succeeded, an action failed, a goal completed. The transcript is a list of events. |
+| **Transition** | The result of applying one command: the new state, the events, and whether anything changed. |
+| **Predicate** | A condition the engine can check — "the keycard is in the inventory", "the bomb is defused". Six kinds exist (§5.1). |
+| **Effect** | A change the engine can apply — "move to this room", "set this flag true". Eight kinds exist (§5.1). |
+| **Hash chain** | A fingerprint of every state, each derived from the last. Makes a run tamper-evident and replay-checkable. |
+| **Canonical JSON** | A JSON representation with sorted keys and no incidental whitespace, so two equal states always produce identical bytes. |
+| **Policy** | Whatever is choosing the agent's next command. The human, a script, a random picker and the model are all policies — the runner cannot tell them apart. |
+| **Budget** | A limit on turns, tokens, cost or wall-clock time. Every run has them, so a confused agent cannot run up a bill. |
+| **Guard** | A rule that stops a run early — a repeated state, too many provider errors, a blown budget. |
+| **Transcript** | The JSONL record of a run: every observation, command, event and state hash. |
+| **Replay** | Re-running a transcript's commands through the engine and checking the hashes match. Proves the environment is deterministic. |
+| **Context strategy** | What the model is allowed to remember: the whole history, a recent window, a summary of what it has seen, or nothing. An experimental variable (§10.4). |
+| **Failure taxonomy** | The fixed set of categories every failed run is sorted into, computed from the transcript (§12.3). |
+| **Wilson interval** | A way to state a success rate with its uncertainty, for small samples. §12.4. |
+| **Scenario vs adventure** | Historical: earlier drafts called it a "scenario". It is now an *adventure* throughout, matching the game's own language. |
+| **warp#NNNNN** | An identifier in the team's ticket system. GitHub issues in `gyrum-labs/devtools` carry one in their title. |
 
 ---
 
 ## Table of contents
+
+**Part 0 — Orientation: start here** (you are here)
+
+0. [Orientation: start here](#part-0--orientation-start-here)
+   · [Glossary](#glossary)
+
+**Part 1 — The reference specification**
 
 1. [Objective, research questions, hypotheses](#1-objective-research-questions-hypotheses)
 2. [Scope, non-goals, constraints](#2-scope-non-goals-constraints)
