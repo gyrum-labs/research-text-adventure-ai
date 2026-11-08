@@ -13,7 +13,12 @@
 
 import { createHash } from 'node:crypto';
 import type { Adventure, Observation } from '../../kernel/types.js';
-import { buildContext, type ContextStrategy, type ContextTurn } from '../context.js';
+import {
+  buildContext,
+  type ContextStrategy,
+  type ContextTurn,
+  type ObservationRenderer,
+} from '../context.js';
 import type { ChatMessage } from './provider.js';
 
 /** Bumped whenever the prompt changes, so a result can be tied to it. */
@@ -24,6 +29,8 @@ export interface PromptOptions {
   strategy: ContextStrategy;
   /** Whether the model is asked to explain itself. */
   thinking?: boolean;
+  /** How the observations are rendered. */
+  renderer?: ObservationRenderer;
   temperature?: number;
   maxOutputTokens?: number;
 }
@@ -118,7 +125,12 @@ export function buildPrompt(
   options: PromptOptions,
 ): PromptBundle {
   const system = buildSystemPrompt(adventure, options);
-  const context = buildContext(options.strategy, { brief: adventure.brief, turns, observation });
+  const context = buildContext(options.strategy, {
+    brief: adventure.brief,
+    turns,
+    observation,
+    renderer: options.renderer,
+  });
 
   return {
     system,

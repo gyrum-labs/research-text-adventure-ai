@@ -17,6 +17,7 @@ import { hashInitial, hashNext } from '../kernel/hash.js';
 import { parseCommand } from '../kernel/parser.js';
 import { reduce } from '../kernel/reduce.js';
 import { metricsOf, type AgentPolicy, type PolicyContext } from '../agents/policy.js';
+import { legalCommands } from '../agents/legal-actions.js';
 import { stateKey } from './oracle.js';
 import type { Transcript } from './transcript.js';
 
@@ -71,6 +72,13 @@ export interface RunOptions {
   onMessage?: (message: string) => void;
   /** Injected so the wall-clock budget is testable without waiting for it. */
   now?: () => number;
+  /**
+   * Whether the legal action set is masked into the observation.
+   *
+   * The masking happens here rather than in the policy, so the transcript
+   * records exactly what the agent was shown.
+   */
+  maskLegalActions?: boolean;
 }
 
 export interface RunResult {
@@ -196,7 +204,11 @@ export async function run(options: RunOptions): Promise<RunResult> {
       }
     }
 
-    const observation = buildObservation(adventure, state, messages);
+    const base = buildObservation(adventure, state, messages);
+    const observation =
+      options.maskLegalActions === true
+        ? { ...base, legalActions: legalCommands(adventure, state) }
+        : base;
     history.push(observation);
     options.onObservation?.(observation);
     options.transcript?.write({ type: 'observation', turn, data: observation });

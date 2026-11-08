@@ -12,7 +12,7 @@
 
 import type { Adventure } from '../../kernel/types.js';
 import { parseCommand } from '../../kernel/parser.js';
-import type { ContextStrategy, ContextTurn } from '../context.js';
+import type { ContextStrategy, ContextTurn, ObservationRenderer } from '../context.js';
 import type {
   AgentPolicy,
   MeasurablePolicy,
@@ -31,6 +31,8 @@ export interface LlmPolicyOptions {
   strategy?: ContextStrategy;
   /** Whether the model is asked to explain itself. Defaults to true. */
   thinking?: boolean;
+  /** How the observations are rendered in the prompt. Defaults to prose. */
+  renderer?: ObservationRenderer;
   temperature?: number;
   maxOutputTokens?: number;
 }
@@ -42,6 +44,7 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
   private readonly provider: LlmProvider;
   private readonly strategy: ContextStrategy;
   private readonly thinking: boolean;
+  private readonly renderer: ObservationRenderer;
   private readonly temperature: number | undefined;
   private readonly maxOutputTokens: number | undefined;
 
@@ -63,6 +66,7 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
     this.provider = options.provider;
     this.strategy = options.strategy ?? 'structured';
     this.thinking = options.thinking !== false;
+    this.renderer = options.renderer ?? 'text';
     this.temperature = options.temperature;
     this.maxOutputTokens = options.maxOutputTokens;
     this.id = `llm:${options.provider.id}/${options.provider.model}`;
@@ -72,6 +76,7 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
     const bundle = buildPrompt(this.adventure, context.observation, this.turnsFrom(context), {
       strategy: this.strategy,
       thinking: this.thinking,
+      renderer: this.renderer,
     });
     this.promptHash = bundle.systemHash;
 
