@@ -70,6 +70,10 @@ both play it, which is the foundation everything else stands on.
 Each experiment README carries the idea, the tests **in the order they get written**, and its
 acceptance criteria. Read the experiment first, then `SPEC.md` for the detail.
 
+**Where the build stands.** Phases 0 to 4, 6 and 7 are built and green, and `RESULTS.md` holds
+what the series found. The remaining cards are Phase 5, the browser client and server, and Phase
+8, the QuestJS comparison. `TASKS.md` says which of each is done.
+
 ## The architecture you are building
 
 ```
