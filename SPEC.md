@@ -504,10 +504,14 @@ interfaces, asserting the final hash chain matches.
 - `session` → `kernel`.
 - `agents` → `kernel` types, `adventures` data.
 - `runner` → `kernel`, `agents`, `adventures`.
-- `cli` / `server` / `web` → `runner`, `kernel`, `adventures`.
+- `cli` / `server` / `web` → `runner`, `kernel`, `agents`, `adventures`.
 
 Every layer may look down and never up. The command line is the composition root, so it is
-the one layer that reaches the adventure data directly.
+the one layer that reaches the adventure data directly, and it is the layer that picks the
+provider.
+
+The provider seam sits inside `agents`. The kernel never sees a model, and the runner never
+sees a provider: the runner asks a policy, and the policy is the only thing that talks to one.
 
 Enforced by `tests/architecture.test.ts` (C4), and by a lint rule that keeps the kernel a leaf.
 
