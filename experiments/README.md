@@ -32,7 +32,7 @@ Every experiment exists to remove one more way for the answer to be wrong.
 | **03** | [The agent plays](./exp-03-the-agent-plays/) | A model can drive a state machine if you give it a clean loop and a fair error message | Built, live providers unticked |
 | **04** | [Why it failed](./exp-04-why-it-failed/) | "It failed" is not a finding; the category is | Built and green |
 | **05** | [The matrix](./exp-05-the-matrix/) | One number is an anecdote; a cell of a matrix is a result | Built, live matrix unticked |
-| **06** | [An organisation](./exp-06-an-organisation/) | The adventure vocabulary has to survive contact with a real org | Spec ready |
+| **06** | [An organisation](./exp-06-an-organisation/) | The adventure vocabulary has to survive contact with a real org | Built and green |
 
 > **Key takeaways**
 >

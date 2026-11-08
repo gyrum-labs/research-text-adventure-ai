@@ -37,6 +37,7 @@ PROSE_GLOBS = (
     "README.md",
     "AGENT_BRIEF.md",
     "TASKS.md",
+    "RESULTS.md",
     "docs/*.md",
     "experiments/**/*.md",
 )

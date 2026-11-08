@@ -75,6 +75,10 @@ export interface CellSummary {
   medianTurns: number;
   /** The cost of the cell divided by the missions it solved. */
   costPerSolve: number;
+  /** The tokens the cell spent. */
+  tokensUsed: number;
+  /** The tokens the cell spent per mission it solved. */
+  tokensPerSolve: number;
   /** The failure histogram for the cell. */
   failures: Record<string, number>;
 }
@@ -247,6 +251,7 @@ export function summariseMatrix(
         .map((run) => run.metrics?.turnsUsed ?? 0)
         .filter((count) => count > 0);
       const cost = cell.reduce((total, run) => total + (run.metrics?.estimatedCostUsd ?? 0), 0);
+      const tokens = cell.reduce((total, run) => total + (run.metrics?.tokensUsed ?? 0), 0);
       const failures: Record<string, number> = {};
 
       for (const run of cell) {
@@ -265,6 +270,8 @@ export function summariseMatrix(
         interval: wilsonInterval(successes, cell.length),
         medianTurns: median(turns),
         costPerSolve: successes === 0 ? 0 : cost / successes,
+        tokensUsed: tokens,
+        tokensPerSolve: successes === 0 ? 0 : tokens / successes,
         failures,
       });
     }

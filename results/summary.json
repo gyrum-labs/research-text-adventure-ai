@@ -1,5 +1,5 @@
 {
-  "generatedFrom": "runs/matrix",
+  "generatedFrom": "runs",
   "models": [
     {
       "id": "surrogate-frontier",
@@ -57,6 +57,8 @@
       },
       "medianTurns": 10,
       "costPerSolve": 0,
+      "tokensUsed": 87200,
+      "tokensPerSolve": 8720,
       "failures": {}
     },
     {
@@ -73,6 +75,8 @@
       },
       "medianTurns": 10,
       "costPerSolve": 0,
+      "tokensUsed": 230070,
+      "tokensPerSolve": 23007,
       "failures": {}
     },
     {
@@ -89,6 +93,8 @@
       },
       "medianTurns": 10,
       "costPerSolve": 0,
+      "tokensUsed": 89440,
+      "tokensPerSolve": 8944,
       "failures": {}
     },
     {
@@ -105,6 +111,8 @@
       },
       "medianTurns": 8,
       "costPerSolve": 0,
+      "tokensUsed": 54020,
+      "tokensPerSolve": 0,
       "failures": {
         "F6": 10
       }
@@ -123,6 +131,8 @@
       },
       "medianTurns": 10,
       "costPerSolve": 0,
+      "tokensUsed": 230070,
+      "tokensPerSolve": 23007,
       "failures": {}
     },
     {
@@ -139,6 +149,8 @@
       },
       "medianTurns": 10,
       "costPerSolve": 0,
+      "tokensUsed": 108921,
+      "tokensPerSolve": 15560.142857142857,
       "failures": {
         "F6": 1,
         "F2": 2
@@ -158,6 +170,8 @@
       },
       "medianTurns": 10,
       "costPerSolve": 0,
+      "tokensUsed": 222200,
+      "tokensPerSolve": 31742.85714285714,
       "failures": {
         "F6": 1,
         "F2": 2
@@ -177,6 +191,8 @@
       },
       "medianTurns": 10,
       "costPerSolve": 0,
+      "tokensUsed": 106319,
+      "tokensPerSolve": 15188.42857142857,
       "failures": {
         "F6": 1,
         "F2": 2
@@ -196,6 +212,8 @@
       },
       "medianTurns": 8,
       "costPerSolve": 0,
+      "tokensUsed": 54020,
+      "tokensPerSolve": 0,
       "failures": {
         "F6": 10
       }
@@ -214,6 +232,8 @@
       },
       "medianTurns": 10,
       "costPerSolve": 0,
+      "tokensUsed": 222200,
+      "tokensPerSolve": 31742.85714285714,
       "failures": {
         "F6": 1,
         "F2": 2
@@ -233,6 +253,8 @@
       },
       "medianTurns": 10,
       "costPerSolve": 0,
+      "tokensUsed": 121047,
+      "tokensPerSolve": 20174.5,
       "failures": {
         "F6": 1,
         "F2": 3
@@ -252,6 +274,8 @@
       },
       "medianTurns": 10,
       "costPerSolve": 0,
+      "tokensUsed": 222166,
+      "tokensPerSolve": 37027.666666666664,
       "failures": {
         "F6": 1,
         "F2": 3
@@ -271,6 +295,8 @@
       },
       "medianTurns": 10,
       "costPerSolve": 0,
+      "tokensUsed": 115751,
+      "tokensPerSolve": 19291.833333333332,
       "failures": {
         "F6": 1,
         "F2": 3
@@ -290,6 +316,8 @@
       },
       "medianTurns": 8,
       "costPerSolve": 0,
+      "tokensUsed": 54020,
+      "tokensPerSolve": 0,
       "failures": {
         "F6": 10
       }
@@ -308,6 +336,8 @@
       },
       "medianTurns": 10,
       "costPerSolve": 0,
+      "tokensUsed": 222166,
+      "tokensPerSolve": 37027.666666666664,
       "failures": {
         "F6": 1,
         "F2": 3
@@ -327,6 +357,8 @@
       },
       "medianTurns": 9,
       "costPerSolve": 0,
+      "tokensUsed": 110923,
+      "tokensPerSolve": 55461.5,
       "failures": {
         "F6": 5,
         "F2": 3
@@ -346,6 +378,8 @@
       },
       "medianTurns": 9,
       "costPerSolve": 0,
+      "tokensUsed": 190958,
+      "tokensPerSolve": 95479,
       "failures": {
         "F6": 5,
         "F2": 3
@@ -365,6 +399,8 @@
       },
       "medianTurns": 9,
       "costPerSolve": 0,
+      "tokensUsed": 107811,
+      "tokensPerSolve": 53905.5,
       "failures": {
         "F6": 5,
         "F2": 3
@@ -384,6 +420,8 @@
       },
       "medianTurns": 8,
       "costPerSolve": 0,
+      "tokensUsed": 54020,
+      "tokensPerSolve": 0,
       "failures": {
         "F6": 10
       }
@@ -402,6 +440,8 @@
       },
       "medianTurns": 9,
       "costPerSolve": 0,
+      "tokensUsed": 190958,
+      "tokensPerSolve": 95479,
       "failures": {
         "F6": 5,
         "F2": 3

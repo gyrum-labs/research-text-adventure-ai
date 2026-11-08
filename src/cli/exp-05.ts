@@ -36,6 +36,7 @@ export function renderTable(summaries: CellSummary[], labels: Map<string, string
     'n',
     'success (95% CI)',
     'median turns',
+    'tok/solve',
     '$/solve',
   ];
   const rows = summaries.map((summary) => [
@@ -46,6 +47,7 @@ export function renderTable(summaries: CellSummary[], labels: Map<string, string
       ? `${(summary.interval.estimate * 100).toFixed(0)}%  (${(summary.interval.lower * 100).toFixed(0)}–${(summary.interval.upper * 100).toFixed(0)}%)`
       : `incomplete`,
     summary.medianTurns === 0 ? '-' : summary.medianTurns.toFixed(0),
+    summary.tokensPerSolve === 0 ? '-' : summary.tokensPerSolve.toFixed(0),
     summary.costPerSolve === 0 ? '-' : `$${summary.costPerSolve.toFixed(4)}`,
   ]);
 

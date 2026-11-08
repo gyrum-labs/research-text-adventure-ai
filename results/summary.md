@@ -1,27 +1,27 @@
 # The matrix
 
-model                     cond  n      success (95% CI)  median turns  $/solve
-------------------------  ----  -----  ----------------  ------------  -------
-surrogate (frontier)      A     10/10  100%  (72–100%)   10            -      
-surrogate (frontier)      B     10/10  100%  (72–100%)   10            -      
-surrogate (frontier)      C     10/10  100%  (72–100%)   10            -      
-surrogate (frontier)      D     10/10  0%  (0–28%)       8             -      
-surrogate (frontier)      E     10/10  100%  (72–100%)   10            -      
-surrogate (strong)        A     10/10  70%  (40–89%)     10            -      
-surrogate (strong)        B     10/10  70%  (40–89%)     10            -      
-surrogate (strong)        C     10/10  70%  (40–89%)     10            -      
-surrogate (strong)        D     10/10  0%  (0–28%)       8             -      
-surrogate (strong)        E     10/10  70%  (40–89%)     10            -      
-surrogate (mid)           A     10/10  60%  (31–83%)     10            -      
-surrogate (mid)           B     10/10  60%  (31–83%)     10            -      
-surrogate (mid)           C     10/10  60%  (31–83%)     10            -      
-surrogate (mid)           D     10/10  0%  (0–28%)       8             -      
-surrogate (mid)           E     10/10  60%  (31–83%)     10            -      
-surrogate (open weights)  A     10/10  20%  (6–51%)      9             -      
-surrogate (open weights)  B     10/10  20%  (6–51%)      9             -      
-surrogate (open weights)  C     10/10  20%  (6–51%)      9             -      
-surrogate (open weights)  D     10/10  0%  (0–28%)       8             -      
-surrogate (open weights)  E     10/10  20%  (6–51%)      9             -      
+model                     cond  n      success (95% CI)  median turns  tok/solve  $/solve
+------------------------  ----  -----  ----------------  ------------  ---------  -------
+surrogate (frontier)      A     10/10  100%  (72–100%)   10            8720       -      
+surrogate (frontier)      B     10/10  100%  (72–100%)   10            23007      -      
+surrogate (frontier)      C     10/10  100%  (72–100%)   10            8944       -      
+surrogate (frontier)      D     10/10  0%  (0–28%)       8             -          -      
+surrogate (frontier)      E     10/10  100%  (72–100%)   10            23007      -      
+surrogate (strong)        A     10/10  70%  (40–89%)     10            15560      -      
+surrogate (strong)        B     10/10  70%  (40–89%)     10            31743      -      
+surrogate (strong)        C     10/10  70%  (40–89%)     10            15188      -      
+surrogate (strong)        D     10/10  0%  (0–28%)       8             -          -      
+surrogate (strong)        E     10/10  70%  (40–89%)     10            31743      -      
+surrogate (mid)           A     10/10  60%  (31–83%)     10            20175      -      
+surrogate (mid)           B     10/10  60%  (31–83%)     10            37028      -      
+surrogate (mid)           C     10/10  60%  (31–83%)     10            19292      -      
+surrogate (mid)           D     10/10  0%  (0–28%)       8             -          -      
+surrogate (mid)           E     10/10  60%  (31–83%)     10            37028      -      
+surrogate (open weights)  A     10/10  20%  (6–51%)      9             55462      -      
+surrogate (open weights)  B     10/10  20%  (6–51%)      9             95479      -      
+surrogate (open weights)  C     10/10  20%  (6–51%)      9             53906      -      
+surrogate (open weights)  D     10/10  0%  (0–28%)       8             -          -      
+surrogate (open weights)  E     10/10  20%  (6–51%)      9             95479      -      
 
 ## Failures
 
