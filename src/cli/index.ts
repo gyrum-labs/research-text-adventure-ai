@@ -13,6 +13,7 @@ import { play } from './play.js';
 import { runAgent, type PolicyName } from './agent.js';
 import { runExp02 } from './exp-02.js';
 import { runExp03 } from './exp-03.js';
+import { runExp04 } from './exp-04.js';
 import { createProvider, type ProviderName } from './provider.js';
 import { replayTranscript } from '../runner/replay.js';
 
@@ -38,6 +39,7 @@ program
   .option('-p, --policy <name>', 'scripted or random', 'scripted')
   .option('--seed <n>', 'seed for the random policy', '1')
   .option('--max-turns <n>', 'turn budget', '30')
+  .option('--seeds <n>', 'how many random-policy seeds to include', '20')
   .option('-o, --out <path>', 'where to write the transcript')
   .option('-q, --quiet', 'print only the summary', false)
   .action(async (options: Record<string, string | boolean>) => {
@@ -78,6 +80,7 @@ program
   .option('--model <name>', 'the model to ask for')
   .option('--strategy <name>', 'none, full, window or structured', 'structured')
   .option('--max-turns <n>', 'turn budget', '30')
+  .option('--seeds <n>', 'how many random-policy seeds to include', '20')
   .action(async (number: string, options: Record<string, string>) => {
     switch (number) {
       case '01':
@@ -99,6 +102,13 @@ program
             provider: createProvider(options['provider'] as ProviderName, options['model']),
             strategy: options['strategy'] as ContextStrategy,
             budgets: { maxTurns: Number(options['maxTurns']) },
+          }),
+        );
+        break;
+      case '04':
+        console.log(
+          await runExp04(adventureById('mission-impossible'), {
+            seeds: Number(options['seeds'] ?? 20),
           }),
         );
         break;
