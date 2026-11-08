@@ -53,9 +53,27 @@ describe('the runner', () => {
         },
       },
       maxTurns: 4,
+      // Waiting changes nothing, so the loop guard would fire first. This
+      // test is about the turn budget, so the loop guard is held back.
+      budgets: { maxRepeatedStates: 100 },
     });
     expect(result.outcome).toBe('budget_exhausted');
     expect(result.turns).toBe(4);
+  });
+
+  it('stops when the agent keeps doing the same thing', async () => {
+    const result = await run({
+      adventure,
+      policy: {
+        id: 'waiter',
+        async next() {
+          return 'wait';
+        },
+      },
+      maxTurns: 20,
+    });
+    expect(result.outcome).toBe('loop_detected');
+    expect(result.reason).toContain('same state');
   });
 
   it('gives a hint and spends a credit', async () => {

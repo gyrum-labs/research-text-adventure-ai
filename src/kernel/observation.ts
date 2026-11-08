@@ -25,7 +25,7 @@ import { isGoalAchieved } from './goals.js';
  * lives here so that the runner and the tests cannot drift apart.
  *
  * A transition that says nothing (a movement, for instance) returns an empty
- * list, and the caller decides what the agent sees instead.
+ * list, and the caller shows the agent nothing rather than something stale.
  */
 export function messagesFromEvents(events: Event[]): string[] {
   const messages: string[] = [];
