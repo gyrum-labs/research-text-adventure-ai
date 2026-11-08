@@ -192,3 +192,49 @@ describe('the observation', () => {
     expect(serialised).not.toContain('unlock vault door');
   });
 });
+
+describe('every action spec', () => {
+  it('can be executed by the reducer without throwing', () => {
+    // A spec that can never run is a broken action, and the world would be
+    // quietly smaller than it looks. Each spec is run with plausible
+    // bindings, from a state where its arguments are in scope.
+    const state = playThrough([
+      'take keycard',
+      'go corridor',
+      'open locker',
+      'take cutters',
+      'take manual',
+    ]);
+
+    for (const spec of adventure.actions) {
+      const bindings: Record<string, string> = {};
+      for (const arg of spec.args) {
+        if (arg.role === 'room') bindings[arg.name] = 'corridor';
+        else if (arg.role === 'text') bindings[arg.name] = 'keycard';
+        else bindings[arg.name] = 'locker';
+      }
+
+      const command = {
+        verb: spec.verb,
+        args: bindings,
+        raw: `${spec.verb} ${Object.values(bindings).join(' ')}`,
+      };
+
+      expect(() => reduce(adventure, state, command), `the ${spec.verb} spec threw`).not.toThrow();
+    }
+  });
+
+  it('has a text for its failure, which is the one the agent reads', () => {
+    for (const spec of adventure.actions) {
+      expect(spec.text.failure.length, `the ${spec.verb} spec has no failure text`).toBeGreaterThan(0);
+    }
+  });
+
+  it('says nothing on a successful move, because the room says it instead', () => {
+    for (const spec of adventure.actions) {
+      if (spec.verb !== 'go') {
+        expect(spec.text.success.length, `the ${spec.verb} spec has no success text`).toBeGreaterThan(0);
+      }
+    }
+  });
+});
