@@ -1,0 +1,29 @@
+# Deploy manifest for the research-text-adventure-ai project. Schema: pkg/deploy/manifest.go
+# EMITTED by the project-onboarding journey emit-registry-catalog step
+# (warp#8738) per ADR-092/093 — derived from the repo deploy-shape, NOT a
+# hand-written stub. Retarget host / hostname / service port if the deploy
+# lands on a different box or port.
+project: research-text-adventure-ai
+hostname: research-text-adventure-ai.gyrum.ai
+host: gyrum-prod-1
+services:
+  - name: web
+    image: ghcr.io/gyrum-labs/research-text-adventure-ai
+    tag: latest
+    port: 8080
+    role: web
+    subdomain: ""
+    build_origin: in-repo
+auto_deploy:
+  on_merge: false
+  deployable: false
+  non_deployable_reason: >-
+    The repository publishes evidence, not a running service. The kernel, the
+    measurement harness and the docs viewer are run locally by a researcher
+    with Node 20 and no container, and nothing here is built, shipped or
+    exposed to traffic. The manifest records the intent to host the docs
+    viewer if a deployment is ever wanted; it does not claim one exists.
+db:
+  mode: local
+  persistence: ephemeral
+env_from_vault: []

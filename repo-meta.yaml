@@ -1,0 +1,49 @@
+# repo-meta.yaml — orientation source of truth for this repo.
+#
+# Scaffolded by `gyrum-orient --init`. Hand-author the six required
+# fields below, then run `gyrum-orient` to generate the committed
+# ORIENTATION.md (which is generated only — never hand-edited; the
+# orientation-drift gate in gyrum-review-pr keeps the two in sync).
+#
+# Contract: dark-factory docs/features/fleet-orientation-docs.md
+#   - Six REQUIRED fields: name, purpose, layer, status, owner, links.
+#     A missing required field is a hard error (gyrum-orient exits 1,
+#     naming the field).
+#   - One OPTIONAL field: test_cmd (overrides the scanner's detected
+#     test command; the fleet aggregator prefers this value).
+#   - layer / status off-enum values are an ADVISORY warning, not a
+#     failure (low-friction onboarding).
+#   - Facts about OTHER repos do not belong here. Cross-repo references
+#     (ports, fleet URLs, ../<repo>/ paths) in prose draw an advisory
+#     lint warning.
+#
+# Parsed with grep/sed (no yq dependency) — keep it to simple scalars,
+# a block list under `links:`, and quoted strings.
+
+# name (required) — owner/repo, e.g. gyrum-labs/devtools
+name: gyrum-labs/research-text-adventure-ai
+# description — one paragraph on what this repository is for
+description: >-
+  A research proof of concept that asks whether a language model can complete
+  a multi-step mission inside a deterministic, stateful text environment
+  without being shown the answer. The repository holds a pure state kernel,
+  a measurement harness, and six experiments that turn the question into
+  evidence.
+# purpose (required) — one line of what this repo is for
+purpose: Measure whether an LLM agent can operate reliably inside a deterministic text world using only the information and the actions it is given.
+# layer (required) — one of the slugs in devtools lib/portfolio-vocabulary.json .layers
+layer: library
+# status (required) — one of: active|maintenance|deprecated|experimental
+status: experimental
+# owner (required) — GitHub handle or team
+owner: "@jonathanleahy"
+# links (required) — may be an empty list ([]); one block entry per link
+links:
+  - title: The specification, which is authoritative
+    url: https://github.com/gyrum-labs/research-text-adventure-ai/blob/main/SPEC.md
+  - title: The results the series found
+    url: https://github.com/gyrum-labs/research-text-adventure-ai/blob/main/RESULTS.md
+
+# test_cmd (optional) — overrides the scanned test command in
+# ORIENTATION.md (the fleet aggregator prefers this value):
+test_cmd: "npm run check"
