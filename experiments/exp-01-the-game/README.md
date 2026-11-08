@@ -35,7 +35,7 @@ Three things, in this order, each with its tests written first:
    goals and turns. It does not know what a bomb is.
 2. **The adventure** (`src/adventures/mission-impossible/`). Pure *data*. Three rooms, nine
    objects, a 10-command gold path, and a lethal trap. No logic: every behaviour is declared
-   through the kernel's six predicates and eight effects.
+   through the kernel's ten predicates and ten effects.
 3. **Two ways to play it**. A human at the terminal, and an agent. Both drive the *same* engine
    through the *same* commands and produce the *same* kind of transcript.
 

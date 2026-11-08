@@ -46,7 +46,7 @@ determinism, replay format and the kernel's vocabulary all become someone else's
 
 We implement roughly fifteen mechanics ourselves: movement, visibility, taking, dropping,
 containers, locks, readables, tools, codes, goal tracking, hints, failure states, dead states.
-`SPEC.md` §5.1 bounds the entire engine to **six predicates and eight effects**, which is what
+`SPEC.md` §5.1 bounds the entire engine to **ten predicates and ten effects**, which is what
 makes that tractable.
 
 ---
