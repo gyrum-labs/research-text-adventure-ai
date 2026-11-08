@@ -1,2 +1,6 @@
 version: 1
 type: library
+gates:
+  profile: standard
+  require:
+    - orientation-drift
