@@ -1,0 +1,114 @@
+# pr-checks.yml — the repository's own checks, on every pull request.
+#
+# `main` requires a `structural-checks` context before anything can merge.
+# Nothing in this repository emitted that context, so every pull request sat at
+# BLOCKED for a reason no amount of work could fix: a required check that
+# nothing reports is a gate that never opens. This workflow reports it.
+#
+# The context means what it says. The checks below are the ones `npm run check`
+# runs, which is the same command the operator runs before pushing. There is no
+# proxy here and no second opinion: the code that is proposed is the code that
+# is checked.
+#
+# The verdict is reported twice, and both reports say the same thing. The job
+# posts a check run, which is what the branch protection sees. The last step
+# posts the same verdict as a commit status, because the fleet's own tooling
+# reads the status and not the check run, and a merge that goes through that
+# tooling must not be told the gate never ran.
+#
+# The prose lint is in the same job rather than beside it, because a rule that
+# only warns is a rule that drifts. It needs Vale and the Microsoft style pack,
+# so the step installs the pinned release, verifies the checksum the release
+# publishes, and syncs the pack. A changed binary fails the step instead of
+# running.
+
+name: pr-checks
+
+# Quoted "on" key — YAML 1.1 reads a bare `on` as a boolean.
+"on":
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: pr-checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  structural-checks:
+    name: structural-checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install the dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Install Vale
+        run: |
+          set -euo pipefail
+          version=3.26.0
+          archive="vale_${version}_Linux_64-bit.tar.gz"
+          url="https://github.com/vale-cli/vale/releases/download/v${version}/${archive}"
+          curl --fail --silent --show-error --location "$url" --output vale.tar.gz
+          echo "22aa69a556558e4a9dfc63c17030777383d8d3c48dcdfad655fa98e839d666ed  vale.tar.gz" \
+            | sha256sum --check --strict
+          mkdir -p "$HOME/.local/bin"
+          tar --extract --gzip --file vale.tar.gz --directory "$HOME/.local/bin" vale
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Sync the Vale style pack
+        run: vale sync
+
+      - name: Prose
+        run: npm run style
+
+      - name: Report the result as a commit status
+        # The branch protection requires a context called structural-checks.
+        # A check run satisfies it, and this posts the same verdict as a
+        # commit status, because the fleet's own tooling reads the status and
+        # not the check run. The description says what ran, so the status
+        # means the same thing to a reader as it does to the tooling.
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = "success" ]; then
+            state=success
+            description="npm run check passed: typecheck, lint, tests, prose"
+          else
+            state=failure
+            description="npm run check did not pass"
+          fi
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${HEAD_SHA}" \
+            --field "state=${state}" \
+            --field "context=structural-checks" \
+            --field "description=${description}" \
+            --field "target_url=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
