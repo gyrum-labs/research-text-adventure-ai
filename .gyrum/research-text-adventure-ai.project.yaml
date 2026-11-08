@@ -1,0 +1,14 @@
+# research-text-adventure-ai — platform registry card. EMITTED by the project-onboarding journey
+# emit-registry-catalog step (warp#8738), derived from repo-type.yaml +
+# the deploy-shape. Promote visibility/lifecycle to public/live once the
+# project actually deploys; fill tagline/homepage when known.
+slug: research-text-adventure-ai
+name: research-text-adventure-ai
+class: platform
+visibility: internal
+lifecycle: building
+owner: "gyrum-labs"
+repos:
+  - research-text-adventure-ai
+consumes: []
+consumed_by: []
