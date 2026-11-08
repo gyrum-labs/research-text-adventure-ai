@@ -15,6 +15,7 @@ import { runExp02 } from './exp-02.js';
 import { runExp03 } from './exp-03.js';
 import { runExp04 } from './exp-04.js';
 import { runExp05 } from './exp-05.js';
+import { runExp06 } from './exp-06.js';
 import { readFileSync } from 'node:fs';
 import type { MatrixConfig } from '../runner/matrix.js';
 import { createProvider, type ProviderName } from './provider.js';
@@ -116,6 +117,9 @@ program
             seeds: Number(options['seeds'] ?? 20),
           }),
         );
+        break;
+      case '06':
+        console.log(await runExp06());
         break;
       case '05': {
         const path = options['matrix'] ?? 'configs/matrix.default.json';
