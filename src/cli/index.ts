@@ -76,6 +76,8 @@ program
   .argument('<number>', 'the experiment number, 01 to 06')
   .option('--provider <name>', 'mock, anthropic, openai or ollama', 'mock')
   .option('--model <name>', 'the model to ask for')
+  .option('--base-url <url>', 'the endpoint of an OpenAI-compatible provider')
+  .option('--api-key-env <name>', 'the environment variable the key is read from')
   .option('--strategy <name>', 'none, full, window or structured', 'structured')
   .option('--max-turns <n>', 'turn budget', '30')
   .action(async (number: string, options: Record<string, string>) => {
@@ -96,7 +98,10 @@ program
       case '03':
         console.log(
           await runExp03(adventureById('mission-impossible'), {
-            provider: createProvider(options['provider'] as ProviderName, options['model']),
+            provider: createProvider(options['provider'] as ProviderName, options['model'], {
+              ...(options['baseUrl'] === undefined ? {} : { baseUrl: options['baseUrl'] }),
+              ...(options['apiKeyEnv'] === undefined ? {} : { apiKeyEnv: options['apiKeyEnv'] }),
+            }),
             strategy: options['strategy'] as ContextStrategy,
             budgets: { maxTurns: Number(options['maxTurns']) },
           }),
