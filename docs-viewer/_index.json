@@ -101,6 +101,11 @@
         },
         {
           "type": "file",
+          "name": "DIAGRAMS.md",
+          "path": "docs/DIAGRAMS.md"
+        },
+        {
+          "type": "file",
           "name": "docs-guide.md",
           "path": "docs/docs-guide.md"
         },
