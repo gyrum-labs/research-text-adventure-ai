@@ -1,4 +1,9 @@
-# Agent Brief — research-text-adventure-ai
+<!-- page-version: 1.0.0 status: draft last-reviewed: 2026-11-08 -->
+
+# Agent Brief: research-text-adventure-ai
+
+*This brief is written for an agent that has never seen this repository. Everything it needs is
+here, including the one decision that is already made and should not be re-litigated.*
 
 Copy everything below the line into your coding agent. It is self-contained: the agent does not
 need this conversation, and does not need to guess anything.
@@ -6,6 +11,11 @@ need this conversation, and does not need to guess anything.
 ---
 
 ## Your task
+> **Reader track**
+>
+> - **Two minutes.** This brief, top to bottom, before you write anything.
+> - **Ten minutes.** Then the experiment README for the experiment you are picking up.
+> - **An hour.** Then `SPEC.md` for the sections that experiment cites. Do not read all of it.
 
 You are implementing a research proof of concept in the repository `gyrum-labs/research-text-adventure-ai`.
 
@@ -20,7 +30,7 @@ actions available to it, with no privileged knowledge of the solution?*
 deterministic, adventure-native state kernel and (b) measurable, replayable evidence about how LLM
 agents behave inside it. The text adventure is the test fixture that makes the evidence cheap.
 
-**The test fixture.** A short, original "Mission Impossible"-style adventure — a three-area
+**The test fixture.** A short, original "Mission Impossible"-style adventure. A three-area
 lock-and-key bomb-disposal mission with a four-step dependency chain, a lethal trap, and a 10-command
 gold path. Its full specification is in `SPEC.md` §7. Do not substitute a different adventure.
 
@@ -28,12 +38,12 @@ gold path. Its full specification is in `SPEC.md` §7. Do not substitute a diffe
 
 1. **TypeScript, strict mode, ESM, Node 20+.** Runtime dependencies limited to `zod` and
    `commander`. Dev dependencies: `typescript`, `tsx`, `vitest`, `esbuild`, `eslint`,
-   `@typescript-eslint/*`. **No LLM vendor SDKs** — implement providers with plain `fetch`.
+   `@typescript-eslint/*`. **No LLM vendor SDKs**. Implement providers with plain `fetch`.
 2. **The kernel is pure.** `src/kernel` must contain no I/O, no `Date.now()`, no `Math.random()`,
    no `fs`, and no imports from `src/agents`, `src/cli`, `src/server`, `src/web`. Enforce this with
    both an ESLint rule and `tests/architecture.test.ts`.
 3. **The kernel speaks the adventure's own vocabulary.** It knows rooms, objects, doors, flags,
-   actions, goals and turns. Do not abstract these into neutral terms — no `node`, no `entity`, no
+   actions, goals and turns. Do not abstract these into neutral terms. No `node`, no `entity`, no
    `connection`, no `world`. The game's language is the point. The adventure's *content* is still
    pure data.
 4. **No privileged information leaks to the agent.** The agent's view of the game is built by
@@ -41,19 +51,19 @@ gold path. Its full specification is in `SPEC.md` §7. Do not substitute a diffe
    fields. The gold path, the hint table, the action predicates/effects, and the contents of closed
    containers must never appear. Enforce with `tests/leakage.test.ts`.
 5. **One engine, three interfaces.** Human CLI, browser UI, and agent runner all drive the same
-   reducer. A golden transcript must replay identically through all three — enforced by
+   reducer. A golden transcript must replay identically through all three. Enforced by
    `tests/equivalence.test.ts`.
 6. **Determinism.** Every state carries a hash: `h_n = sha256(h_{n-1} + ':' + canonicalJson(state_n))`.
    The same commands always produce the same chain. Replay verifies it.
 7. **Cost safety.** All LLM calls sit behind `--provider`. `--provider mock` runs the entire
-   harness with zero network and zero cost. Per-run budgets are mandatory (§11.2 of `SPEC.md`).
+   harness with zero network and zero cost. Per-run budgets are mandatory. See `SPEC.md` §11.2.
 8. **No secrets in the repo.** Provider keys come from environment variables only. Commit
    `.env.example`; git-ignore `.env`.
 
 ## Where the work is
 
 The build is cut into **six numbered experiments**, each teaching one idea and runnable on its
-own. Start at [`experiments/README.md`](./experiments/README.md). Experiment 01 — *The game* — is
+own. Start at [`experiments/README.md`](./experiments/README.md). Experiment 01, *The game*, is
 the one to begin with: it gets the adventure working so that a human **and** the AI system can
 both play it, which is the foundation everything else stands on.
 
@@ -72,7 +82,7 @@ kernel (pure)  ← adventures (data) ← session (InMemory | File | Http)
 
 Detailed type signatures, the predicate/effect DSL, the observation shape, the command grammar, the
 prompt contract, the metric definitions and the experiment matrix are all specified in `SPEC.md`.
-Follow them literally — the spec is written to be implementable without interpretation. Where the
+Follow them literally. The spec is written to be implementable without interpretation. Where the
 spec leaves something open, choose the simplest option that satisfies the constraints, and record
 the decision as a short ADR in `docs/ARCHITECTURE.md`.
 
@@ -81,7 +91,7 @@ the decision as a short ADR in `docs/ARCHITECTURE.md`.
 | Document | Read it for |
 |---|---|
 | [`docs/RESEARCH-CONTEXT.md`](./docs/RESEARCH-CONTEXT.md) | Why a custom kernel, what TALES actually shows, the prior art we borrow from, and the **evidence behind each design decision** (D1–D16) |
-| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | The layer map and **ADR-001…ADR-015** — the decisions already taken, and why. Do not re-litigate them silently |
+| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | The layer map and **ADR-001 to ADR-016**: the decisions already taken, and why. Do not re-litigate them silently |
 | [`docs/REFERENCES.md`](./docs/REFERENCES.md) | Annotated bibliography with licences. Check a licence before you add a dependency |
 | [`docs/SCENARIOS.md`](./docs/SCENARIOS.md) | How to write adventure data, with worked examples of every mechanic and an authoring checklist |
 
@@ -105,7 +115,7 @@ has explicit acceptance criteria; a phase is done when its criteria pass. Do not
 (LLM agents) before Phase 2 (human CLI) works end-to-end.
 
 **Test as you go.** Every phase needs tests. The kernel needs ≥ 90% line coverage. The rules in
-`SPEC.md` §16 are the definition of done — treat each acceptance criterion as a failing test to be
+`SPEC.md` §16 are the definition of done. Treat each acceptance criterion as a failing test to be
 written first where practical.
 
 **Use the mock provider for development.** Do not burn API tokens while building the harness.
@@ -118,13 +128,13 @@ passes. Do not report a phase as done on the strength of code that has not been 
 
 The complete set is `SPEC.md` §16. The ones that most often get skipped:
 
-- **P0.1 / P0.5** — kernel purity and the dependency rules are enforced automatically, not just intended.
-- **P1.2 / P1.3 / P1.4** — the gold path succeeds, a BFS oracle proves 10 is the shortest path, and
+- **P0.1 / P0.5**: Kernel purity and the dependency rules are enforced automatically, not just intended.
+- **P1.2 / P1.3 / P1.4**: The gold path succeeds, a BFS oracle proves 10 is the shortest path, and
   the random policy fails 20/20 seeds. These three together validate the adventure.
-- **P2.3 / P5.4** — transcripts from every interface replay to identical hash chains.
-- **P3.2** — the mock provider runs the entire harness with no network access.
-- **P4.2** — the failure classifier assigns exactly one code to every failed run.
-- **AC-R2** — 100% of recorded transcripts replay to their recorded hash chain.
+- **P2.3 / P5.4**: Transcripts from every interface replay to identical hash chains.
+- **P3.2**: The mock provider runs the entire harness with no network access.
+- **P4.2**: The failure classifier assigns exactly one code to every failed run.
+- **AC-R2**: 100% of recorded transcripts replay to their recorded hash chain.
 
 ## Definition of done for the whole project
 

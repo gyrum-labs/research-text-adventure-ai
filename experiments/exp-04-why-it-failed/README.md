@@ -1,17 +1,28 @@
-# Experiment 04 — Why It Failed
+<!-- page-version: 1.0.0 status: draft last-reviewed: 2026-11-08 -->
+
+# Experiment 04: Why It Failed
+
+*"It failed" is not a finding. "It failed because it cut the wire before it read the manual" is
+a finding, and the second one tells you what to do next.*
+
 
 > **The one idea:** "it failed" is not a finding. The *category* of failure is the finding.
+
+> **Reader track**
+>
+> - **Ten minutes.** The nine categories and the decision tree.
+> - **Thirty minutes.** The tests and what the histogram buys you.
 
 ## What you are building
 
 Two things that turn a pile of runs into evidence:
 
-1. **The metrics** — objective numbers per run: outcome, turns used, invalid commands,
+1. **The metrics**. Objective numbers per run: outcome, turns used, invalid commands,
    hallucinations, repeated states, tokens, cost, wall-clock.
-2. **The failure classifier** — a deterministic function that sorts each failed run into exactly
+2. **The failure classifier**. A deterministic function that sorts each failed run into exactly
    one category, computed from the transcript alone:
 
-| | Category | The agent... |
+| | Category | What the agent did |
 |---|---|---|
 | `F1` | Parsing | could not produce a command the parser accepted |
 | `F2` | Hallucination | referenced objects that are not in the room or the inventory |
@@ -56,7 +67,7 @@ not explore enough; `F2` dominant means the observation is confusing it.
 - each synthetic transcript classifies to exactly one expected code
 - a failed run never classifies to zero codes, and never to two
 - a successful run is never classified as a failure
-- the classifier reads only the transcript — it never calls the model
+- the classifier reads only the transcript. It never calls the model
 - `hallucinationRate` counts a command that names an object absent from the room and the inventory
 - `orderingViolations` counts an action attempted before its precondition was discovered
 
@@ -75,4 +86,4 @@ One experiment's failures are anecdotes. Many experiments' failures are a result
 ## Reference
 
 - `SPEC.md` §12.2 (metrics), §12.3 (failure taxonomy)
-- `docs/RESEARCH-CONTEXT.md` §3.4, §4.7 — why diagnosis, not score, is the bottleneck
+- `docs/RESEARCH-CONTEXT.md` §3.4, §4.7. Why diagnosis, not score, is the bottleneck

@@ -1,7 +1,19 @@
-# Experiment 06 — An Organisation
+<!-- page-version: 1.0.0 status: draft last-reviewed: 2026-11-08 -->
 
-> **The one idea:** the adventure vocabulary has to survive contact with a real organisation — or
+# Experiment 06: An Organisation
+
+*The whole point of writing an organisation as an adventure is that it might not work. If the
+metaphor survives the transfer, the game was a rehearsal. If it does not, we learn exactly how
+much machinery a real simulation would need.*
+
+
+> **The one idea:** the adventure vocabulary has to survive contact with a real organisation. Or
 > the whole idea was a metaphor that does not pay.
+
+> **Reader track**
+>
+> - **Ten minutes.** The mapping table and the central assertion.
+> - **Thirty minutes.** The tests, especially the one that fails if the kernel changed.
 
 ## What you are building
 
@@ -25,7 +37,7 @@ npm run exp:06
 
 ## What you should see
 
-The same agent harness, the same prompts, the same budgets — pointed at a different world:
+The same agent harness, the same prompts, the same budgets. Pointed at a different world:
 
 ```
 TASK: release the 2.4.1 hotfix before the customer SLA expires.
@@ -40,7 +52,7 @@ And then the same two questions we asked of the game:
 
 1. **Can it finish?** The success rate, the histogram, the cost.
 2. **Does it fail the same way?** If the failure categories in the organisation are the same
-   categories as in the game, the taxonomy transfers — and the game was a valid rehearsal.
+   categories as in the game, the taxonomy transfers. And the game was a valid rehearsal.
 
 ## The tests, in the order they get written
 
@@ -48,13 +60,13 @@ And then the same two questions we asked of the game:
   central assertion, and it is a test, not a promise.
 - the organisation's gold path wins, and BFS confirms it is shortest
 - the random policy fails on this world too
-- the failure classifier classifies organisation failures without modification — if it needs a new
+- the failure classifier classifies organisation failures without modification. If it needs a new
   category, that is a finding, and it gets written down
 - the organisation adventure is reachable in every dimension (no dead ends)
 
 ## Acceptance criteria
 
-- [ ] The organisation adventure is authored with **no change to `src/kernel`** — enforced by a
+- [ ] The organisation adventure is authored with **no change to `src/kernel`**. Enforced by a
       test that fails if the kernel's diff is non-empty
 - [ ] Its gold path wins; BFS confirms it is shortest; the random policy fails
 - [ ] The same agent harness runs it with no code change
@@ -63,8 +75,8 @@ And then the same two questions we asked of the game:
 
 ## The honest reading
 
-If this experiment fails — if the organisation cannot be written as an adventure without bending
-the kernel — then the game was still worth building, because we now know where the metaphor
+If this experiment fails. If the organisation cannot be written as an adventure without bending
+the kernel. Then the game was still worth building, because we now know where the metaphor
 breaks, and we know exactly how much machinery a real organisation simulation would need. That is
 a more useful answer than an untested assumption that it would work.
 

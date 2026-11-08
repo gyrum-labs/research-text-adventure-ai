@@ -1,11 +1,24 @@
-# Experiment 01 — The Game
+<!-- page-version: 1.0.0 status: draft last-reviewed: 2026-11-08 -->
+
+# Experiment 01: The Game
+
+*I lost an afternoon to a flaky harness before I wrote a single line of game logic. The lesson is
+in this experiment: the environment is the thing you have to be able to trust, and you cannot
+trust it until it is boring.*
+
 
 > **The one idea:** build a world you can *trust*. Before you can measure an AI agent, you must be
 > certain the environment it is measured in is deterministic, fair, and does not leak the answer.
 
+> **Reader track**
+>
+> - **Ten minutes.** The why, the layout and the gold path.
+> - **Thirty minutes.** The two baselines and the acceptance criteria.
+> - **A day.** Write the first failing test, then the kernel.
+
 ## Why this is the first experiment
 
-It is tempting to start with the agent — that is the interesting part. But if the environment is
+It is tempting to start with the agent. That is the interesting part. But if the environment is
 flaky, leaky, or rigged, then the agent's result is meaningless, and you will spend a week
 debugging a conclusion that was never real. So we start at the bottom and earn our way up.
 
@@ -17,13 +30,13 @@ will open it.
 
 Three things, in this order, each with its tests written first:
 
-1. **The kernel** (`src/kernel/`) — a pure function from `(state, command)` to `(new state,
+1. **The kernel** (`src/kernel/`). A pure function from `(state, command)` to `(new state,
    events)`. No I/O, no clock, no randomness. It knows rooms, objects, doors, flags, actions,
    goals and turns. It does not know what a bomb is.
-2. **The adventure** (`src/adventures/mission-impossible/`) — pure *data*. Three rooms, nine
+2. **The adventure** (`src/adventures/mission-impossible/`). Pure *data*. Three rooms, nine
    objects, a 10-command gold path, and a lethal trap. No logic: every behaviour is declared
    through the kernel's six predicates and eight effects.
-3. **Two ways to play it** — a human at the terminal, and an agent. Both drive the *same* engine
+3. **Two ways to play it**. A human at the terminal, and an agent. Both drive the *same* engine
    through the *same* commands and produce the *same* kind of transcript.
 
 ### The rule that makes the experiment valid
@@ -31,8 +44,12 @@ Three things, in this order, each with its tests written first:
 **The agent gets no special treatment.** Same engine, same grammar, same error messages, same
 transcript format as the human. The only difference is who chooses the next command.
 
-That is what makes "the agent solved it" mean the same thing as "a human solved it" — and it is
+That is what makes "the agent solved it" mean the same thing as "a human solved it". And it is
 why the human transcript is the reference the agent is compared against.
+
+> **Margin note.** The 1979 original was a timed task, and the community's verdict on it
+> was that the difficulty was "offset by the lack of options". We kept both halves: the budget is
+> the antagonist, and the option space stays narrow on purpose.
 
 ## The adventure
 
@@ -52,7 +69,7 @@ Everything else it has to find: the defusal manual is inside a closed locker, th
 both the safe wire *and* the safe code, the vault door needs a keycard from the first room, and
 cutting the wrong wire ends the run.
 
-**The gold path** (10 commands — the denominator for every efficiency measurement later):
+**The gold path** (10 commands. The denominator for every efficiency measurement later):
 
 ```
 take keycard · go corridor · open locker · take cutters · read manual
@@ -68,7 +85,7 @@ npm run exp:01    # same thing, plus the scripted and random baselines
 ```
 
 You should be able to finish the adventure yourself in a couple of minutes without reading the
-gold path — that is the test of whether the adventure is fair.
+gold path. That is the test of whether the adventure is fair.
 
 ## What you should see
 
@@ -102,7 +119,7 @@ And the two baselines, which are the real deliverable of this experiment:
 | Policy | Expected | Why it matters |
 |---|---|---|
 | **Scripted** (the gold path) | Wins in 10 turns | Proves the adventure is solvable and the engine is right |
-| **Random** (uniform over legal commands) | Fails 20/20 seeds | Proves the adventure is *not* trivially solvable — otherwise a success rate means nothing |
+| **Random** (uniform over legal commands) | Fails 20/20 seeds | Proves the adventure is *not* trivially solvable. Otherwise a success rate means nothing |
 
 If the random policy ever wins, the experiment is broken and you must fix the adventure before
 moving on.
@@ -128,7 +145,7 @@ running the first.
 - a BFS over the action space confirms 10 is the *shortest* winning path
 - cutting the wrong wire ends the run as `failure`
 - cutting a wire before reading the manual is refused, and is *not* fatal
-- every room and every object is reachable — no dead ends (reachability check)
+- every room and every object is reachable. No dead ends (reachability check)
 - brute-forcing the safe code cannot complete within the turn budget
 - the random policy fails 20/20 seeds
 
@@ -160,4 +177,4 @@ The game is now trustworthy. Two questions remain, and they are the next two exp
 ## Reference
 
 - `SPEC.md` §6 (data model), §7 (the adventure), §8 (command grammar), §13 (replay)
-- `docs/ADVENTURES.md` — how to write a scenario, with worked examples
+- `docs/ADVENTURES.md`. How to write a scenario, with worked examples

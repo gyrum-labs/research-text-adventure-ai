@@ -1,29 +1,47 @@
-# Specification — AI Text Adventure & State-Based Agent Experiment
+<!-- page-version: 1.0.0 status: draft last-reviewed: 2026-11-08 -->
+
+# Specification: AI Text Adventure & State-Based Agent Experiment
 
 **Repository:** `gyrum-labs/research-text-adventure-ai`
 **Status:** Approved for implementation. This document is the authoritative requirements source.
 **Language:** TypeScript (strict), Node 20+, ESM.
 **Type:** Standalone research proof of concept.
 
+*I began this project wanting to know whether a language model could finish a job without being
+shown how. It took me a while to notice that the question I actually wanted was smaller: could it
+finish a job without being shown the answer?*
+
 > **Read this first.** The adventure game is *not* the deliverable. The deliverable is evidence about
 > whether an LLM agent can operate reliably inside a deterministic, stateful environment using only
-> the information and actions available to it — and a **state kernel written in the game's own
+> the information and actions available to it. And a **state kernel written in the game's own
 > language** (rooms, objects, doors, flags), which an organisation simulation can then be
 > expressed *as*. The game is the *test fixture* that makes the evidence cheap to produce. See
 > §1.3, §3.1 and §18.
 >
-> **New here?** Start with [Part 0 — Orientation](#part-0--orientation-start-here): it teaches the
+> **New here?** Start with [Part 0, Orientation](#part-0-orientation): it teaches the
 > whole idea from the beginning, with a worked example, and needs nothing else. The
 > [glossary](#glossary) follows it. Sections §1 onward are the precise reference an implementer
 > works from.
 
+> **Reader track**
+>
+> - **Ten minutes.** Part 0, from 0.1 to 0.4. That is the whole idea and one full turn of it.
+> - **Thirty minutes.** Part 0 in full, then §7. You now know the project and the fixture.
+> - **Two hours.** Part 0, §1, §2 and §12. You now know the question, the scope and the
+>   measurement.
+> - **A day.** Everything, then the experiment series. You are ready to build.
+
 ---
 
-## Part 0 — Orientation: start here
+## Part 0: Orientation
 
 *This part teaches the material from the beginning. If you are new to this project, read it in
 order and you will need nothing else before you can read the rest of the document. Everything from
 §1 onward is the precise reference that an implementer works from.*
+
+> **Key insight.** The whole project reduces to one sentence: build a world you can trust, then
+> find out what an agent does inside it. Everything else, the kernel, the harness, the taxonomy,
+> the matrix, is machinery for making that sentence checkable.
 
 ### 0.1 The question, in plain words
 
@@ -35,7 +53,7 @@ Here is a thing we want to know:
 Concretely: we build a small computer game. The game has rooms, objects, doors, and a goal. An AI
 model is dropped into it with no instructions beyond the rules of the game and the mission it was
 given. We watch what it does. We record everything. Then we can say something honest about how
-reliable AI agents are when the work is *stateful* — when what happened three moves ago decides
+reliable AI agents are when the work is *stateful*. When what happened three moves ago decides
 what is possible now.
 
 Why not just ask the model? Because a model can produce a confident, fluent, wrong answer in one
@@ -47,7 +65,7 @@ model's prose is, we are measuring whether it can keep track of a world and act 
 
 Text adventures are games where you type commands like `take keycard` or `go corridor`, and the
 game describes what happened. They are a surprisingly good testbed for AI agents, and the research
-literature agrees — the [TALES benchmark](https://arxiv.org/abs/2504.14128) exists precisely to
+literature agrees. The [TALES benchmark](https://arxiv.org/abs/2504.14128) exists precisely to
 measure AI agents this way.
 
 Three properties make a text adventure useful here:
@@ -80,9 +98,9 @@ Everything in this project is built from six concepts. Learn these and the rest 
 
 Two more appear constantly, so:
 
-- **State** — the complete description of the world right now: which room the agent is in, what it
+- **State**: The complete description of the world right now: which room the agent is in, what it
   is carrying, which doors are open, which goals are done. The state is a value, not a process.
-- **Observation** — the slice of that state the agent is allowed to see. This is deliberately
+- **Observation**: The slice of that state the agent is allowed to see. This is deliberately
   *smaller* than the state. The agent cannot see the contents of a closed locker until it opens it.
   That gap is the entire experiment.
 
@@ -95,7 +113,7 @@ Here is a single turn of our adventure, in full, so the shape of the system is c
 > A booby-trapped case is locked in the server vault. Two objectives: disarm the bomb, and recover
 > the case. Nothing else is known. You are in the briefing room. Discover the rest by exploring.
 
-**What the agent sees** (this is the observation — the *only* thing it gets):
+**What the agent sees** (this is the observation. The *only* thing it gets):
 
 ```
 Turn 0
@@ -147,7 +165,7 @@ That is the whole loop, repeated until the agent wins, loses, or runs out of tur
 
 Notice what the engine does **not** do. It does not decide what the agent should do, it does not
 fix up a malformed command, and it does not reward or punish. It is a rulebook. All the
-interesting behaviour is in the middle box — and that is exactly what we want to measure.
+interesting behaviour is in the middle box. And that is exactly what we want to measure.
 
 ### 0.5 Three ways to play, one engine
 
@@ -161,16 +179,16 @@ The same adventure is playable three ways, and all three drive the *same* engine
 
 This matters for the integrity of the result. Because a human transcript and an agent transcript
 are produced by the same engine, "the agent solved it" means the same thing as "a human solved
-it". We can compare them directly, and we can prove the three interfaces agree (§4.3).
+it". We can compare them directly, and we can prove the three interfaces agree. See §4.3.
 
 ### 0.6 How we will know whether it worked
 
 The obvious measure is a success rate: *did the agent complete the mission?* We will report it. But
-we expect it to be low and noisy, and a bare number is a poor research result — it cannot tell you
+we expect it to be low and noisy, and a bare number is a poor research result. It cannot tell you
 what to fix.
 
 So the primary artefact is a **failure taxonomy**: every unsuccessful run is classified into
-exactly one category, computed automatically from the transcript (§12.3). Was the agent's command
+exactly one category, computed automatically from the transcript. See §12.3. Was the agent's command
 malformed? Did it invent an object that was not there? Did it act before it had discovered the fact
 it needed? Did it cut the wrong wire? Did it loop? Did it run out of turns?
 
@@ -178,13 +196,13 @@ That taxonomy is the thing worth having. It tells you what to fix, and it transf
 categories apply to an agent working inside an organisation.
 
 Alongside it we record the cheap, objective numbers: how many turns it took, how many commands
-were invalid, how many tokens it cost, and — crucially — whether the engine behaved itself. The
+were invalid, how many tokens it cost, and, crucially, whether the engine behaved itself. The
 environment is fully deterministic, so **every** run must replay to an identical state history
-(§13). If the environment is not trustworthy, the agent's results mean nothing.
+See §13. If the environment is not trustworthy, the agent's results mean nothing.
 
 ### 0.7 What this project is not
 
-- It is **not** a game. The adventure is a fixture — a small, controlled world we can reason about.
+- It is **not** a game. The adventure is a fixture. A small, controlled world we can reason about.
 - It is **not** a model training project. We evaluate; we do not fine-tune.
 - It is **not** a claim about AI capability in general. One hand-built adventure is a narrow claim.
   §17 lists the threats to validity honestly, and Phase 7 adds a second world.
@@ -196,7 +214,7 @@ environment is fully deterministic, so **every** run must replay to an identical
 | If you are… | Read |
 |---|---|
 | **New to the project** | This part, then §1 (what we are trying to find out), then §7 (the adventure itself). That is enough to understand the whole idea. |
-| **Going to implement it** | §1–§16 in order, implementing phase by phase (§16). The data model (§6) is the part to read most carefully. |
+| **Going to implement it** | §1–§16 in order, implementing phase by phase. See §16. The data model is the part to read most carefully: see §6. |
 | **Reviewing the research design** | §1 (questions and hypotheses), §12 (what is measured), §17 (what could make the result wrong). |
 | **Sceptical / new to the team** | §3 (why we built our own engine), `docs/RESEARCH-CONTEXT.md` (the evidence), and §17. |
 
@@ -208,7 +226,7 @@ Terms used throughout this document, in the order a newcomer meets them.
 
 | Term | Meaning |
 |---|---|
-| **Adventure** | The complete definition of one game: its rooms, objects, doors, actions and goals. Pure data — no logic. |
+| **Adventure** | The complete definition of one game: its rooms, objects, doors, actions and goals. Pure data. No logic. |
 | **Room** | A place the agent can be in. |
 | **Object** | A thing in a room or carried by the agent. |
 | **Door** | A connection between two rooms; it may be open, closed or locked. |
@@ -219,20 +237,20 @@ Terms used throughout this document, in the order a newcomer meets them.
 | **Turn** | One action and its consequences. The engine's only unit of time. |
 | **Kernel** | The pure engine: `(state, command) → { state, events }`. No I/O, no clock, no randomness. |
 | **Reducer** | The specific function that is the kernel. Named for the Redux/Elm idea of folding a state forward. |
-| **Pure function** | A function whose output depends only on its inputs — no clock, no randomness, no side effects. This is what makes a run replayable. |
+| **Pure function** | A function whose output depends only on its inputs. No clock, no randomness, no side effects. This is what makes a run replayable. |
 | **Event** | Something that happened: an action succeeded, an action failed, a goal completed. The transcript is a list of events. |
 | **Transition** | The result of applying one command: the new state, the events, and whether anything changed. |
-| **Predicate** | A condition the engine can check — "the keycard is in the inventory", "the bomb is defused". Six kinds exist (§5.1). |
-| **Effect** | A change the engine can apply — "move to this room", "set this flag true". Eight kinds exist (§5.1). |
+| **Predicate** | A condition the engine can check. "the keycard is in the inventory", "the bomb is defused". Six kinds exist. See §5.1. |
+| **Effect** | A change the engine can apply. "move to this room", "set this flag true". Eight kinds exist. See §5.1. |
 | **Hash chain** | A fingerprint of every state, each derived from the last. Makes a run tamper-evident and replay-checkable. |
 | **Canonical JSON** | A JSON representation with sorted keys and no incidental whitespace, so two equal states always produce identical bytes. |
-| **Policy** | Whatever is choosing the agent's next command. The human, a script, a random picker and the model are all policies — the runner cannot tell them apart. |
+| **Policy** | Whatever is choosing the agent's next command. The human, a script, a random picker and the model are all policies. The runner cannot tell them apart. |
 | **Budget** | A limit on turns, tokens, cost or wall-clock time. Every run has them, so a confused agent cannot run up a bill. |
-| **Guard** | A rule that stops a run early — a repeated state, too many provider errors, a blown budget. |
+| **Guard** | A rule that stops a run early. A repeated state, too many provider errors, a blown budget. |
 | **Transcript** | The JSONL record of a run: every observation, command, event and state hash. |
 | **Replay** | Re-running a transcript's commands through the engine and checking the hashes match. Proves the environment is deterministic. |
-| **Context strategy** | What the model is allowed to remember: the whole history, a recent window, a summary of what it has seen, or nothing. An experimental variable (§10.4). |
-| **Failure taxonomy** | The fixed set of categories every failed run is sorted into, computed from the transcript (§12.3). |
+| **Context strategy** | What the model is allowed to remember: the whole history, a recent window, a summary of what it has seen, or nothing. An experimental variable. See §10.4. |
+| **Failure taxonomy** | The fixed set of categories every failed run is sorted into, computed from the transcript. See §12.3. |
 | **Wilson interval** | A way to state a success rate with its uncertainty, for small samples. §12.4. |
 | **Scenario vs adventure** | Historical: earlier drafts called it a "scenario". It is now an *adventure* throughout, matching the game's own language. |
 | **warp#NNNNN** | An identifier in the team's ticket system. GitHub issues in `gyrum-labs/devtools` carry one in their title. |
@@ -241,12 +259,12 @@ Terms used throughout this document, in the order a newcomer meets them.
 
 ## Table of contents
 
-**Part 0 — Orientation: start here** (you are here)
+**Part 0, Orientation** (you are here)
 
 0. [Orientation: start here](#part-0--orientation-start-here)
    · [Glossary](#glossary)
 
-**Part 1 — The reference specification**
+**Part 1. The reference specification**
 
 1. [Objective, research questions, hypotheses](#1-objective-research-questions-hypotheses)
 2. [Scope, non-goals, constraints](#2-scope-non-goals-constraints)
@@ -269,6 +287,14 @@ Terms used throughout this document, in the order a newcomer meets them.
 19. [Open questions](#19-open-questions)
 20. [Source references](#20-source-references)
 
+> **Key takeaways**
+>
+> - The environment is the thing under suspicion. Build it first, and prove it.
+> - The agent's view of the world is smaller than the world. That gap is the experiment.
+> - One engine, three interfaces. A human run and an agent run mean the same thing.
+> - The failure category is the finding. A bare success rate cannot tell you what to fix.
+> - The organisation is the destination. The adventure is the rehearsal.
+
 ---
 
 ## 1. Objective, research questions, hypotheses
@@ -283,8 +309,8 @@ stateful text environment, **given no privileged information about the solution*
 
 | # | Objective | Why it matters |
 |---|---|---|
-| S1 | Build an **adventure-native** state kernel: rooms, objects, doors, flags — the game's own vocabulary, used directly | The kernel should read like the thing it models, and must survive being pointed at an organisation simulation expressed as an adventure (§18) |
-| S2 | Prove **one engine, three interfaces**: human CLI, browser UI, autonomous agent — same reducer, same rules | Confirms the environment is the controlled variable, not the UI |
+| S1 | Build an **adventure-native** state kernel: rooms, objects, doors, flags. The game's own vocabulary, used directly | The kernel should read like the thing it models, and must survive being pointed at an organisation simulation expressed as an adventure. See §18 |
+| S2 | Prove **one engine, three interfaces**: human CLI, browser UI, autonomous agent. Same reducer, same rules | Confirms the environment is the controlled variable, not the UI |
 | S3 | Produce a **failure taxonomy** for LLM agents in stateful environments | The taxonomy is the reusable artefact; the win-rate is not |
 | S4 | Measure the effect of **context strategy** and **action masking** | Directly informs how an org-simulation agent should be built |
 | S5 | Produce **cost and latency** data per solved mission | Determines feasibility at scale |
@@ -300,7 +326,7 @@ stateful text environment, **given no privileged information about the solution*
 - **RQ3 (prompt sensitivity).** How much does success rate move across context strategies
   (`none` / `full` / `window` / `structured`) and between free-form and masked action spaces?
 - **RQ4 (scale).** What is the cost per solved mission, and how does it scale with task depth?
-- **RQ5 (generality).** Does the adventure vocabulary hold up as a model for a second domain —
+- **RQ5 (generality).** Does the adventure vocabulary hold up as a model for a second domain.
   specifically, can an organisation be expressed **as** an adventure (teams as rooms, tickets as
   objects, handoffs as doors) without changing the kernel?
 
@@ -346,7 +372,7 @@ H1 holds.
 
 | ID | Constraint |
 |---|---|
-| C1 | The kernel performs **no I/O**, no wall-clock reads, no unseeded randomness. Determinism is enforced by test and by architecture test (§16, P0). |
+| C1 | The kernel performs **no I/O**, no wall-clock reads, no unseeded randomness. Determinism is enforced by test and by architecture test. See §16, P0. |
 | C2 | The agent **never** receives adventure-authoring data (gold path, hint tables, predicate source). Enforced by a dedicated observation builder + leakage test. |
 | C3 | All LLM traffic is **opt-in** and cost-capped. A `MockProvider` must allow the full harness to run with zero network and zero cost. |
 | C4 | The kernel must not import from `src/agents`, `src/cli`, `src/server` or `src/web`. Enforced by an architecture test. |
@@ -362,21 +388,21 @@ Summary of findings (full detail and citations in `docs/RESEARCH-CONTEXT.md`):
 
 | Option | What it is | Licence | Advantages | Disadvantages | Decision |
 |---|---|---|---|---|---|
-| **QuestJS** (`textadventures/quest`) | JavaScript adventure engine: rooms, objects, text commands, runs in browser | **MIT** | Substantial existing framework; browser-native | Existing game architecture (attributes, dynamic text) complicates controlled agent testing; adds a dependency we do not control | Alternative — Phase 8 comparison |
+| **QuestJS** (`textadventures/quest`) | JavaScript adventure engine: rooms, objects, text commands, runs in browser | **MIT** | Substantial existing framework; browser-native | Existing game architecture (attributes, dynamic text) complicates controlled agent testing; adds a dependency we do not control | Alternative. Phase 8 comparison |
 | **ink** (`inkle/ink`) | Narrative scripting language for branching stories | **MIT** | Excellent branching narrative; browser/Room | Optimised for storytelling, not for general world-state simulation or agent evaluation | Future experiment |
 | **TextWorld** (`microsoft/TextWorld`) | RL sandbox for text games: training + evaluation of agents | **Microsoft Research License** (not OSI-approved) | Purpose-built for evaluating agents in stateful text environments | Python ecosystem; heavy install; licence is non-commercial-restricted | Research reference only |
-| **TALES** (`microsoft/tale-suite`) | Benchmark of curated text games across Jericho/TextWorld/TextWorld-Express/ScienceWorld/ALFWorld | MIT | Real numbers: on human-written games (Jericho — the suite's only non-synthetic environment) the best agents reach only **13.4%** of maximum normalised score, vs 76–100 on synthetic environments | Python; heavyweight; its metric is a normalised score, not per-game success | **Primary reference for expected effect sizes** |
+| **TALES** (`microsoft/tale-suite`) | Benchmark of curated text games across Jericho/TextWorld/TextWorld-Express/ScienceWorld/ALFWorld | MIT | Real numbers: on human-written games (Jericho. The suite's only non-synthetic environment) the best agents reach only **13.4%** of maximum normalised score, vs 76–100 on synthetic environments | Python; heavyweight; its metric is a normalised score, not per-game success | **Primary reference for expected effect sizes** |
 | **Minimal TypeScript reducer (this repo)** | Purpose-built pure state-transition kernel | MIT | Total control, deterministic, dependency-light, reusable for the org-simulation goal | We must implement ~15 mechanics ourselves | **Chosen for v1** |
 
-**Decision:** build a small, generic TypeScript kernel. The adventure content is a *adventure* — data
-describing rooms, objects, actions, goals — evaluated by the kernel. QuestJS and ink are deferred
-comparisons (Phase 8). TextWorld/TALES are read for calibration: TALES' result — a roughly
-tenfold score collapse between synthetic and human-written games — sets our expectation that
+**Decision:** build a small, generic TypeScript kernel. The adventure content is a *adventure*. Data
+describing rooms, objects, actions, goals. Evaluated by the kernel. QuestJS and ink are deferred
+comparisons (Phase 8). TextWorld/TALES are read for calibration: TALES' result. A roughly
+tenfold score collapse between synthetic and human-written games. Sets our expectation that
 **human-shaped worlds are where agents break**, and that failure analysis matters more than a
 headline win-rate.
 
-> **Note on the vocabulary.** The kernel deliberately speaks the game's own language — rooms,
-> objects, doors, flags — rather than a neutral abstraction. An organisation simulation is
+> **Note on the vocabulary.** The kernel deliberately speaks the game's own language. Rooms,
+> objects, doors, flags. Rather than a neutral abstraction. An organisation simulation is
 > therefore written as another adventure (teams as rooms, tickets as objects, handoffs as doors),
 > not as a new engine. See §3.1 and §18.
 
@@ -389,12 +415,12 @@ headline win-rate.
 ### 3.1 The design decision that follows from this
 
 If the game engine is removed entirely, the kernel still speaks an **adventure vocabulary**, and
-that is deliberate. The core knows *rooms, objects, doors, flags, actions, goals, turns* — the
+that is deliberate. The core knows *rooms, objects, doors, flags, actions, goals, turns*. The
 language of the game it runs, not a neutral abstraction over it.
 
 The reasoning: the adventure is not merely the fixture, it is the **model**. The longer-term aim
 is to run an organisation the way this game runs, and that works best when the organisation is
-expressed *as* an adventure — teams as rooms, tickets as objects, handoffs as doors. An
+expressed *as* an adventure. Teams as rooms, tickets as objects, handoffs as doors. An
 abstraction layer between "the game" and "the kernel" would have to be taught to every reader and
 every agent, for no benefit. §18 sets out the mapping and the seam.
 
@@ -460,12 +486,12 @@ ADR-002 (superseded) and ADR-016.
 | `src/server` | HTTP routes over a server-held session | Contain game rules |
 | `src/web` | Browser client | Contain game rules |
 
-### 4.3 One engine, three interfaces — the equivalence contract
+### 4.3 One engine, three interfaces: the equivalence contract
 
 This is the single most important structural property of the repo. It must be **testable**:
 
 > **REQ-EQUIV-1.** For a given adventure and the same sequence of commands, the human CLI, the web
-> client and the agent runner must produce **identical state hash chains** (§13.2).
+> client and the agent runner must produce **identical state hash chains**. See §13.2.
 
 Enforced by a single golden transcript (`tests/fixtures/golden.jsonl`) replayed through all three
 interfaces, asserting the final hash chain matches.
@@ -492,11 +518,11 @@ Enforced by `tests/architecture.test.ts` (C4).
 | **Specification / rule DSL** | `Predicate[]` + `Effect[]` on each action | Adventure authors declare *what* is true; the kernel decides *how* to evaluate it. Keeps adventure semantics out of the core |
 | **Strategy** | `AgentPolicy { next(observation, history): Promise<Command \| null> }` | Human, scripted, random and LLM agents are interchangeable; the runner cannot tell them apart |
 | **Ports & adapters (hexagonal)** | `LlmProvider`, `Session` | Swap Anthropic ↔ OpenAI ↔ Ollama ↔ Mock; swap in-memory ↔ HTTP session, with no change to the kernel |
-| **Observer / event stream** | `reduce` emits `Event[]`; the transcript is the event log | Lets the UI animate, the evaluator classify failures, and the replayer assert — all from one stream |
+| **Observer / event stream** | `reduce` emits `Event[]`; the transcript is the event log | Lets the UI animate, the evaluator classify failures, and the replayer assert. All from one stream |
 | **Repository / snapshot** | `Session.save()/load()` as plain JSON | State is fully serialisable; sessions are files; no database |
 | **Fixture + golden-file testing** | `tests/fixtures/*.jsonl` | Adventure behaviour and interface equivalence are pinned to readable files, not to assertions scattered across code |
 | **Circuit breaker / budget guard** | Runner stop conditions + parse-failure backoff | An agent that loops or babbles must not run up a bill |
-| **Structured output with repair** | LLM asked for a strict envelope; extractor falls back through a defined chain | Model-specific formatting drift is handled centrally, and every failure is counted (§12.3) |
+| **Structured output with repair** | LLM asked for a strict envelope; extractor falls back through a defined chain | Model-specific formatting drift is handled centrally, and every failure is counted. See §12.3 |
 | **Seeded PRNG** | Any randomness (random policy, jittered adventures) takes an injected seed | Reproducibility |
 
 ### 5.1 The specification DSL (kernel vocabulary)
@@ -529,7 +555,7 @@ This is the whole engine. Everything else is data.
 
 ## 6. Data model
 
-### 6.1 Core types (target shape — `src/kernel/types.ts`)
+### 6.1 Core types (target shape: `src/kernel/types.ts`)
 
 ```ts
 export type Id = string;
@@ -693,8 +719,8 @@ whitespace. The chain is written into every transcript, which makes runs tamper-
 
 This adventure is an **original homage** to the classic Mission Impossible text adventures (a
 three-area, lock-and-key, bomb-disposal mission). No existing game's prose, room names, puzzle
-layout or text is reproduced. The purpose is to reproduce the *shape* of the puzzle — a short
-dependency chain with a lethal trap — not any specific work.
+layout or text is reproduced. The purpose is to reproduce the *shape* of the puzzle. A short
+dependency chain with a lethal trap. Not any specific work.
 
 ### 7.2 Narrative
 
@@ -724,12 +750,12 @@ dependency chain with a lethal trap — not any specific work.
 |---|---|---|---|
 | `keycard` | briefing | takeable | Opens the vault door |
 | `bulletin` | briefing | readable | Narrative texture; mentions "the maintenance locker in the corridor" (weak hint) |
-| `desk` | briefing | — | Surface the keycard sits on |
+| `desk` | briefing |. | Surface the keycard sits on |
 | `locker` | corridor | container, closed → contains `cutters`, `manual` | Gates the two critical tools |
 | `cutters` | corridor→locker | takeable | Tool required to cut a wire |
 | `manual` | corridor→locker | readable | **The gate.** Reveals (a) the safe code `4821`, (b) that the safe wire is the **yellow** one |
-| `extinguisher` | corridor | — | Red herring; gives a distinct failure message if used on the bomb |
-| `bomb` | vault | — | Three wires: red, blue, yellow. Cutting a wrong wire detonates it |
+| `extinguisher` | corridor |. | Red herring; gives a distinct failure message if used on the bomb |
+| `bomb` | vault |. | Three wires: red, blue, yellow. Cutting a wrong wire detonates it |
 | `safe` | vault | container, locked, code `4821` → contains `case` | Gates the objective item |
 | `case` | vault→safe | takeable | Objective item |
 
@@ -747,11 +773,11 @@ take case ────► recover objective
 
 Four *independent* gating facts must be discovered and held. The agent cannot brute-force the
 wire (cutting without having read the manual is refused: "the wiring is a tangle of identical
-cables — you cannot tell which is which in this light"), and it cannot brute-force the safe code
+cables. You cannot tell which is which in this light"), and it cannot brute-force the safe code
 (the code space is 10⁴ and each attempt is a turn). A random policy therefore succeeds with
 probability ≈ 0.
 
-### 7.6 Gold path (10 commands — the efficiency denominator)
+### 7.6 Gold path (10 commands: the efficiency denominator)
 
 ```
  1  take keycard
@@ -775,7 +801,7 @@ random policy fails 20/20 seeds.
 
 | Trigger | Outcome | Note |
 |---|---|---|
-| `cut red wire with cutters` / `cut blue wire …` | **failure** — detonation, run ends | Irreversible within the run |
+| `cut red wire with cutters` / `cut blue wire …` | **failure**. Detonation, run ends | Irreversible within the run |
 | `cut yellow wire with cutters` before reading the manual | action fails (not fatal) | Enforces the manual gate |
 | `unlock safe with 0000` … `9999` | action fails | Bounded by the turn budget, so brute force is impossible in practice |
 | `go vault` while the vault door is locked | action fails | |
@@ -791,20 +817,20 @@ random policy fails 20/20 seeds.
 
 | Verb | Synonyms | Args | Notes |
 |---|---|---|---|
-| `look` | `l` | — | Re-describe the current room |
-| `inventory` | `i`, `inv` | — | List carried objects |
+| `look` | `l` |. | Re-describe the current room |
+| `inventory` | `i`, `inv` |. | List carried objects |
 | `examine` | `x`, `inspect` | `target: object-in-room` | Reveals `detail` if present |
 | `go` | `walk`, `move`, `enter` | `target: room` | Direction words map to doors |
 | `take` | `get`, `grab`, `pick up` | `target: object-in-room` | |
-| `drop` | — | `target: object-in-inventory` | |
-| `open` | — | `target: object-in-room` | Containers |
-| `read` | — | `target: object-in-room` | Readables |
-| `unlock` | — | `target: object-in-room`, `with: text` | Key object **or** numeric code |
-| `cut` | — | `target: object-in-room`, `with: object-in-inventory` | Tool must be carried |
-| `use` | — | `tool: object-in-inventory`, `on: object-in-room` | Generic two-arg form |
-| `hint` | — | — | Costs one turn; consumes a hint credit (§7.4) |
-| `wait` | — | — | Costs one turn |
-| `help` | `?` | — | Lists verbs; no state change |
+| `drop` |. | `target: object-in-inventory` | |
+| `open` |. | `target: object-in-room` | Containers |
+| `read` |. | `target: object-in-room` | Readables |
+| `unlock` |. | `target: object-in-room`, `with: text` | Key object **or** numeric code |
+| `cut` |. | `target: object-in-room`, `with: object-in-inventory` | Tool must be carried |
+| `use` |. | `tool: object-in-inventory`, `on: object-in-room` | Generic two-arg form |
+| `hint` |, |, | Costs one turn; consumes a hint credit. See §7.4 |
+| `wait` |, |, | Costs one turn |
+| `help` | `?` |. | Lists verbs; no state change |
 
 Multi-word forms: `use X on Y`, `cut X with Y`, `unlock X with Y`. The parser recognises the
 connective (`on` / `with` / `to`) and splits accordingly.
@@ -821,9 +847,9 @@ connective (`on` / `with` / `to`) and splits accordingly.
 7. Unknown verb → `parse_error` listing the valid verbs.
 
 **Rationale for no LLM parsing:** it keeps the cost of an invalid agent action attributable to the
-agent, and makes `invalid_action_rate` (§12.2) a genuine measure rather than a parser artefact.
+agent, and makes `invalid_action_rate` a genuine measure rather than a parser artefact. See §12.2.
 
-**Error message contract** (every failure must be informative and non-punitive — the agent must be
+**Error message contract** (every failure must be informative and non-punitive. The agent must be
 able to recover): state what was attempted, what was wrong, and what *is* possible.
 
 ```
@@ -867,7 +893,7 @@ export interface Observation {
 - The contents of a closed container (only that it is closed and that it *might* contain something).
 - The identity of the safe wire before the manual is read.
 - Any flag the agent has not observed.
-- Internal ids that leak authoring structure beyond stable object names (ids are fine — they are
+- Internal ids that leak authoring structure beyond stable object names (ids are fine. They are
   stable and opaque; authoring predicates are not).
 
 **Enforcement:** `tests/leakage.test.ts` asserts that, for every reachable state in the adventure,
@@ -915,7 +941,7 @@ Implementations:
 | Policy | Purpose |
 |---|---|
 | `ScriptedPolicy` | Replays a fixed command list (used for the gold path and for regression fixtures) |
-| `RandomPolicy` | Uniformly samples legal commands — the **lower bound** baseline |
+| `RandomPolicy` | Uniformly samples legal commands. The **lower bound** baseline |
 | `LlmPolicy` | Calls an `LlmProvider`, renders the observation into a prompt, extracts a command |
 
 ### 10.2 `LlmProvider` (the ports & adapters seam)
@@ -946,8 +972,8 @@ export interface LlmResponse {
 ```
 
 Required adapters: **Anthropic**, **OpenAI-compatible**, **Ollama** (local), and **`Mock`**
-(scripted responses, for tests and zero-cost runs). Implement all of them with plain `fetch` — no
-vendor SDKs — so provider churn does not become a dependency problem.
+(scripted responses, for tests and zero-cost runs). Implement all of them with plain `fetch`. No
+vendor SDKs. So provider churn does not become a dependency problem.
 
 ### 10.3 Prompt assembly and the action envelope
 
@@ -965,14 +991,14 @@ Required prompt elements:
    you are unsure, explore rather than guess; a failed action does not cost the mission.
 5. The output envelope (below).
 
-**Output envelope** — ask for reasoning and command in a strict form:
+**Output envelope**. Ask for reasoning and command in a strict form:
 
 ```
 THINK: <one or two sentences of reasoning>
 COMMAND: <one command>
 ```
 
-`COMMAND:` is required. The extractor (§10.5) accepts the line after `COMMAND:`, strips code
+`COMMAND:` is required. The extractor accepts the line after `COMMAND:`, strips code
 fences and `>` prompts.
 
 `THINK:` is optional and its presence/absence is an experimental variable (`thinking: on|off`).
@@ -990,7 +1016,7 @@ fences and `>` prompts.
 requirement ("the AI agent gets your current details about where you are"). `full` tests H5.
 
 **Known-facts block** (the `structured` strategy) is derived only from the agent's own observation
-history — it is a *summary of what the agent has seen*, never adventure-authoring data.
+history. It is a *summary of what the agent has seen*, never adventure-authoring data.
 
 ### 10.5 Action extraction and repair
 
@@ -1003,13 +1029,13 @@ as a metric, `extraction_route`):
 4. `null` → the runner records `unparsable_response` and re-prompts (counts against the turn
    budget).
 
-Then: parse the extracted string with the kernel parser (§8.2). If parsing fails, the runner records
-`parse_error` and returns the error message as the next observation — **the agent gets the chance to
+Then: parse the extracted string with the kernel parser. See §8.2. If parsing fails, the runner records
+`parse_error` and returns the error message as the next observation. **the agent gets the chance to
 correct itself**. Whether correction is allowed (1 retry / unlimited / none) is an experimental
 variable.
 
 **Never** repair a command by fuzzy-matching it into a legal one. If the agent said "take the
-keycard", the kernel must not helpfully interpret "the keycard" as "keycard" by fiat — but alias
+keycard", the kernel must not helpfully interpret "the keycard" as "keycard" by fiat. But alias
 resolution inside the adventure's alias table is legitimate and must be declared in the adventure.
 
 ### 10.6 Prompt template
@@ -1079,16 +1105,16 @@ transcript and one metrics record.
 | `goalsCompleted` | 0…2 (of the adventure's goals) |
 | `turnsUsed` | Turns consumed |
 | `goldPathLength` | 10 for this adventure |
-| `efficiency` | `goldPathLength / turnsUsed` — higher is better; 1.0 = a perfect run, 0.1 = ten times the optimal path |
-| `wasteRatio` | `turnsUsed / goldPathLength` — the inverse, for readers who think in overhead multiples (1.0 = optimal) |
+| `efficiency` | `goldPathLength / turnsUsed`. Higher is better; 1.0 = a perfect run, 0.1 = ten times the optimal path |
+| `wasteRatio` | `turnsUsed / goldPathLength`. The inverse, for readers who think in overhead multiples (1.0 = optimal) |
 | `hintsUsed` | Hints consumed |
 
 **Process metrics (the interesting ones)**
 | Metric | Definition |
 |---|---|
-| `invalidActionRate` | Invalid actions ÷ total commands — proxies "does it ground its actions in the game?" |
+| `invalidActionRate` | Invalid actions ÷ total commands. Proxies "does it ground its actions in the game?" |
 | `unparsableRate` | Responses the extractor could not turn into a command ÷ total turns |
-| `hallucinationRate` | Commands referencing an object not present in room ∪ inventory ÷ total commands — the grounding proxy |
+| `hallucinationRate` | Commands referencing an object not present in room ∪ inventory ÷ total commands. The grounding proxy |
 | `repeatStateRate` | Commands that changed nothing ÷ total commands |
 | `explorationSteps` | Turns before the first state-changing action |
 | `recoveryRate` | After a failure, did the agent try something different within 2 turns? (0…1) |
@@ -1097,7 +1123,7 @@ transcript and one metrics record.
 **Cost metrics**
 `inputTokens`, `outputTokens`, `estimatedCostUsd`, `wallClockMs`, `msPerTurn`.
 
-### 12.3 Failure taxonomy (S3 — the reusable artefact)
+### 12.3 Failure taxonomy (S3: the reusable artefact)
 
 Every unsuccessful run is classified into exactly one primary category, in this priority order:
 
@@ -1135,8 +1161,8 @@ turns, and the failure-code histogram.
 | One transcript per run | `runs/<model>/<condition>/<seed>.jsonl` (git-ignored by default; an `examples/` set is committed) |
 | Per-run metrics | `runs/<model>/<condition>/<seed>.metrics.json` |
 | Aggregated summary | `results/summary.json` and `results/summary.md` (a Markdown table with Wilson intervals) |
-| Failure taxonomy | `results/failures.md` — histogram plus 3 annotated transcripts per category |
-| Findings write-up | `RESULTS.md` — the human-readable answer to RQ1–RQ5 |
+| Failure taxonomy | `results/failures.md`. Histogram plus 3 annotated transcripts per category |
+| Findings write-up | `RESULTS.md`. The human-readable answer to RQ1–RQ5 |
 
 ### 12.6 Acceptance criteria for the research
 
@@ -1148,7 +1174,7 @@ The experiment is complete when:
 - **AC-R3.** H1 is reported with a Wilson interval, whether it holds or not.
 - **AC-R4.** Every failure in the matrix is assigned exactly one taxonomy code, and ≥ 3 transcripts
   per non-empty category are annotated in `results/failures.md`.
-- **AC-R5.** `RESULTS.md` answers RQ1–RQ5 with numbers, and states threats to validity (§17).
+- **AC-R5.** `RESULTS.md` answers RQ1–RQ5 with numbers, and states threats to validity. See §17.
 - **AC-R6.** The cost per solved mission is reported.
 
 ---
@@ -1184,9 +1210,9 @@ This is the executable form of §4.3's equivalence contract.
 
 A session is `{ id, adventureId, adventureVersion, state, transcript[] }` and is stored as plain JSON.
 
-- `FileSession` — writes to `sessions/<id>.json`.
-- `InMemorySession` — for tests and the browser client.
-- `HttpSession` — the server-held session (§14).
+- `FileSession`. Writes to `sessions/<id>.json`.
+- `InMemorySession`. For tests and the browser client.
+- `HttpSession`. The server-held session. See §14.
 
 The server-held session exists for the "watch the agent play" demo and for multi-agent experiments.
 It is **not** required for v1 to be useful.
@@ -1210,9 +1236,9 @@ JSON Lines. One record per line. The first line is the header:
 
 ## 14. Interface decision: client, server, or both
 
-The user's question — *"if you get it working in the browser, you might want a server behind it just
+The user's question. *"if you get it working in the browser, you might want a server behind it just
 holding the state, unless you can do that all in memory in the front end. Have a think: adversary,
-pros, cons"* — is answered here.
+pros, cons"*. Is answered here.
 
 ### 14.1 Options considered
 
@@ -1232,7 +1258,7 @@ pros, cons"* — is answered here.
 ### 14.2 Adversary analysis
 
 **Against browser-only:** the agent runner cannot observe the same session the human is watching,
-so the "watch it solve it live" demo — which is the most persuasive artefact of this project — is
+so the "watch it solve it live" demo, which is the most persuasive artefact of this project, is
 impossible. Multi-agent collaboration cannot be demonstrated. State loss on refresh is a papercut
 rather than a blocker.
 
@@ -1244,18 +1270,18 @@ server-ish way, weakening the "pure, portable kernel" property.
 **For the chosen option (C):** the kernel is pure, so it runs identically in Room and in the
 browser. The `Session` interface means the browser client can start in `InMemory` mode (zero
 infra, GitHub Pages deployable) and switch to `Http` mode with one configuration flag when the
-live agent demo is wanted. The decision is deferred rather than forced — which is the correct
+live agent demo is wanted. The decision is deferred rather than forced. Which is the correct
 posture when the two modes have genuinely different costs.
 
 ### 14.3 Decision
 
 **Implement C. Concretely:**
 
-- `src/session/types.ts` — `Session { id, adventure, state, send(command), snapshot(), reset() }`.
-- `src/session/in-memory.ts` — `InMemorySession` (default; used by tests, the CLI, and the browser
+- `src/session/types.ts`. `Session { id, adventure, state, send(command), snapshot(), reset() }`.
+- `src/session/in-memory.ts`. `InMemorySession` (default; used by tests, the CLI, and the browser
   client).
-- `src/session/http.ts` — `HttpSession` (browser client talking to `src/server`).
-- `src/server/routes.ts` — `POST /api/session`, `POST /api/session/:id/command`,
+- `src/session/http.ts`. `HttpSession` (browser client talking to `src/server`).
+- `src/server/routes.ts`. `POST /api/session`, `POST /api/session/:id/command`,
   `GET /api/session/:id`, `GET /api/adventure/:id`, `GET /api/health`.
 - The web client reads `VITE_SESSION_MODE=memory|http` (or a runtime config object) and picks the
   implementation.
@@ -1271,7 +1297,7 @@ keeping it in-process removes a network failure mode from the measurement path.
   events to the browser. Server-backed, optional, clearly labelled as a demo convenience.
 - No framework. Plain TypeScript bundled with esbuild. Rationale: the UI is a display surface; a
   framework would add weight and obscure the fact that the UI holds no rules.
-- The web client must contain **no game logic** — it renders observations and sends commands.
+- The web client must contain **no game logic**. It renders observations and sends commands.
 
 ---
 
@@ -1386,7 +1412,7 @@ research-text-adventure-ai/
 |---|---|---|
 | Language | TypeScript 5.x, `strict: true`, `noUncheckedIndexedAccess: true` | The spec *is* the contract; the type system should enforce it |
 | Module system | ESM (`"type": "module"`), Node 20+ | Current default; `tsx` handles TS directly |
-| Runtime | Node 20+ | `node:test` not needed — Vitest is used |
+| Runtime | Node 20+ | `node:test` not needed. Vitest is used |
 | Test runner | Vitest | Fast, TS-native, good snapshot support |
 | Dev runner | `tsx` | Zero-config TS execution |
 | Validation | Zod | Runtime validation of adventure files and provider responses; adventures are data and must be validated at load |
@@ -1435,7 +1461,7 @@ pass in CI.
 **Every phase is built test-first.** Write the test, watch it fail, make it pass, then refactor
 with the tests green. If a test passes on its first run, it is not testing the thing.
 
-This is not a style preference for this project — it is the mechanism that keeps the measurement
+This is not a style preference for this project. It is the mechanism that keeps the measurement
 honest. The environment's determinism, its perception boundary and its replay guarantee are all
 easy to *believe* and easy to *break*, and a test is the only thing that distinguishes the two. So:
 
@@ -1445,23 +1471,23 @@ A green suite is a claim. A missing test is an unexamined claim.
 
 **The same work, re-cut as experiments.** The phases below are the authoritative plan. They are
 also presented as a numbered series of small experiments, each teaching one idea and runnable on
-its own — the Karpathy `microgpt`/`llm.c` shape, because the order of work should match the order
+its own. The Karpathy `microgpt`/`llm.c` shape, because the order of work should match the order
 of understanding. Start at [`experiments/README.md`](./experiments/README.md); each experiment's
 README carries the idea, the tests in the order they get written, and its acceptance criteria.
 
 | Experiment | The one idea | Covers |
 |---|---|---|
-| [01 — The game](./experiments/exp-01-the-game/README.md) | A deterministic world you can trust, playable by a human *and* by the agent | P0, P1, P2 |
-| [02 — What the agent sees](./experiments/exp-02-what-the-agent-sees/README.md) | The agent's view is smaller than the world, and that gap is the experiment | P0 (observation), P3.4 |
-| [03 — The agent plays](./experiments/exp-03-the-agent-plays/README.md) | A model can drive a state machine given a clean loop and a fair error message | P3 |
-| [04 — Why it failed](./experiments/exp-04-why-it-failed/README.md) | "It failed" is not a finding; the category is | P4.1, P4.2 |
-| [05 — The matrix](./experiments/exp-05-the-matrix/README.md) | One number is an anecdote; a cell of a matrix is a result | P4.3, P6 |
-| [06 — An organisation](./experiments/exp-06-an-organisation/README.md) | The adventure vocabulary has to survive contact with a real org | P7 |
+| [01. The game](./experiments/exp-01-the-game/README.md) | A deterministic world you can trust, playable by a human *and* by the agent | P0, P1, P2 |
+| [02. What the agent sees](./experiments/exp-02-what-the-agent-sees/README.md) | The agent's view is smaller than the world, and that gap is the experiment | P0 (observation), P3.4 |
+| [03. The agent plays](./experiments/exp-03-the-agent-plays/README.md) | A model can drive a state machine given a clean loop and a fair error message | P3 |
+| [04. Why it failed](./experiments/exp-04-why-it-failed/README.md) | "It failed" is not a finding; the category is | P4.1, P4.2 |
+| [05. The matrix](./experiments/exp-05-the-matrix/README.md) | One number is an anecdote; a cell of a matrix is a result | P4.3, P6 |
+| [06. An organisation](./experiments/exp-06-an-organisation/README.md) | The adventure vocabulary has to survive contact with a real org | P7 |
 
 P5 (browser client) and P8 (QuestJS comparison) are interface and comparison work rather than new
 ideas, so they stay in this phase plan on their own.
 
-### Phase 0 — Kernel (foundation)
+### Phase 0: Kernel (foundation)
 
 **Tasks:** types; predicates; effects; reduce; hash chain; parser; observation builder; text
 renderer; goal evaluation.
@@ -1474,7 +1500,7 @@ renderer; goal evaluation.
 | P0.4 | The parser resolves aliases, handles `use X on Y` / `cut X with Y`, and produces informative errors |
 | P0.5 | `tests/architecture.test.ts` proves the dependency rules of §4.4 |
 
-### Phase 1 — Adventure
+### Phase 1: Adventure
 
 | ID | Acceptance criterion |
 |---|---|
@@ -1484,7 +1510,7 @@ renderer; goal evaluation.
 | P1.4 | `RandomPolicy` fails 20/20 seeds |
 | P1.5 | Detonation is irreversible and ends the run as `failure` |
 
-### Phase 2 — Human CLI
+### Phase 2: Human CLI
 
 | ID | Acceptance criterion |
 |---|---|
@@ -1492,7 +1518,7 @@ renderer; goal evaluation.
 | P2.2 | The CLI writes a transcript in the §13.4 format |
 | P2.3 | The CLI's transcript replays to an identical hash chain |
 
-### Phase 3 — Agent harness
+### Phase 3: Agent harness
 
 | ID | Acceptance criterion |
 |---|---|
@@ -1503,7 +1529,7 @@ renderer; goal evaluation.
 | P3.5 | Budgets, loop detection, and transient-error handling are implemented and unit-tested |
 | P3.6 | No secret is ever written to a transcript or log |
 
-### Phase 4 — Measurement
+### Phase 4: Measurement
 
 | ID | Acceptance criterion |
 |---|---|
@@ -1512,7 +1538,7 @@ renderer; goal evaluation.
 | P4.3 | `sweep` runs the full matrix and writes `results/summary.json` + `results/summary.md` |
 | P4.4 | Wilson 95% intervals are computed for every cell |
 
-### Phase 5 — Web client + server
+### Phase 5: Web client + server
 
 | ID | Acceptance criterion |
 |---|---|
@@ -1521,7 +1547,7 @@ renderer; goal evaluation.
 | P5.3 | A human can watch an agent run live (SSE) in the browser |
 | P5.4 | The web client's transcript replays identically to the CLI's |
 
-### Phase 6 — Results
+### Phase 6: Results
 
 | ID | Acceptance criterion |
 |---|---|
@@ -1530,15 +1556,15 @@ renderer; goal evaluation.
 | P6.3 | `results/failures.md` has ≥ 3 annotated transcripts per non-empty failure category |
 | P6.4 | Cost per solved mission is reported |
 
-### Phase 7 — Generality probe (stretch)
+### Phase 7: Generality probe (stretch)
 
 | ID | Acceptance criterion |
 |---|---|
-| P7.1 | A second adventure — a miniature organisation simulation (2 teams as rooms, 1 shared artefact, 1 dependency, 1 budget constraint) — is authored **without changing the kernel** |
+| P7.1 | A second adventure, a miniature organisation simulation (2 teams as rooms, 1 shared artefact, 1 dependency, 1 budget constraint), is authored **without changing the kernel** |
 | P7.2 | The same agent harness runs it, and `RESULTS.md` compares the two worlds |
 | P7.3 | A one-page "what this means for org simulation" section is written |
 
-### Phase 8 — Engine comparison (stretch)
+### Phase 8: Engine comparison (stretch)
 
 | ID | Acceptance criterion |
 |---|---|
@@ -1556,9 +1582,9 @@ renderer; goal evaluation.
 | V3 | **Prompt sensitivity dominates the result** | Pin and hash the prompt; report results per prompt version; treat prompt changes as a new experiment |
 | V4 | **Model version drift** | Record the exact model id, provider, and date in every transcript; report the run date |
 | V5 | **Small sample** | ≥ 10 seeds per cell; Wilson intervals; do not claim significance below that |
-| V6 | **Non-determinism** | Never claim exact reproduction of an agent run; guarantee engine determinism only (§13.1) |
-| V7 | **Observer effect** — the observation format helps more than the reasoning | Include the `none` control condition and a `text` observation condition so format effects are separable from reasoning effects |
-| V8 | **Parser leniency inflates success** | Report `invalidActionRate`; the parser never rewrites an agent's intent (§10.5) |
+| V6 | **Non-determinism** | Never claim exact reproduction of an agent run; guarantee engine determinism only. See §13.1 |
+| V7 | **Observer effect**. The observation format helps more than the reasoning | Include the `none` control condition and a `text` observation condition so format effects are separable from reasoning effects |
+| V8 | **Parser leniency inflates success** | Report `invalidActionRate`; the parser never rewrites an agent's intent. See §10.5 |
 | V9 | **Cost** | Budgets per §11.2; `--provider mock` for all development and CI |
 | V10 | **Single-adventure overfitting** | Phase 7's second adventure; the kernel must not be tuned to the MI adventure's specifics |
 
@@ -1566,7 +1592,7 @@ renderer; goal evaluation.
 
 ## 18. Roadmap to organisation simulation
 
-The long-term aim: run an organisation as an adventure game — state stored centrally, each agent
+The long-term aim: run an organisation as an adventure game. State stored centrally, each agent
 receives its current context (where it is, what it knows, what it must do), and acts through a
 command vocabulary.
 
@@ -1588,16 +1614,16 @@ command vocabulary.
 
 ### 18.2 What already transfers
 
-Because the kernel speaks the game's own vocabulary (§3.1), an organisation simulation is written
+Because the kernel speaks the game's own vocabulary, an organisation simulation is written
 as *another adventure* rather than as a new engine. The following are already built by Phase 0 and
 need no change to serve it:
 
-- The state machine, hash chain, replay, and transcript format — the audit trail for agent actions.
-- The observation contract — the "current details about where you are" payload.
-- The context strategies (`none` / `full` / `window` / `structured`) — the answer to "do we give the
+- The state machine, hash chain, replay, and transcript format. The audit trail for agent actions.
+- The observation contract. The "current details about where you are" payload.
+- The context strategies (`none` / `full` / `window` / `structured`). The answer to "do we give the
   agent the whole context of the conversation, or a summary?".
-- The budgets and guards — the answer to "how do we stop an agent burning money?".
-- The failure taxonomy — the answer to "how do we know an agent is failing, and why?".
+- The budgets and guards. The answer to "how do we stop an agent burning money?".
+- The failure taxonomy. The answer to "how do we know an agent is failing, and why?".
 
 ### 18.3 What must be built later (not in v1)
 
@@ -1627,13 +1653,13 @@ the *research design* must be recorded in `docs/ARCHITECTURE.md` as an ADR.
 
 | # | Question | Default |
 |---|---|---|
-| Q1 | Does the agent see the mission goal checklist status, or only the brief? | Yes — the objectives are disclosed (the mission is known); the *method* is not |
+| Q1 | Does the agent see the mission goal checklist status, or only the brief? | Yes. The objectives are disclosed (the mission is known); the *method* is not |
 | Q2 | Are hints available to LLM agents? | Yes, 3 per run, identical for all conditions, recorded as `hintsUsed` |
-| Q3 | Does the agent see the count of remaining hints? | Yes — it is an observable affordance, not privileged information |
+| Q3 | Does the agent see the count of remaining hints? | Yes. It is an observable affordance, not privileged information |
 | Q4 | Free-text commands or a structured action schema? | Both: free-text is the primary condition; the masked condition is the comparison |
 | Q5 | Is the `THINK:` step on by default? | On (it is the stronger baseline); `off` is a recorded variable |
 | Q6 | Temperature | 0.7 for the seeded main matrix (to measure reliability, not best case); 0 as a supplementary condition |
-| Q7 | Should the agent be told the turn budget? | Yes — knowing the budget is part of competent agent design |
+| Q7 | Should the agent be told the turn budget? | Yes. Knowing the budget is part of competent agent design |
 | Q8 | Which providers/models | At least one Anthropic and one OpenAI-compatible model; Ollama optional |
 
 ---
@@ -1644,27 +1670,27 @@ Full annotated bibliography with licences and dates accessed: **[`docs/REFERENCE
 
 **Benchmarks and environments**
 
-- TALES — Text Adventure Learning Environment Suite (Microsoft Research):
+- TALES. Text Adventure Learning Environment Suite (Microsoft Research):
   <https://www.microsoft.com/en-us/research/publication/tales-text-adventure-learning-environment-suite/>
   · <https://github.com/microsoft/tale-suite> · paper: <https://arxiv.org/abs/2504.14128>
-- Jericho — <https://arxiv.org/abs/1909.05398> · <https://github.com/microsoft/jericho>
-- NAIL — <https://arxiv.org/abs/1902.04259>
-- ALFWorld — <https://arxiv.org/abs/2010.03768>
-- ScienceWorld — <https://arxiv.org/abs/2203.07540>
+- Jericho. <https://arxiv.org/abs/1909.05398> · <https://github.com/microsoft/jericho>
+- NAIL. <https://arxiv.org/abs/1902.04259>
+- ALFWorld. <https://arxiv.org/abs/2010.03768>
+- ScienceWorld. <https://arxiv.org/abs/2203.07540>
 
 **Engines**
 
 - QuestJS (MIT): <https://github.com/textadventures/quest>
 - ink (MIT): <https://github.com/inkle/ink>
-- TextWorld (Microsoft Research License — **not** MIT): <https://github.com/microsoft/TextWorld>
+- TextWorld (Microsoft Research License. **not** MIT): <https://github.com/microsoft/TextWorld>
 
 **Agent methods**
 
-- ReAct — <https://arxiv.org/abs/2210.03629>
-- Reflexion — <https://arxiv.org/abs/2303.11366>
-- Voyager — <https://arxiv.org/abs/2305.16291>
-- WebArena — <https://arxiv.org/abs/2307.13854>
-- BenchTrace — <https://arxiv.org/abs/2605.29225>
+- ReAct. <https://arxiv.org/abs/2210.03629>
+- Reflexion. <https://arxiv.org/abs/2303.11366>
+- Voyager. <https://arxiv.org/abs/2305.16291>
+- WebArena. <https://arxiv.org/abs/2307.13854>
+- BenchTrace. <https://arxiv.org/abs/2605.29225>
 
 **Genre history**
 

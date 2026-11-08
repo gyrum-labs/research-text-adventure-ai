@@ -1,12 +1,24 @@
+<!-- page-version: 1.0.0 status: draft last-reviewed: 2026-11-08 -->
+
 # Experiments
+
+*I could have written one long specification for this. What I could not have written was anything a
+stranger could pick up on a Tuesday and know what to do next. So this is six experiments instead,
+and each one runs.*
 
 This is a series of small, self-contained experiments. Each one teaches exactly one idea, runs on
 its own, and leaves the reader with something they can see. You work through them in order, and
 each builds on the one before.
 
 The style follows Karpathy's: `microgpt`, `llm.c`, `nanochat`. A handful of files, no frameworks,
+> **Reader track**
+>
+> - **Five minutes.** Read the table below and Experiment 01's opening. That is the shape of the
+>   whole project.
+> - **Thirty minutes.** Read Experiment 01 in full. It is the foundation.
+> - **An afternoon.** Start Experiment 01. Write the first test before the first line of kernel.
 the code readable in one sitting, and a README that tells you what you are building and what you
-should see when it works. The reason to work this way is not tidiness — it is that **you cannot
+should see when it works. The reason to work this way is not tidiness. It is that **you cannot
 evaluate an AI agent's reliability until you are certain the environment itself is reliable**.
 Every experiment exists to remove one more way for the answer to be wrong.
 
@@ -20,6 +32,14 @@ Every experiment exists to remove one more way for the answer to be wrong.
 | **04** | [Why it failed](./exp-04-why-it-failed/) | "It failed" is not a finding; the category is | Spec ready |
 | **05** | [The matrix](./exp-05-the-matrix/) | One number is an anecdote; a cell of a matrix is a result | Spec ready |
 | **06** | [An organisation](./exp-06-an-organisation/) | The adventure vocabulary has to survive contact with a real org | Spec ready |
+
+> **Key takeaways**
+>
+> - The environment is the thing under suspicion. Build it first, and prove it.
+> - The agent's view of the world is smaller than the world. That gap is the experiment.
+> - One engine, three interfaces. A human run and an agent run mean the same thing.
+> - The failure category is the finding. A bare success rate cannot tell you what to fix.
+> - The organisation is the destination. The adventure is the rehearsal.
 
 ## How to run them
 
@@ -36,7 +56,7 @@ npm run exp:06     # the organisation probe
 
 Every experiment is also a **specification**: the README is the contract, the tests are the
 executable form of that contract, and the code is whatever satisfies both. If you are an agent
-picking up work, start with the experiment's README and its acceptance criteria — you do not need
+picking up work, start with the experiment's README and its acceptance criteria. You do not need
 to read `SPEC.md` first, though it has the full detail.
 
 ## The working method: test first
@@ -88,5 +108,5 @@ intent.
 | 05 The matrix | P4.3 (sweep), P6 (results) |
 | 06 An organisation | P7 (generality probe) |
 
-Phases not covered here — P5 (browser client) and P8 (QuestJS comparison) — are interface and
+Phases not covered here, P5 (browser client) and P8 (QuestJS comparison), are interface and
 comparison work rather than new ideas, so they stay in `SPEC.md` §16 on their own.

@@ -1,20 +1,30 @@
-# Experiment 03 — The Agent Plays
+<!-- page-version: 1.0.0 status: draft last-reviewed: 2026-11-08 -->
+
+# Experiment 03: The Agent Plays
+
+*I expected the interesting part of this project to be the agent loop. It was the error message.*
+
 
 > **The one idea:** a model can drive a state machine reliably, if you give it a clean loop, an
 > honest error message, and a hard limit on how much it may cost.
+
+> **Reader track**
+>
+> - **Ten minutes.** The four pieces and the transcript format.
+> - **Thirty minutes.** The tests and the acceptance criteria.
 
 ## What you are building
 
 The agent loop, and the four pieces that make it trustworthy:
 
-1. **The provider port** (`src/agents/llm/provider.ts`) — one interface, four implementations:
+1. **The provider port** (`src/agents/llm/provider.ts`). One interface, four implementations:
    Anthropic, an OpenAI-compatible endpoint, a local Ollama, and a `Mock` that replays scripted
    responses. Plain `fetch`, no vendor SDKs.
-2. **The prompt** — the mission brief, the verb list, the rules, and the output envelope. A pure
+2. **The prompt**. The mission brief, the verb list, the rules, and the output envelope. A pure
    function of `(adventure, observation, context)`, so it can be unit-tested and hashed.
-3. **The extraction chain** — a deterministic ladder that turns a model response into one command,
+3. **The extraction chain**. A deterministic ladder that turns a model response into one command,
    recording *which rung* worked so formatting drift is measured rather than hidden.
-4. **The runner** — the loop, the budgets, the guards, the transcript.
+4. **The runner**. The loop, the budgets, the guards, the transcript.
 
 ## How to run it
 
@@ -22,6 +32,9 @@ The agent loop, and the four pieces that make it trustworthy:
 npm run exp:03 -- --provider mock                       # offline, free, deterministic
 npm run exp:03 -- --provider anthropic --model claude-sonnet-4.5
 ```
+
+> An environment that says "nothing happened" gives the agent nothing to learn from, and an
+> agent with nothing to learn from cannot finish a ten-step chain.
 
 ## What you should see
 
@@ -49,7 +62,7 @@ turn 7  COMMAND: take keycard
 ```
 
 That second message matters more than it looks. An environment that says "nothing happened" gives
-the agent nothing to learn from — which is a documented cause of agent failure in the literature
+the agent nothing to learn from. Which is a documented cause of agent failure in the literature
 (`docs/RESEARCH-CONTEXT.md` §4.6).
 
 ## The tests, in the order they get written
@@ -59,7 +72,7 @@ the agent nothing to learn from — which is a documented cause of agent failure
 - the extraction chain is tried in order and records which rung produced the command
 - a response with no command at all is counted, not silently dropped
 - the runner stops on: turn budget, token budget, wall-clock budget, repeated state, provider
-  errors — each with the right outcome code
+  errors. Each with the right outcome code
 - no API key appears in any transcript, log or metric file
 - an invalid command does not end the run; the agent gets the error and continues
 

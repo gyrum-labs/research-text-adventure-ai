@@ -1,166 +1,158 @@
+<!-- page-version: 1.0.0 status: draft last-reviewed: 2026-11-08 -->
+
 # research-text-adventure-ai
 
-> **Status: specification complete, implementation pending.**
-> This repository contains the full requirements for a research proof of concept, cut into a
-> series of small experiments. Nothing is implemented yet — the build work is specified,
-> task-carded and ready to hand to an implementing agent.
+*I spent a while wondering whether a language model could finish a job without being shown how.
+Then I noticed the question I was actually asking was smaller and much more useful: could it finish
+a job without being shown the answer?*
 
 **Can an AI agent autonomously complete a multi-step mission in a deterministic, stateful text
-environment — using only the information and actions available to it, with no privileged knowledge
+environment, using only the information and actions available to it, with no privileged knowledge
 of the solution?**
 
-The adventure game is not the point. The point is the evidence about how LLM agents behave inside
-a controlled, replayable state machine — and a kernel written in the game's own language, so that
-an organisation can later be modelled *as* an adventure (teams as rooms, tickets as objects).
+The adventure game is not the point. The point is the evidence about how LLM agents behave inside a
+controlled, replayable state machine, and a kernel written in the game's own language so that an
+organisation can later be modelled *as* an adventure: teams as rooms, tickets as objects, handoffs
+as doors.
+
+> The environment is the thing under suspicion. Every result this project produces rests on one
+> claim, and the claim is checked rather than asserted: the world is deterministic, the agent is
+> never told more than it earned, and every run replays exactly.
+
+> **Reader track**
+>
+> - **Five minutes.** Read Part 0 of the specification. It teaches the whole idea from zero, with
+>   one full turn worked through.
+> - **Twenty minutes.** Skim the experiment series. Six experiments, one idea each.
+> - **An hour.** Read the research context. It is the evidence behind every decision in the design.
+> - **A day.** Start Experiment 01. It is where the work actually begins.
 
 ---
 
-## Start here
+## Where to start
 
-Pick the door that matches why you are here.
+| I want to | Read |
+| --- | --- |
+| Understand the idea | [`SPEC.md` Part 0, Orientation](./SPEC.md#part-0-orientation) |
+| Build it | [`experiments/README.md`](./experiments/README.md). Six experiments, one idea each |
+| Review the design | [`docs/proposal.md`](./docs/proposal.md), [`docs/RESEARCH-CONTEXT.md`](./docs/RESEARCH-CONTEXT.md), [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) |
+| Hand it to an agent | [`AGENT_BRIEF.md`](./AGENT_BRIEF.md). Copy, paste, go |
+| Play with it | [`docs/userguide.md`](./docs/userguide.md) |
+| Know how it is proven | [`docs/TESTING.md`](./docs/TESTING.md) |
 
-| I want to… | Read |
-|---|---|
-| **Understand the idea** | [`SPEC.md` Part 0 — Orientation](./SPEC.md#part-0--orientation-start-here). It teaches the whole project from zero: the question, why a text adventure, the six words the design rests on, and one full turn end to end. |
-| **Build it** | [`experiments/README.md`](./experiments/README.md). Six numbered experiments, one idea each, every one runnable on its own. Experiment 01 gets the game working so a human *and* an AI can play it. |
-| **Review the design** | [`docs/proposal.md`](./docs/proposal.md) (what and why), [`docs/RESEARCH-CONTEXT.md`](./docs/RESEARCH-CONTEXT.md) (the evidence), [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) (the ADRs), [`SPEC.md` §17](./SPEC.md) (what could make the result wrong). |
-| **Hand it to an agent** | [`AGENT_BRIEF.md`](./AGENT_BRIEF.md) — copy-paste and go. |
-| **Play with it** | [`docs/userguide.md`](./docs/userguide.md). |
-
-The whole thing is built **test-first**: every experiment lists its tests in the order they get
-written, and the rule is that nothing ships without a test that would catch the failure it
-guards against. The reasoning is in [`docs/TESTING.md`](./docs/TESTING.md).
+Everything is built test first. Every experiment lists its tests in the order they get written, and
+the rule has a hard edge for this project: no change ships without a test that would catch the
+failure it guards against. Determinism, the perception boundary and the replay guarantee are all
+easy to believe and easy to break, and a test is the only thing that tells the two apart.
 
 ---
 
 ## The three deliverables
 
 | # | Deliverable | Where |
-|---|---|---|
-| 1 | **An adventure-native state kernel** — pure, deterministic, and written in the game's own language: rooms, objects, doors, flags, actions, goals, turns. | `SPEC.md` §4–§6 |
-| 2 | **One engine, three interfaces** — human CLI, browser UI, autonomous agent, all driving the same reducer, provably equivalent via a hash chain | `SPEC.md` §4.3, §14 |
-| 3 | **Measurable, replayable results** — metrics, a failure taxonomy, an experiment matrix, and transcripts anyone can re-run | `SPEC.md` §12–§13 |
+| --- | --- | --- |
+| 1 | **An adventure-native state kernel.** Pure, deterministic, and written in the game's own language: rooms, objects, doors, flags, actions, goals, turns. | `SPEC.md` §4 to §6 |
+| 2 | **One engine, three interfaces.** Human CLI, browser client, autonomous agent, all driving the same reducer, provably equivalent through a hash chain. | `SPEC.md` §4.3, §14 |
+| 3 | **Measurable, replayable results.** Metrics, a failure taxonomy, an experiment matrix, and transcripts anyone can re-run. | `SPEC.md` §12 to §13 |
+
+---
 
 ## The test fixture
 
 A short, original Mission Impossible-style adventure: three areas, a four-step dependency chain, a
-lethal trap, and a 10-command gold path.
+lethal trap, and a ten-command gold path.
 
 ```
-BRIEFING ROOM ──► SERVICE CORRIDOR ──[keycard]──► SERVER VAULT
-  keycard           locker ──► wire cutters           bomb (3 wires)
-  bulletin                 └─► defusal manual         safe ─[code]─► case
+BRIEFING ROOM → SERVICE CORRIDOR →[keycard]→ SERVER VAULT
+  keycard         locker → wire cutters          bomb (3 wires)
+  bulletin              → defusal manual          safe →[code]→ case
 ```
 
-The agent receives the mission brief and nothing else. It must discover that the defusal manual is
-in a locked locker, that the manual names the safe wire *and* the safe code, and that the vault
-door needs a keycard from the first room. Cutting the wrong wire ends the run.
+The agent is told only this:
 
-Full adventure specification: [`SPEC.md` §7](./SPEC.md#7-the-mission-impossible-adventure).
+> A booby-trapped case is locked in the server vault. Two objectives: disarm the bomb, and recover
+> the case. Nothing else is known. You are in the briefing room. Discover the rest by exploring.
 
-## Research questions
+Everything else it has to find. The defusal manual is inside a closed locker. The manual names both
+the safe wire and the safe code. The vault door needs a keycard from the first room. Cutting the
+wrong wire ends the run.
 
-- **RQ1** Can a capable LLM agent complete the mission within a 30-turn budget?
-- **RQ2** When it fails, *why* — perception, planning, action generation, memory, or grounding?
-- **RQ3** How much do observation format and context strategy move the result?
-- **RQ4** What is the cost per solved mission?
-- **RQ5** Can an organisation be expressed as an adventure — teams as rooms, tickets as objects — without changing the kernel?
+---
 
-Hypotheses and their falsification conditions: [`SPEC.md` §1.4](./SPEC.md#14-hypotheses-to-be-falsified-not-confirmed).
+## What the experiment reports
 
-## Why a custom kernel rather than an existing engine?
+The obvious measure is a success rate, and it gets reported. A bare number is a poor research
+result, though, because it cannot tell you what to fix.
 
-We surveyed QuestJS (MIT), ink (MIT), TextWorld (Microsoft Research Licence) and the TALES
-benchmark. The short version: an existing adventure framework couples the experiment to an engine
-we do not control, and TextWorld's licence is non-commercial. A small purpose-built kernel gives
-total control over determinism and over exactly what the agent is allowed to see.
+So the primary artefact is a **failure taxonomy**. Every unsuccessful run is sorted into exactly one
+category, computed from the transcript: parsing, hallucination, planning, ordering, exploration
+failure, lethal trap, budget exhaustion, provider error, or abstention.
 
-The benchmark that matters for calibration is **TALES**, where the same models score 76–100 on
-synthetic games and collapse to **13.4%** of maximum score on Jericho — the suite's only
-human-written environment. Human-shaped worlds are where agents break, and the *why* (grounded and
-inductive reasoning failures, context dilution, uninformative feedback) is the reusable finding.
+That histogram is the thing worth having. It says where the model breaks, it tells you what to fix,
+and it transfers. The same categories apply to an agent working inside an organisation.
 
-> Our numbers are **not** comparable to TALES': their agent gets almost no domain information and
-> is scored on a normalised 0–100 scale, while ours gets a mission brief and a command grammar and
-> is scored on binary goal completion. See [`docs/RESEARCH-CONTEXT.md` §3.5](./docs/RESEARCH-CONTEXT.md#35-two-methodological-choices-in-tales-that-differ-from-ours).
+---
 
-Survey, evidence per decision, and the correction log: [`docs/RESEARCH-CONTEXT.md`](./docs/RESEARCH-CONTEXT.md).
-Annotated bibliography: [`docs/REFERENCES.md`](./docs/REFERENCES.md).
+## How the build is ordered
+
+Six numbered experiments, in the `microgpt` and `llm.c` shape: one idea each, every one runnable on
+its own, because the order of work should match the order of understanding.
+
+| # | Experiment | The one idea |
+| --- | --- | --- |
+| 01 | [The game](./experiments/exp-01-the-game/README.md) | A world you can trust, playable by a human and the agent |
+| 02 | [What the agent sees](./experiments/exp-02-what-the-agent-sees/README.md) | The agent's view is smaller than the world, and that gap is the experiment |
+| 03 | [The agent plays](./experiments/exp-03-the-agent-plays/README.md) | A clean loop and a fair error message are enough |
+| 04 | [Why it failed](./experiments/exp-04-why-it-failed/README.md) | The category of failure is the finding |
+| 05 | [The matrix](./experiments/exp-05-the-matrix/README.md) | One number is an anecdote; a cell of a matrix is a result |
+| 06 | [An organisation](./experiments/exp-06-an-organisation/README.md) | The metaphor has to survive contact with a real org |
+
+---
+
+## The longer game
+
+The intended follow-on runs an organisation the way this game runs: state held centrally, each agent
+handed its current situation and a command vocabulary, acting through tool calls. The kernel
+concepts map across directly, and `SPEC.md` §18 sets out the mapping and the seam.
+
+One thing does not carry over, and it is the interesting part. In the adventure, the agent can read
+the manual and learn the rule. In an organisation, some rules are written down and some are not, and
+an agent that cannot tell the difference is the failure mode worth knowing about.
+
+---
 
 ## Repository layout
 
 ```
-SPEC.md                  ← authoritative requirements (start with Part 0)
-experiments/             ← the build, as six numbered experiments, one idea each
+SPEC.md                  ← authoritative requirements, starting with Part 0
+experiments/             ← the build, as six numbered experiments
 AGENT_BRIEF.md           ← copy-paste brief for an implementing agent
 TASKS.md                 ← phase and task cards with acceptance criteria
-RESULTS.md               ← findings write-up (Phase 6)
-docs/proposal.md         ← what this project is and why (living document)
-docs/userguide.md       ← how to use it (living document)
+RESULTS.md               ← findings write-up, after Phase 6
+docs/proposal.md         ← what this project is and why
+docs/userguide.md       ← how to use it
 docs/TESTING.md          ← the testing doctrine and what each layer guarantees
-docs/docs-guide.md       ← how the docs fit together (living document)
-docs/RESEARCH-CONTEXT.md ← engine survey, prior art, evidence per decision, correction log
-docs/REFERENCES.md       ← annotated bibliography with licences and dates accessed
-docs/ARCHITECTURE.md     ← layer map + ADR-001…ADR-016 (why it is shaped this way)
-docs/ADVENTURES.md       ← adventure authoring guide + checklist
-docs-viewer/             ← the shared Devtools docs reader (Gyrum convention)
+docs/docs-guide.md       ← how the docs fit together
+docs/RESEARCH-CONTEXT.md ← engine survey, prior art, evidence per decision
+docs/REFERENCES.md       ← the bibliography
+docs/ARCHITECTURE.md     ← the layer map and ADR-001 to ADR-016
+docs/ADVENTURES.md       ← how to write an adventure
+docs/DIAGRAMS.md         ← the logic, visually
+docs-viewer/             ← the shared Devtools reader
 src/                     ← kernel · adventures · session · agents · runner · cli · server · web
 tests/                   ← kernel, adventure, architecture, leakage, equivalence, replay
-examples/runs/           ← a few committed example transcripts
 ```
 
-## How to run the build
+> **Key takeaways**
+>
+> - The environment is the thing under suspicion. Build it first, and prove it.
+> - The agent's view of the world is smaller than the world. That gap is the experiment.
+> - One engine, three interfaces. A human run and an agent run mean the same thing.
+> - The failure category is the finding. A bare success rate cannot tell you what to fix.
+> - The organisation is the destination. The adventure is the rehearsal.
 
-The work is tracked as nine phase issues, each carrying its own acceptance criteria, grouped into
-matching milestones:
-
-| Issue | Phase | Gate |
-|---|---|---|
-| [#1](https://github.com/gyrum-labs/research-text-adventure-ai/issues/1) | P0 — Kernel | Pure reducer, DSL, parser, observation builder, architecture rules enforced |
-| [#2](https://github.com/gyrum-labs/research-text-adventure-ai/issues/2) | P1 — Adventure | Gold path solves it, BFS proves it is shortest, random policy fails |
-| [#3](https://github.com/gyrum-labs/research-text-adventure-ai/issues/3) | P2 — Human CLI | Playable end-to-end, transcripts replay identically |
-| [#4](https://github.com/gyrum-labs/research-text-adventure-ai/issues/4) | P3 — Agent harness | Provider adapters, prompt, extraction, context strategies, budgets |
-| [#5](https://github.com/gyrum-labs/research-text-adventure-ai/issues/5) | P4 — Measurement | Metrics, failure taxonomy, sweep, Wilson intervals, replay |
-| [#6](https://github.com/gyrum-labs/research-text-adventure-ai/issues/6) | P5 — Web + server | Browser client, swappable session, live agent view |
-| [#7](https://github.com/gyrum-labs/research-text-adventure-ai/issues/7) | P6 — Results | The matrix, `RESULTS.md`, failure annotations, cost per solve |
-| [#8](https://github.com/gyrum-labs/research-text-adventure-ai/issues/8) | P7 — Generality probe | Org-simulation adventure on the *unchanged* kernel |
-| [#9](https://github.com/gyrum-labs/research-text-adventure-ai/issues/9) | P8 — Engine comparison | Same adventure on QuestJS, same harness |
-
-To hand the work to an agent: point it at [`AGENT_BRIEF.md`](./AGENT_BRIEF.md), tell it that
-`SPEC.md` is authoritative, and have it work the issues in order. Each issue is self-contained
-enough to be picked up on its own.
-
-## Key design rules
-
-| Rule | Why |
-|---|---|
-| The kernel performs no I/O, reads no clock, uses no unseeded randomness | Determinism is what makes the results checkable |
-| The agent's view is built by exactly one function | Makes "no privileged information" a testable property rather than an intention |
-| The parser never rewrites the agent's intent | Keeps invalid-action rates attributable to the agent |
-| LLM calls are behind a provider port; a mock provider runs everything offline | Cost safety, and CI that needs no keys |
-| The kernel speaks the game's own vocabulary | An organisation simulation is written as *another adventure*, not as a new engine (§18) |
-
-## The longer game
-
-The intended follow-on: run an organisation the way this game runs — state held centrally, each
-agent handed its current situation and a command vocabulary, acting through tool calls. The kernel
-concepts map onto that domain directly (rooms → teams, objects → tickets and artefacts,
-observations → an agent's dashboard, goals → objectives). `SPEC.md` §18 sets out the mapping and
-identifies which parts are already built.
+---
 
 ## Licence
 
 MIT.
-
-## References
-
-Full annotated bibliography with licences and dates accessed: [`docs/REFERENCES.md`](./docs/REFERENCES.md).
-
-- TALES — Text Adventure Learning Environment Suite: <https://github.com/microsoft/tale-suite> · <https://arxiv.org/abs/2504.14128>
-- Jericho: <https://arxiv.org/abs/1909.05398> · NAIL: <https://arxiv.org/abs/1902.04259>
-- ALFWorld: <https://arxiv.org/abs/2010.03768> · ScienceWorld: <https://arxiv.org/abs/2203.07540>
-- ReAct: <https://arxiv.org/abs/2210.03629> · Reflexion: <https://arxiv.org/abs/2303.11366>
-- Voyager: <https://arxiv.org/abs/2305.16291> · WebArena: <https://arxiv.org/abs/2307.13854>
-- BenchTrace: <https://arxiv.org/abs/2605.29225>
-- QuestJS (MIT): <https://github.com/textadventures/quest> · ink (MIT): <https://github.com/inkle/ink>
-- TextWorld (Microsoft Research Licence): <https://github.com/microsoft/TextWorld>

@@ -1,19 +1,30 @@
-# Experiment 05 — The Matrix
+<!-- page-version: 1.0.0 status: draft last-reviewed: 2026-11-08 -->
+
+# Experiment 05: The Matrix
+
+*One number is an anecdote. A cell of a matrix with an interval is a result, and the difference
+between them is the difference between a hunch and a finding.*
+
 
 > **The one idea:** one number is an anecdote. A cell of a matrix, with an interval, is a result.
+
+> **Reader track**
+>
+> - **Ten minutes.** The conditions and what a cell means.
+> - **Thirty minutes.** The tests and the acceptance criteria.
 
 ## What you are building
 
 The sweep: the same experiment across models and conditions, many times each, summarised
 honestly.
 
-- **Conditions** — the experimental variables, one per axis:
+- **Conditions**: The experimental variables, one per axis:
   - `A` prose observation, full history
   - `B` JSON observation, full history
   - `C` JSON observation + masked legal actions + structured context
   - `D` JSON observation, no history *(the control)*
-- **Cells** — (model × condition), each with at least 10 seeds.
-- **Summaries** — success rate with a Wilson 95% interval, median turns, the failure histogram,
+- **Cells**: (model × condition), each with at least 10 seeds.
+- **Summaries**: Success rate with a Wilson 95% interval, median turns, the failure histogram,
   and cost per solved mission.
 
 ## How to run it
@@ -60,4 +71,4 @@ The method works on one world. Now: does it work on a second, very different one
 ## Reference
 
 - `SPEC.md` §12.4 (experiment matrix), §12.6 (acceptance), §17 (threats to validity)
-- `docs/RESEARCH-CONTEXT.md` §7 — why our numbers are *not* comparable to TALES' numbers
+- `docs/RESEARCH-CONTEXT.md` §7. Why our numbers are *not* comparable to TALES' numbers

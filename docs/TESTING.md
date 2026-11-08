@@ -1,12 +1,17 @@
+<!-- page-version: 1.0.0 status: draft last-reviewed: 2026-11-08 -->
+
 ---
-title: research-text-adventure-ai — testing
+title: research-text-adventure-ai. Testing
 status: living document
 last-updated: 2026-11-07
 ---
 
-> **This is a living document.** Keep the layers below in step with the code. When a new guarantee is claimed — determinism, perception, replay — add the test that proves it in the same change that claims it.
+> **This is a living document.** Keep the layers below in step with the code. When a new guarantee is claimed, determinism, perception, replay, add the test that proves it in the same change that claims it.
 
-# research-text-adventure-ai — testing
+# research-text-adventure-ai: testing
+
+*I have watched enough confident, wrong answers to know that a green test suite is the only thing
+that makes a claim worth making. Here is what this project tests and why.*
 
 The testing story for this project has one unusual feature, and it drives everything else: **the
 environment is the thing under suspicion.** We are measuring an AI agent, and the only way that
@@ -16,13 +21,18 @@ fair, and provably free of leaked answers. A flaky environment produces confiden
 So the tests here are not a safety net at the end of the work. They are the mechanism.
 
 ## The doctrine: test first
+> **Reader track**
+>
+> - **Five minutes.** The doctrine and Layer 1. That is the method.
+> - **Twenty minutes.** Layers 2 to 4. That is the whole stack.
+> - **An hour.** Layer 1 in detail, against `experiments/exp-01-the-game/README.md`.
 
 Every experiment is built test-first, and this is not a style preference.
 
 1. **Write the test first.** The test says what the thing must do, in executable form, before any
    implementation exists. If you cannot write the test, you do not yet know what you are building.
 2. **Watch it fail.** A test that has never failed proves nothing. If it passes on the first run,
-   it is not testing the thing — it is testing nothing.
+   it is not testing the thing. It is testing nothing.
 3. **Make it pass.** The smallest change that works.
 4. **Then clean up, with the tests green.** Refactoring happens after, never before.
 
@@ -39,20 +49,20 @@ A green suite is a claim. A missing test is an unexamined claim.
 Each experiment's README lists its tests **in the order they get written**, so the sequence is
 the plan, not an afterthought:
 
-- [Experiment 01 — The game](../experiments/exp-01-the-game/README.md) — the kernel, the
+- [Experiment 01, The game](../experiments/exp-01-the-game/README.md), the kernel, the
   adventure, and the two ways to play
-- [Experiment 02 — What the agent sees](../experiments/exp-02-what-the-agent-sees/README.md) —
+- [Experiment 02, What the agent sees](../experiments/exp-02-what-the-agent-sees/README.md),
   the perception boundary
-- [Experiment 03 — The agent plays](../experiments/exp-03-the-agent-plays/README.md) — the loop,
+- [Experiment 03, The agent plays](../experiments/exp-03-the-agent-plays/README.md), the loop,
   the prompt, the budgets
-- [Experiment 04 — Why it failed](../experiments/exp-04-why-it-failed/README.md) — the metrics and
+- [Experiment 04, Why it failed](../experiments/exp-04-why-it-failed/README.md), the metrics and
   the failure taxonomy
-- [Experiment 05 — The matrix](../experiments/exp-05-the-matrix/README.md) — the sweep and the
+- [Experiment 05, The matrix](../experiments/exp-05-the-matrix/README.md), the sweep and the
   statistics
-- [Experiment 06 — An organisation](../experiments/exp-06-an-organisation/README.md) — the
+- [Experiment 06, An organisation](../experiments/exp-06-an-organisation/README.md), the
   generality probe
 
-## Layer 1 — Unit tests (pre-push)
+## Layer 1: Unit tests (pre-push)
 
 The fast suite. It must run on every push, with no network and no model access.
 
@@ -67,10 +77,10 @@ The fast suite. It must run on every push, with no network and no model access.
 | `src/runner/classify.ts` | Synthetic transcripts classify to exactly one expected code | The taxonomy is a fact, not an impression |
 | Architecture | `src/kernel` imports nothing outside itself; the kernel contains no clock, randomness or I/O | The boundary is enforced, not intended |
 
-The architecture rules are enforced twice — once as a lint rule and once as a test — because a
+The architecture rules are enforced twice, once as a lint rule and once as a test, because a
 lint rule can be disabled and a test cannot be wished away.
 
-## Layer 2 — 3-persona AI review
+## Layer 2: 3-persona AI review
 
 The Gyrum review gate (`gyrum-review-pr`) runs a structural check suite and a five-persona AI
 review over the diff. This is where the *design* is challenged rather than the code: a reviewer
@@ -86,7 +96,7 @@ For this project the questions a reviewer should press hardest are:
 - Does this change make the parser more forgiving? (That would quietly move the
   `invalidActionRate` metric and invalidate earlier numbers.)
 
-## Layer 3 — Contract tests
+## Layer 3: Contract tests
 
 Contract tests pin the boundaries between the pieces. The ones that matter here:
 
@@ -102,9 +112,9 @@ The replay test is the one to insist on. It is the executable form of "the envir
 trustworthy", and it is the only check that would catch a change that made the kernel
 non-deterministic in a way the unit tests missed.
 
-## Layer 4 — Fleet E2E
+## Layer 4: Fleet E2E
 
-The full sweep — models × conditions × seeds — is the end-to-end run. It is expensive (model
+The full sweep, models × conditions × seeds, is the end-to-end run. It is expensive (model
 calls), so it is not part of the pre-push gate; it is a deliberate, scheduled experiment whose
 artefacts are the result.
 
@@ -115,7 +125,8 @@ classification. A run missing any of the three is a failed run, not a skipped on
 
 | Command | What it does |
 |---|---|
-| `npm run check` | typecheck + lint + tests — the pre-push gate |
+| `npm run check` | typecheck + lint + tests. The pre-push gate |
+| `bash vale.sh` | The prose gate: the em-dash rule and the AI-tell list, then Vale |
 | `npm test` | The unit suite alone |
 | `npm run test:watch` | The unit suite in watch mode, for the test-first loop |
 | `npm run replay -- <file>` | Re-apply a transcript's commands and verify the hash chain |
@@ -130,13 +141,21 @@ classification. A run missing any of the three is a failed run, not a skipped on
 | Gap | Why it is still open | When it closes |
 |---|---|---|
 | The agent's own reasoning traces are not classified | Our taxonomy is operational, computed from the transcript; TALES' cognitive taxonomy needs the traces | If the traces are recorded and a second classifier is written, both are reported side by side |
-| No test yet proves the *agent* is deterministic | It cannot be — model sampling is not reproducible | Never. The guarantee is engine determinism plus a recorded trajectory (`SPEC.md` §13.1) |
+| No test yet proves the *agent* is deterministic | It cannot be. Model sampling is not reproducible | Never. The guarantee is engine determinism plus a recorded trajectory (`SPEC.md` §13.1) |
 | The matrix has not been run at scale | The harness is not written | Experiment 05 |
 | The failure classifier has only been checked against synthetic transcripts | Real transcripts are not yet available | Experiment 04 |
 
+> **Key takeaways**
+>
+> - The environment is the thing under suspicion. Build it first, and prove it.
+> - The agent's view of the world is smaller than the world. That gap is the experiment.
+> - One engine, three interfaces. A human run and an agent run mean the same thing.
+> - The failure category is the finding. A bare success rate cannot tell you what to fix.
+> - The organisation is the destination. The adventure is the rehearsal.
+
 ## Related
 
-- [`SPEC.md`](../SPEC.md) §16 — the phase plan and acceptance criteria
-- [`experiments/README.md`](../experiments/README.md) — the experiment series and the working method
-- [`docs/proposal.md`](./proposal.md) — what this project is and why
-- [`docs/userguide.md`](./userguide.md) — how to use it
+- [`SPEC.md`](../SPEC.md) §16. The phase plan and acceptance criteria
+- [`experiments/README.md`](../experiments/README.md). The experiment series and the working method
+- [`docs/proposal.md`](./proposal.md). What this project is and why
+- [`docs/userguide.md`](./userguide.md). How to use it

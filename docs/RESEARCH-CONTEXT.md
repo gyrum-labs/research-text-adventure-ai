@@ -1,9 +1,11 @@
-# Research Context — Engines, Benchmarks, Prior Art and the Design Decisions
+<!-- page-version: 1.0.0 status: draft last-reviewed: 2026-11-08 -->
+
+# Research Context: Engines, Benchmarks, Prior Art and the Design Decisions
 
 This document records the evidence behind the architectural decisions in `SPEC.md` §3. It is the
 "why", kept separate from the "what". It is a research record: every figure below was read from a
 primary source and verified against it on **7 November 2026**. Where an earlier draft of this
-repository mis-stated a figure, the correction is recorded explicitly in §3.6 — the error and its
+repository mis-stated a figure, the correction is recorded explicitly in §3.6. The error and its
 repair are part of the record.
 
 ---
@@ -24,20 +26,20 @@ repair are part of the record.
 
 > *"Are there any simple open-source adventure game engines we could utilise?"*
 
-Yes — several, and they are good. We are not using one for v1 because of **coupling**, not quality.
+Yes. Several, and they are good. We are not using one for v1 because of **coupling**, not quality.
 The research question is about an agent operating inside a *controlled, deterministic, auditable*
-environment. If the environment is supplied by a third party, then the observation surface — the
-exact variable under test — is decided by that engine's script format rather than by us, and
+environment. If the environment is supplied by a third party, then the observation surface. The
+exact variable under test. Is decided by that engine's script format rather than by us, and
 determinism, replay format and the kernel's vocabulary all become someone else's decision.
 
 ### 2.1 Survey
 
 | Option | Licence (verified via GitHub API) | What it is | Fit for v1 |
 |---|---|---|---|
-| **QuestJS** — [`textadventures/quest`](https://github.com/textadventures/quest) | **MIT** (`spdx_id: MIT`) | JavaScript re-implementation of the Quest engine. Rooms, objects, attributes, dynamic text, text command parser. Browser-native. | **Alternative — Phase 8.** Existing object model is attribute-driven and designed for human-authored prose; modelling "the agent may only observe what it has perceived" on top of it is awkward. Quest shows the player the room's full contents; we need a perception layer that differs between human and agent views. |
-| **ink** — [`inkle/ink`](https://github.com/inkle/ink) | **MIT** (`spdx_id: MIT`) | Narrative scripting language for branching interactive fiction. Excellent at story structure and conditional text. | **Future experiment.** A *story runtime*, not a world-state simulator. It does not model inventories, locks, tool possession or world flags, and has no notion of "the agent does not yet know which wire is safe". Deriving a state kernel from ink means building the kernel anyway, on top of ink. |
-| **TextWorld** — [`microsoft/TextWorld`](https://github.com/microsoft/TextWorld) | **Microsoft Research License** — the GitHub API reports `NOASSERTION`, **not** an OSI-approved licence | RL sandbox for training and evaluating agents on text games. Its *information mask* is exactly the perception control we want. | **Research reference only.** Python; heavy install (Java needed for TextWorld-Express and ScienceWorld); non-commercial licence. **Correction:** an earlier draft of this project assumed TextWorld was MIT. It is not, and that assumption must not be carried forward. |
-| **TALES** — [`microsoft/tale-suite`](https://github.com/microsoft/tale-suite) | MIT | Benchmark unifying Jericho, ALFWorld, ScienceWorld, TextWorld and TextWorldExpress, plus the synthetic "Simon Says" screening task | **Primary yardstick and design vocabulary.** See §3. |
+| **QuestJS**, [`textadventures/quest`](https://github.com/textadventures/quest) | **MIT** (`spdx_id: MIT`) | JavaScript re-implementation of the Quest engine. Rooms, objects, attributes, dynamic text, text command parser. Browser-native. | **Alternative, Phase 8.** Existing object model is attribute-driven and designed for human-authored prose; modelling "the agent may only observe what it has perceived" on top of it is awkward. Quest shows the player the room's full contents; we need a perception layer that differs between human and agent views. |
+| **ink**. [`inkle/ink`](https://github.com/inkle/ink) | **MIT** (`spdx_id: MIT`) | Narrative scripting language for branching interactive fiction. Excellent at story structure and conditional text. | **Future experiment.** A *story runtime*, not a world-state simulator. It does not model inventories, locks, tool possession or world flags, and has no notion of "the agent does not yet know which wire is safe". Deriving a state kernel from ink means building the kernel anyway, on top of ink. |
+| **TextWorld**, [`microsoft/TextWorld`](https://github.com/microsoft/TextWorld) | **Microsoft Research License**, the GitHub API reports `NOASSERTION`, **not** an OSI-approved licence | RL sandbox for training and evaluating agents on text games. Its *information mask* is exactly the perception control we want. | **Research reference only.** Python; heavy install (Java needed for TextWorld-Express and ScienceWorld); non-commercial licence. **Correction:** an earlier draft of this project assumed TextWorld was MIT. It is not, and that assumption must not be carried forward. |
+| **TALES**. [`microsoft/tale-suite`](https://github.com/microsoft/tale-suite) | MIT | Benchmark unifying Jericho, ALFWorld, ScienceWorld, TextWorld and TextWorldExpress, plus the synthetic "Simon Says" screening task | **Primary yardstick and design vocabulary.** See §3. |
 | **Minimal TypeScript kernel** | MIT (ours) | Purpose-built pure state-transition kernel with a declarative adventure format | **Chosen for v1.** |
 
 ### 2.2 The cost we accept
@@ -49,7 +51,7 @@ makes that tractable.
 
 ---
 
-## 3. TALES — the benchmark we calibrate against
+## 3. TALES: the benchmark we calibrate against
 
 **Primary source:** Cui, Yuan, Xiao, Ammanabrolu & Côté, *TALES: Text Adventure Learning Environment
 Suite*, arXiv:2504.14128 (v1 19 Apr 2025; v4 24 Apr 2025), CC BY 4.0. Suite: <https://github.com/microsoft/tale-suite>.
@@ -59,7 +61,7 @@ Suite*, arXiv:2504.14128 (v1 19 Apr 2025; v4 24 Apr 2025), CC BY 4.0. Suite: <ht
 > "Despite an impressive showing on synthetic games, even the top LLM-driven agents fail to achieve
 > 15% on games designed for human enjoyment."
 
-### 3.2 What that actually means — and what it does not
+### 3.2 What that actually means: and what it does not
 
 This is the single most important correction in this document, so it is worth being precise.
 
@@ -80,7 +82,7 @@ top agent score per framework:
 | **Jericho** | **54** | **87.15** | ✓ | **✗** | ✓ | ✓ | ✓ | ✓ | **9.5** | **13.4** |
 
 **Jericho is the only non-synthetic framework in the suite.** Its top reasoning-agent score is
-**13.4** — which is where the abstract's "fail to achieve 15%" comes from. Per-game breakdown
+**13.4**. Which is where the abstract's "fail to achieve 15%" comes from. Per-game breakdown
 (Appendix B, top rows):
 
 | Model | TextWorld | TextWorldExpress | ALFWorld | ScienceWorld | Jericho |
@@ -95,13 +97,13 @@ The shape of the result: **the same models score 76–100 on synthetic and struc
 and 5–13 on human-written interactive fiction.** A roughly tenfold collapse, driven entirely by
 whether the games are human-authored.
 
-### 3.3 Zork1 — the hardest single case
+### 3.3 Zork1: the hardest single case
 
 From §4.4, verbatim in substance:
 
 - Zork1 "still proves an insurmountable challenge even for modern state-of-the-art LLMs".
 - The authors suspect training-data leakage: *"we very strongly suspect that Claude-3.5-Sonnet and
-  other LLMs were trained on play-through transcripts of Zork1"* — and it still fails.
+  other LLMs were trained on play-through transcripts of Zork1"*. And it still fails.
 - The top agents reach **.291** normalised score, which the authors describe as failing "to achieve
   over 50% of the available score".
 - Zork1 needs "well over 100 steps" to complete; the suite caps agents at **100 steps**.
@@ -109,7 +111,7 @@ From §4.4, verbatim in substance:
 - Grounded-reasoning failures observed: hallucinating actions that make no sense in context, and
   **attempting to interact with objects seen but not in the current location**.
 - Inductive-reasoning failures observed: agents **repeatedly attempted actions that failed, or
-  repeatedly cycled between a set of locations** — and this affected strong models too, despite
+  repeatedly cycled between a set of locations**. And this affected strong models too, despite
   the suspected leakage.
 - The mechanism named for degradation with game length: *"relevant information getting lost in the
   ever increasing context."*
@@ -117,7 +119,7 @@ From §4.4, verbatim in substance:
 ### 3.4 The four reasoning skills TALES uses to classify failures
 
 TALES classifies every failure as **spatial**, **deductive**, **inductive** or **grounded**
-reasoning. Our failure taxonomy (`SPEC.md` §12.3) is different on purpose — ours is
+reasoning. Our failure taxonomy (`SPEC.md` §12.3) is different on purpose. Ours is
 *operational* (what the agent did wrong, recoverable from a transcript) rather than *cognitive*
 (requires reading reasoning traces). But the two are complementary and should be reported side by
 side in `RESULTS.md`.
@@ -126,8 +128,8 @@ The paper's own findings that matter to our design:
 
 | Finding | Our design consequence |
 |---|---|
-| *"LLMs often fail to discover implicit game dynamics through inductive reasoning"* | Our adventure must teach its rules **through the environment**, not the prompt — hence the manual in the locker, and the `hint` affordance. |
-| ALFWorld returns *"nothing happened"* for **any** failure, including parse failure — so the agent cannot learn why it failed. | `SPEC.md` §8.2 mandates an **informative error contract**: what was attempted, what was wrong, what is possible. This is a direct, evidence-backed design decision, and ALFWorld is the counterexample. |
+| *"LLMs often fail to discover implicit game dynamics through inductive reasoning"* | Our adventure must teach its rules **through the environment**, not the prompt. Hence the manual in the locker, and the `hint` affordance. |
+| ALFWorld returns *"nothing happened"* for **any** failure, including parse failure. So the agent cannot learn why it failed. | `SPEC.md` §8.2 mandates an **informative error contract**: what was attempted, what was wrong, what is possible. This is a direct, evidence-backed design decision, and ALFWorld is the counterexample. |
 | Grounded failures: acting on objects **seen but not present in the current location**. | `SPEC.md` §9.2 confines the observation to room contents ∪ inventory, and `hallucinationRate` measures exactly this failure. |
 | Inductive failures: repeating failed actions, cycling between locations. | `SPEC.md` §11.3 adds **loop detection** (≥3 repeated state hashes) and the `repeatStateRate` metric. |
 | *"basing current action and reasoning in outdated or incorrect game state facts, especially in later steps"*; *"failure to abstract failure modes from repeated attempts"*. | Directly motivates **H5** and the `structured` context strategy (`SPEC.md` §10.4): a known-facts block beats a growing transcript. |
@@ -143,7 +145,7 @@ These are the honest comparability caveats.
    When stuck, try using the 'help' command…"* The authors state they deliberately provide no
    domain knowledge, unlike several other benchmarks, to measure capability rather than
    instruction-following.
-   **Our prompt is materially more informative** — it supplies the mission brief and the command
+   **Our prompt is materially more informative**. It supplies the mission brief and the command
    grammar (`SPEC.md` §10.3). Our experiment therefore tests *instruction-following under a state
    machine*, not *blind exploration*. Our success rates are **not comparable** to TALES numbers,
    and should not be placed on the same axis.
@@ -155,7 +157,7 @@ These are the honest comparability caveats.
 
 | Date | Item | Earlier statement | Corrected statement |
 |---|---|---|---|
-| 7 Nov 2026 | TALES headline | "top LLM-driven agents fail ~85% of human-designed text adventures" (in `SPEC.md` §3 and `README.md`) | The metric is **normalised score, not per-game failure rate**. The correct statement is: on Jericho — the only non-synthetic environment — the best agents reach **13.4%** of maximum score (zero-shot: 9.5%), versus 76–100 on synthetic environments. The "~85%" framing conflated a score shortfall with a failure rate and has been removed everywhere. |
+| 7 Nov 2026 | TALES headline | "top LLM-driven agents fail ~85% of human-designed text adventures" (in `SPEC.md` §3 and `README.md`) | The metric is **normalised score, not per-game failure rate**. The correct statement is: on Jericho, the only non-synthetic environment, the best agents reach **13.4%** of maximum score (zero-shot: 9.5%), versus 76–100 on synthetic environments. The "~85%" framing conflated a score shortfall with a failure rate and has been removed everywhere. |
 | 7 Nov 2026 | TextWorld licence | "MIT" | **Microsoft Research License** (`NOASSERTION`). Not commercially permissive. |
 
 ### 3.7 Point-in-time caveat
@@ -171,24 +173,24 @@ prefer the suite's live results where they are available.
 
 ## 4. Prior art we build on
 
-### 4.1 ReAct — the reasoning/acting loop
+### 4.1 ReAct: the reasoning/acting loop
 
 Yao et al., *ReAct: Synergizing Reasoning and Acting in Language Models*, ICLR 2023,
 arXiv:2210.03629. <https://arxiv.org/abs/2210.03629>
 
 - Interleaves free-form reasoning traces (**Thought**) with task actions (**Action**) and
-  environment feedback (**Observation**) — prompting, not reinforcement learning.
+  environment feedback (**Observation**). Prompting, not reinforcement learning.
 - On interactive decision-making, ReAct beats action-only prompting and outperforms
-  imitation- and RL-trained baselines by **+34% absolute on ALFWorld** and **+10% on WebShop**,
+  baselines trained by imitation and by reinforcement learning, by **+34% absolute on ALFWorld** and **+10% on WebShop**,
   while using one or two in-context examples against baselines trained on 10³–10⁵ instances.
-- Its failure analysis attributes a large share of errors to **non-informative search** — the agent
+- Its failure analysis attributes a large share of errors to **non-informative search**. The agent
   searching without learning.
 
 **What we take:** the `THINK:` / `COMMAND:` envelope (`SPEC.md` §10.3) is a ReAct-shaped contract
 with one action per turn, which keeps the transcript machine-readable. The `thinking: on|off`
 variable (`SPEC.md` §19, Q5) is the ReAct-vs-zero-shot comparison, borrowed directly.
 
-### 4.2 Reflexion — memory built from the agent's own observations
+### 4.2 Reflexion: memory built from the agent's own observations
 
 Shinn et al., *Reflexion: Language Agents with Verbal Reinforcement Learning*, NeurIPS 2023,
 arXiv:2303.11366. <https://arxiv.org/abs/2303.11366>
@@ -196,15 +198,15 @@ arXiv:2303.11366. <https://arxiv.org/abs/2303.11366>
 - Agents reflect on task feedback in **verbal** form and store the reflection in an **episodic
   memory buffer** to improve subsequent trials. No weight updates.
 - Improves over baselines by **22% on ALFWorld**, 20% on HotPotQA, 11% on HumanEval.
-- Notably, the memory is **bounded** — the paper truncates to the last three reflections
+- Notably, the memory is **bounded**. The paper truncates to the last three reflections
   explicitly *"to avoid very long prompt windows that may exceed the maximum limit"*.
 
 **What we take:** the `structured` context strategy (`SPEC.md` §10.4) is the Reflexion insight
-applied to a single episode — a bounded, derived summary of what the agent has observed, rather
+applied to a single episode. A bounded, derived summary of what the agent has observed, rather
 than a growing transcript. The bounded-memory lesson also underwrites the `window` strategy (N=5).
 Reflexion's *retry with memory* loop is out of scope for v1 and is noted in `SPEC.md` §18.3.
 
-### 4.3 Jericho — template-based action spaces and state introspection
+### 4.3 Jericho: template-based action spaces and state introspection
 
 Hausknecht, Ammanabrolu, Côté & Yuan, *Interactive Fiction Games: A Colossal Adventure*, AAAI
 2020 (arXiv:1909.05398); companion *NAIL: A General Interactive Fiction Agent*
@@ -220,10 +222,10 @@ Hausknecht, Ammanabrolu, Côté & Yuan, *Interactive Fiction Games: A Colossal A
 - The **masked-action condition** (`SPEC.md` §12.4, condition C) is the LLM analogue of TDQN's
   template action space, and this is now an explicit comparison rather than an invention.
 - Jericho's **state load/save** is the precedent for our hash chain and replay (`SPEC.md` §13).
-- The random-policy baseline is expected to score ~0 — our adventure must preserve that property
+- The random-policy baseline is expected to score ~0. Our adventure must preserve that property
   (acceptance criterion P1.4).
 
-### 4.4 Voyager — skill libraries, and the shape of the long-term goal
+### 4.4 Voyager: skill libraries, and the shape of the long-term goal
 
 Wang et al., *Voyager: An Open-Ended Embodied Agent with Large Language Models*, TMLR 2024,
 arXiv:2305.16291. <https://github.com/MineDojo/Voyager>
@@ -232,7 +234,7 @@ arXiv:2305.16291. <https://github.com/MineDojo/Voyager>
   library** of executable code, and **iterative prompting** that incorporates environment feedback,
   execution errors and self-verification.
 - Obtains **3.3× more unique items**, travels **2.3× farther**, unlocks tech-tree milestones up to
-  **15.3× faster** than prior SOTA, and — the result that matters for us — **reuses its skill
+  **15.3× faster** than prior SOTA, and, the result that matters for us, **reuses its skill
   library in a new world to solve novel tasks from scratch**, where other methods fail to
   generalise.
 
@@ -242,19 +244,19 @@ shape. A skill library is explicitly **not** in v1 scope, but `SPEC.md` §18.3 n
 natural next mechanism, and the "reuses its library in a new world" result is the evidence that
 such transfer is achievable at all.
 
-### 4.5 WebArena — the organisation-simulation prior art
+### 4.5 WebArena: the organisation-simulation prior art
 
 Zhou et al., *WebArena: A Realistic Web Environment for Building Autonomous Agents*, ICLR 2024,
 arXiv:2307.13854. <https://webarena.dev>
 
 - A **standalone, self-hostable, reproducible** environment: four functional website categories
   (e-commerce, forum, collaborative software development, CMS), plus utility tools and knowledge
-  resources. 812 long-horizon tasks from 241 templates, graded by **functional correctness** —
+  resources. 812 long-horizon tasks from 241 templates, graded by **functional correctness**.
   programmatic checks of the *end state*, not the action sequence.
 - Best GPT-4-based agent: **14.41% end-to-end success**, against **78.24% for humans**.
 
 **What we take:** three things map directly onto our design.
-1. **Functional-correctness grading** — checking the end state, not the path — is what our
+1. **Functional-correctness grading**, checking the end state, not the path, is what our
    `GoalSpec` mechanism does (`SPEC.md` §6.1).
 2. **A self-hosted, reproducible environment** is the precedent for our "no infrastructure required"
    position (`SPEC.md` §14).
@@ -263,19 +265,19 @@ arXiv:2307.13854. <https://webarena.dev>
    long-horizon professional tasks. Our experiment should be read as a *scaled-down rehearsal* of
    that gap, not as a proof of feasibility.
 
-### 4.6 ALFWorld and ScienceWorld — the environment attributes that matter
+### 4.6 ALFWorld and ScienceWorld: the environment attributes that matter
 
 Shridhar et al., *ALFWorld: Aligning Text and Embodied Environments for Interactive Learning*,
 ICLR 2021. <https://arxiv.org/abs/2010.03768> · Wang et al., *ScienceWorld*, arXiv:2203.07540.
 
 These matter to us through the **attribute table in §3.2**, not through their scores. ALFWorld is
 the only environment in TALES with *no informative feedback, no nearest-neighbour parser, no game
-resets and no dead state* — and the paper's qualitative analysis attributes much of its agents'
+resets and no dead state*. And the paper's qualitative analysis attributes much of its agents'
 failure to exactly that: the environment says *"nothing happened"* and the agent cannot infer why.
-Our adventure deliberately inverts all four properties — informative feedback, alias resolution,
+Our adventure deliberately inverts all four properties. Informative feedback, alias resolution,
 irreversible failure (detonation), and a dead state.
 
-### 4.7 BenchTrace — failure localisation as a first-class metric
+### 4.7 BenchTrace: failure localisation as a first-class metric
 
 *BenchTrace: A Benchmark for Testing Reflection Ability and Controlled Evolution in LLM Agents*,
 arXiv:2605.29225. <https://arxiv.org/abs/2605.29225>
@@ -283,14 +285,14 @@ arXiv:2605.29225. <https://arxiv.org/abs/2605.29225>
 - Reports that current models fall **below a 30% end-to-end pass rate on reflection evaluation**,
   with **diagnosis as the primary bottleneck**.
 - Its reflection prompt for Jericho gives the evaluator exactly three inputs: `obs`, `inv`, and
-  `action` — the same shape as our `Observation`.
+  `action`. The same shape as our `Observation`.
 - Reports that self-evolution methods improve over non-evolving baselines, but that **agents forget
   early lessons as noise episodes accumulate** and fail to generalise reflections beyond the
   specific context, causing negative transfer.
 
 **What we take:** (a) the `obs` + inventory + action shape corroborates our observation contract;
 (b) the "diagnosis is the bottleneck" result is the strongest available argument that a *failure
-taxonomy* — not a win rate — is the artefact worth producing, which is why `SPEC.md` §12.3 makes
+taxonomy*, not a win rate, is the artefact worth producing, which is why `SPEC.md` §12.3 makes
 the taxonomy a first-class deliverable and `AC-R4` requires annotated transcripts per category;
 (c) "forget early lessons as noise accumulates" is independent support for H5.
 
@@ -331,8 +333,8 @@ Two things follow for us, and both are deliberate:
 
 ### 5.1 Originality statement
 
-Our adventure is an **original homage**. It reproduces the *shape* of the 1979 adventure — a
-three-area, lock-and-key, bomb-disposal mission under a move limit — and nothing else. No prose,
+Our adventure is an **original homage**. It reproduces the *shape* of the 1979 adventure. A
+three-area, lock-and-key, bomb-disposal mission under a move limit. And nothing else. No prose,
 room names, object names, puzzle layout, walkthrough or text from any existing game is reproduced.
 The setting is a corporate server vault rather than a nuclear plant, the objects are a keycard, a
 wire cutter, a defusal manual and a safe rather than security keys and a bomb detector, and the
@@ -344,8 +346,8 @@ dependency chain is our own. This is stated in `SPEC.md` §7.1 and enforced by r
 
 | # | Decision | Evidence | Where it lands |
 |---|---|---|---|
-| D1 | Build a custom kernel instead of adopting an engine | Coupling argument (§2); the kernel must read like the thing it models | `SPEC.md` §3, §4.4 |
-| D2 | The kernel speaks the adventure's vocabulary — rooms, objects, doors, flags | The game's own language is the point; Phase 7 writes the organisation as another adventure | `SPEC.md` §6.1 |
+| D1 | Build a custom kernel instead of adopting an engine | Coupling argument in §2; the kernel must read like the thing it models | `SPEC.md` §3, §4.4 |
+| D2 | The kernel speaks the adventure's vocabulary. Rooms, objects, doors, flags | The game's own language is the point; Phase 7 writes the organisation as another adventure | `SPEC.md` §6.1 |
 | D3 | The agent's view is built by exactly one function | TextWorld's information mask; TALES' grounded-reasoning failures | `SPEC.md` §9 |
 | D4 | Informative error messages are mandatory | ALFWorld's "nothing happened" is the counterexample that produces unlearnable failures | `SPEC.md` §8.2 |
 | D5 | The parser never repairs the agent's intent | Otherwise `invalidActionRate` measures the parser, not the agent | `SPEC.md` §8.2, §10.5 |
@@ -373,7 +375,7 @@ Stated so that nobody misreads our numbers as TALES numbers.
 | K2 | Our metric is binary goal completion; TALES' is normalised score with milestones | Not convertible without a mapping. We report our own metric and cite TALES qualitatively |
 | K3 | Our adventure is one game, hand-built, with a 10-command gold path; Jericho is 54 human-written games with an 87.15-step average walkthrough | A single adventure cannot support a population claim. Phase 7 adds a second adventure; Phase 8 adds QuestJS |
 | K4 | Our turn budget is 30; TALES' is 100, and only 57% of Jericho's score is reachable in 100 steps | Our task is *shorter* but *more tightly budgeted*. Both directions of difficulty are present; report both |
-| K5 | We use a newer model generation than the paper's initial release | The 2025 figures are a baseline, not a live leaderboard (§3.7) |
+| K5 | We use a newer model generation than the paper's initial release | The 2025 figures are a baseline, not a live leaderboard. See §3.7 |
 
 ---
 
@@ -384,7 +386,7 @@ Stated so that nobody misreads our numbers as TALES numbers.
 - We did **not** conclude that WebArena's 14.41% predicts our org-simulation outcome. We cite it as
   a reference point for the *shape* of the problem, not as a forecast.
 - We did **not** assume TextWorld's information-mask design is available to us under a permissive
-  licence. We reimplemented the *principle* (§4.3, D3).
+  licence. We reimplemented the *principle*. See §4.3, D3.
 
 ---
 

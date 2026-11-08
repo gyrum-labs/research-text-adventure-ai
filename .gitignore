@@ -201,3 +201,6 @@ gyrum-review-findings.json.prior-keys
 .gyrum/deferred-first-push.log
 .gyrum/deferred-first-push.log.lock
 # >>> gyrum-managed:end
+
+# Vale's synced style pack (re-fetched by `vale sync`)
+.vale/styles/Microsoft/

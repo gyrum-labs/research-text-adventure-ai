@@ -1,7 +1,9 @@
+<!-- page-version: 1.0.0 status: draft last-reviewed: 2026-11-08 -->
+
 # Adventure Authoring Guide
 
 How to write an adventure for the kernel. The Mission Impossible adventure itself is specified in
-`SPEC.md` §7 — this document explains the *mechanics* you use to express it, and shows a worked
+`SPEC.md` §7. This document explains the *mechanics* you use to express it, and shows a worked
 example.
 
 An adventure is **pure data**. It contains no logic. Everything it can do is declared through the
@@ -90,7 +92,7 @@ Notes:
   agent must discover.** Putting the safe code in the manual's `detail` is what makes reading the
   manual a hard gate.
 - `aliases` are declared by the author and are the *only* strings the parser may resolve loosely.
-- `container.contents` is hidden while `closed` is true — the agent sees that the locker is closed,
+- `container.contents` is hidden while `closed` is true. The agent sees that the locker is closed,
   not what is inside.
 
 ### Connections
@@ -206,9 +208,9 @@ The fact is now in the game state *and* in the transcript, so the agent can refe
 > **Note.** When two actions share a verb, the reducer picks the first whose `requires` all hold,
 > and whose arguments resolve. Order actions in the file from most specific to least. The code
 > check for the safe should be a distinct verb (`enter <code>`) if the two `unlock` uses become
-> ambiguous — `SPEC.md` §8.1 lists `enter` as the intended verb for codes.
+> ambiguous. `SPEC.md` §8.1 lists `enter` as the intended verb for codes.
 
-**A lethal action — the trap:**
+**A lethal action. The trap:**
 
 ```ts
 {
@@ -235,12 +237,12 @@ The fact is now in the game state *and* in the transcript, so the agent can refe
 And the failure of the wrong wire is expressed by a **second action spec** whose `effects` include
 `{ op: 'finish', outcome: 'failure', reason: '...' }`.
 
-**The ordering trap** — cutting before reading the manual — is the same `cut` action with a
+**The ordering trap**, cutting before reading the manual, is the same `cut` action with a
 `requires` on `manual_read`. Because the preconditions fail, the reducer emits `action_failed`
 and the state does not change: **a recoverable mistake**, not a loss. Contrast with cutting the
 wrong wire, which is irreversible.
 
-That distinction — recoverable failure vs irreversible failure — is the single most important
+That distinction, recoverable failure vs irreversible failure, is the single most important
 lever for making an adventure hard but fair, and it is worth getting right in every adventure you
 write.
 
@@ -267,7 +269,7 @@ goals: [
 ]
 ```
 
-`text` is **disclosed to the agent** — it is the objective. `achievedWhen` is the success check.
+`text` is **disclosed to the agent**. It is the objective. `achievedWhen` is the success check.
 A run succeeds only when every goal is achieved.
 
 ---
@@ -326,7 +328,7 @@ Before an adventure is accepted, every box must be ticked:
 - [ ] **BFS confirms the gold path is shortest.** (`SPEC.md` P1.3)
 - [ ] **A random policy cannot solve it.** (`SPEC.md` P1.4) If it can, the adventure is too easy.
 - [ ] **There is at least one recoverable failure** (wrong order, missing prerequisite) and at
-      least one irreversible one — or a deliberate, documented decision not to.
+      least one irreversible one. Or a deliberate, documented decision not to.
 - [ ] **No brute-force path exists** within the turn budget. A 4-digit code with 30 turns is safe;
       a 2-digit code is not.
 - [ ] **The adventure loads under Zod validation** and fails fast with a readable message if not.
@@ -360,5 +362,5 @@ The fastest way to catch a leak is to ask, for each required fact:
 
 > *Can the agent learn this without being told?*
 
-If the answer is no — because the fact only exists in `requires`/`effects` or in the gold path —
+If the answer is no, because the fact only exists in `requires`/`effects` or in the gold path,
 the adventure is broken, and `tests/leakage.test.ts` will say so.

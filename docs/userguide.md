@@ -1,37 +1,47 @@
+<!-- page-version: 1.0.0 status: draft last-reviewed: 2026-11-08 -->
+
 ---
-title: research-text-adventure-ai — user guide
+title: research-text-adventure-ai. User guide
 status: living document
 last-updated: 2026-11-07
 ---
 
-> **This is a living document.** Screenshots, keyboard flows, and behaviour descriptions should match the current build — refresh the images and the surrounding prose whenever the user-facing surface of research-text-adventure-ai changes.
+> **This is a living document.** Screenshots, keyboard flows, and behaviour descriptions should match the current build. Refresh the images and the surrounding prose whenever the user-facing surface of research-text-adventure-ai changes.
 
-# research-text-adventure-ai — user guide
+# research-text-adventure-ai: user guide
 
-> **This is a living document.** This project has no graphical UI yet — it is a library and a
-> command-line tool — so this guide uses terminal output and diagrams in place of screenshots.
+*The hardest part of this project is not the agent. It is making a world in which an agent's
+success and failure are both unambiguous. This guide is how you play in that world.*
+
+> **This is a living document.** This project has no graphical UI yet. It is a library and a
+> command-line tool. So this guide uses terminal output and diagrams in place of screenshots.
 
 This guide is for someone who has never run this project before. It takes about ten minutes to
 read and leaves you able to play the adventure yourself and understand what the experiment is
 measuring.
 
 ## Concepts
+> **Reader track**
+>
+> - **Five minutes.** Concepts and Getting started. You can play after that.
+> - **Twenty minutes.** First use and Common workflows.
+> - **An hour.** Troubleshooting as well, because it is where the real questions live.
 
 Five nouns to hold in your head. `SPEC.md` Part 0 is the long version; this is the short one.
 
-**Adventure.** The complete definition of one game — its rooms, objects, doors, actions and
+**Adventure.** The complete definition of one game. Its rooms, objects, doors, actions and
 goals. It is *pure data*: no logic, no code, just declarations the engine reads. *Not* a running
 program, and *not* the thing under test.
 
 **Kernel.** The pure engine: it takes the current state and one command and returns the next
 state. It never guesses, never asks the model anything, and never changes its mind. *Not* a game
-framework — it is small enough to read in one sitting.
+framework. It is small enough to read in one sitting.
 
 **State.** Everything true right now: which room the agent is in, what it carries, which doors
 are open. A plain value that can be printed and compared. *Not* a process.
 
 **Observation.** The part of the state the agent is allowed to see. Deliberately *smaller* than
-the state — the agent cannot see inside a closed locker. *Not* the state, and not a summary of it.
+the state. The agent cannot see inside a closed locker. *Not* the state, and not a summary of it.
 
 **Turn.** One action and its consequences. The kernel's only unit of time. *Not* a "round" of
 anything.
@@ -79,7 +89,7 @@ npm run check     # typecheck + lint + tests
 
 The simplest end-to-end workflow: play the adventure, then watch a model attempt the same thing.
 
-**Step 1 — play it.** Type commands at the `>` prompt. The ten commands that finish the mission:
+**Step 1. Play it.** Type commands at the `>` prompt. The ten commands that finish the mission:
 
 ```
 take keycard · go corridor · open locker · take cutters · read manual
@@ -87,14 +97,14 @@ unlock vault door with keycard · go vault · cut yellow wire with cutters
 unlock safe with 4821 · take case
 ```
 
-**Step 2 — watch a model try.** The same adventure, the same engine, no extra help:
+**Step 2. Watch a model try.** The same adventure, the same engine, no extra help:
 
 ```sh
 npm run agent -- --provider mock                    # offline, free, deterministic
 npm run agent -- --provider anthropic --model claude-sonnet-4.5
 ```
 
-**Step 3 — read the evidence.** Every run writes a transcript and a metrics file under `runs/`.
+**Step 3. Read the evidence.** Every run writes a transcript and a metrics file under `runs/`.
 The transcript is the record you can check:
 
 ```
@@ -104,7 +114,7 @@ The transcript is the record you can check:
 {"type":"state","turn":1,"hash":"sha256:…"}
 ```
 
-And you can check it yourself — replaying a transcript re-runs its commands through the engine
+And you can check it yourself. Replaying a transcript re-runs its commands through the engine
 and compares the hash chain:
 
 ```sh
@@ -123,8 +133,16 @@ npm run replay -- runs/<file>.jsonl
 | Read the docs in a browser | `pydocs .` | This repository's Markdown, with search and Mermaid |
 
 For the full walkthrough of the experiment series, start at
-[`experiments/README.md`](../experiments/README.md) — each experiment has its own README with the
+[`experiments/README.md`](../experiments/README.md). Each experiment has its own README with the
 idea, the tests and the acceptance criteria.
+
+> **Key takeaways**
+>
+> - The environment is the thing under suspicion. Build it first, and prove it.
+> - The agent's view of the world is smaller than the world. That gap is the experiment.
+> - One engine, three interfaces. A human run and an agent run mean the same thing.
+> - The failure category is the finding. A bare success rate cannot tell you what to fix.
+> - The organisation is the destination. The adventure is the rehearsal.
 
 ## Troubleshooting
 
@@ -142,7 +160,7 @@ pipeline without a key, and check the key's environment variable name against th
 adapter's documentation.
 
 **The replay says the hash chain does not match.**
-Something changed between the run and the replay — most often the adventure data itself, which is
+Something changed between the run and the replay. Most often the adventure data itself, which is
 hashed into the transcript header. If the adventure was edited, the old transcript legitimately no
 longer replays. The transcript header records the adventure hash so this is detectable rather than
 mysterious.
