@@ -85,6 +85,24 @@ call: the conditions are real code that change what the model is shown, the swee
 the intervals are the published ones to four decimal places, and the hypotheses are decided by
 comparing cells rather than by opinion.
 
+The matrix runs a live model when the configuration names one. A model entry carries the
+provider, the model, the endpoint and the variable its key is in, so any OpenAI-compatible
+service can be swept:
+
+```json
+{
+  "id": "live",
+  "label": "live",
+  "provider": "openai",
+  "model": "a-model",
+  "baseUrl": "https://api.example.com/v1",
+  "apiKeyEnv": "A_PROVIDER_KEY"
+}
+```
+
+The key is read from the environment and nowhere else, and a model whose key is missing is
+refused before the sweep starts rather than halfway through it.
+
 ### The surrogate, and why it exists
 
 The surrogate is a stand-in for a model: it has the plan and nothing else, and a plan step

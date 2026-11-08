@@ -155,4 +155,58 @@ describe('the hypotheses', () => {
 
     expect(control?.successes).toBe(0);
   });
+
+  it('runs a live model when the caller says how to build one', async () => {
+    const built: string[] = [];
+    const config: MatrixConfig = {
+      ...CONFIG,
+      models: [
+        {
+          id: 'live',
+          label: 'live',
+          provider: 'openai',
+          model: 'a-model',
+          baseUrl: 'http://127.0.0.1:1/v1',
+          apiKeyEnv: 'A_KEY_FOR_THE_TEST',
+        },
+      ],
+      conditions: ['A'],
+      seeds: 1,
+    };
+    process.env['A_KEY_FOR_THE_TEST'] = 'sk-test';
+
+    try {
+      const runs = await runMatrix(adventure, config, {
+        root: scratch(),
+        providerFor: (model) => {
+          built.push(`${model.id}:${model.provider}:${model.baseUrl}`);
+          return {
+            id: 'a-live-provider',
+            model: model.model,
+            async complete() {
+              return { text: 'COMMAND: look' };
+            },
+          };
+        },
+      });
+
+      expect(built).toEqual(['live:openai:http://127.0.0.1:1/v1']);
+      expect(runs).toHaveLength(1);
+    } finally {
+      delete process.env['A_KEY_FOR_THE_TEST'];
+    }
+  });
+
+  it('refuses a live model it has no way to build', async () => {
+    const config: MatrixConfig = {
+      ...CONFIG,
+      models: [{ id: 'live', label: 'live', provider: 'openai', model: 'a-model' }],
+      conditions: ['A'],
+      seeds: 1,
+    };
+
+    await expect(runMatrix(adventure, config, { root: scratch() })).rejects.toThrow(
+      /needs a key in the environment/,
+    );
+  });
 });
