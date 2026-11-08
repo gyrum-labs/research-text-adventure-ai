@@ -1414,6 +1414,9 @@ research-text-adventure-ai/
 ├── tests/
 │   ├── kernel/*.test.ts
 │   ├── adventures/*.test.ts
+│   ├── agents/*.test.ts
+│   ├── runner/*.test.ts
+│   ├── cli/*.test.ts
 │   ├── architecture.test.ts     ← C4 dependency rules
 │   ├── leakage.test.ts          ← C2 no privileged info
 │   ├── equivalence.test.ts      ← REQ-EQUIV-1 across the three interfaces

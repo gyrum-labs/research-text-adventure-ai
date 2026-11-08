@@ -24,15 +24,15 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import ts from 'typescript';
-import { adventure } from '../../src/adventures/mission-impossible/adventure.js';
-import { GOLD_PATH } from '../../src/adventures/mission-impossible/gold-path.js';
-import { reachableStates } from '../../src/runner/reachable.js';
-import { buildObservation, messagesFromEvents } from '../../src/kernel/observation.js';
-import { parseCommand } from '../../src/kernel/parser.js';
-import { reduce } from '../../src/kernel/reduce.js';
-import type { Adventure, GameState, Observation } from '../../src/kernel/types.js';
+import { adventure } from '../src/adventures/mission-impossible/adventure.js';
+import { GOLD_PATH } from '../src/adventures/mission-impossible/gold-path.js';
+import { reachableStates } from '../src/runner/reachable.js';
+import { buildObservation, messagesFromEvents } from '../src/kernel/observation.js';
+import { parseCommand } from '../src/kernel/parser.js';
+import { reduce } from '../src/kernel/reduce.js';
+import type { Adventure, GameState, Observation } from '../src/kernel/types.js';
 
-const REPO_ROOT = new URL('../..', import.meta.url).pathname;
+const REPO_ROOT = new URL('..', import.meta.url).pathname;
 
 /** Everything the agent can read in one observation, as one string. */
 function observationText(observation: Observation): string {
