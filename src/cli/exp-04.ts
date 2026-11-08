@@ -9,7 +9,7 @@
  * picture of one policy's habits.
  */
 
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Adventure } from '../kernel/types.js';
 import type { AgentPolicy, PolicyContext } from '../agents/policy.js';
@@ -254,6 +254,13 @@ export async function runSweep(
       goldPathLength: GOLD_PATH.length,
       model: 'mock/mock-model',
     });
+
+    // One metrics file per run, as the results artefacts call for.
+    writeFileSync(
+      join(directory, `${entry.name}.metrics.json`),
+      `${JSON.stringify({ run: entry.name, ...metrics }, null, 2)}\n`,
+    );
+
     runs.push({ name: entry.name, metrics });
   }
 
