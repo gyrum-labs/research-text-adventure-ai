@@ -1,0 +1,50 @@
+{
+  "name": "research-text-adventure-ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Research PoC: can an AI agent autonomously complete a multi-step mission in a deterministic, stateful text environment?",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx src/cli/index.ts",
+    "play": "tsx src/cli/index.ts play --scenario mission-impossible",
+    "agent": "tsx src/cli/index.ts agent --provider mock",
+    "sweep": "tsx src/cli/index.ts sweep",
+    "replay": "tsx src/cli/index.ts replay",
+    "eval": "tsx src/cli/index.ts eval",
+    "exp:01": "tsx src/cli/index.ts exp 01",
+    "exp:02": "tsx src/cli/index.ts exp 02",
+    "exp:03": "tsx src/cli/index.ts exp 03",
+    "exp:04": "tsx src/cli/index.ts exp 04",
+    "exp:05": "tsx src/cli/index.ts exp 05",
+    "exp:06": "tsx src/cli/index.ts exp 06",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run style",
+    "coverage": "vitest run --coverage",
+    "style": "bash vale.sh",
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "@types/node": "^22.9.0",
+    "@vitest/coverage-v8": "^2.1.4",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.13.0",
+    "prettier": "^3.3.3",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.12.2",
+    "vitest": "^2.1.4"
+  }
+}

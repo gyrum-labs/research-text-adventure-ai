@@ -204,3 +204,6 @@ gyrum-review-findings.json.prior-keys
 
 # Vale's synced style pack (re-fetched by `vale sync`)
 .vale/styles/Microsoft/
+
+# Test coverage output
+coverage/

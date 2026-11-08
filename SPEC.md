@@ -527,31 +527,49 @@ Enforced by `tests/architecture.test.ts` (C4).
 
 ### 5.1 The specification DSL (kernel vocabulary)
 
-The kernel understands exactly these six predicates and eight effects. Nothing else.
+The kernel understands exactly these ten predicates and ten effects. Nothing else.
 
 ```ts
 type Predicate =
-  | { op: 'at'; room: Id }
-  | { op: 'object_in_room'; object: Id; room: Id }
-  | { op: 'carrying'; object: Id }
-  | { op: 'flag'; key: string; value: boolean }
+  | { op: 'in_room'; room: Id }                                 // the player is here
+  | { op: 'object_in_room'; object: Id; room: Id }              // a named object is there
+  | { op: 'arg_in_room'; arg: string }                         // the bound object is here
+  | { op: 'carrying'; object: Id }                              // a named object is carried
+  | { op: 'flag'; key: string; value: boolean }                 // a world fact
   | { op: 'object_flag'; object: Id; key: string; value: boolean }
-  | { op: 'goal_complete'; goal: Id };
+  | { op: 'arg_flag'; arg: string; key: string; value: boolean }
+  | { op: 'arg_equals'; arg: string; value: string }            // the bound value matches
+  | { op: 'goal_complete'; goal: Id }
+  | { op: 'hints_remaining'; count: number };
 
 type Effect =
   | { op: 'move_to'; room: Id }
   | { op: 'set_flag'; key: string; value: boolean }
-  | { op: 'set_object_flag'; object: Id; key: string; value: boolean }
-  | { op: 'set_object_room'; object: Id; room: Id | null }
-  | { op: 'add_to_inventory'; object: Id }
-  | { op: 'remove_from_inventory'; object: Id }
-  | { op: 'set_object_state'; object: Id; key: string; value: string }
+  | { op: 'set_arg_flag'; arg: string; key: string; value: boolean }
+  | { op: 'set_arg_room'; arg: string; room: Id | null }
+  | { op: 'add_to_inventory'; arg: string }
+  | { op: 'remove_from_inventory'; arg: string }
+  | { op: 'reveal_container'; arg: string }
+  | { op: 'set_arg_state'; arg: string; key: string; value: string }
+  | { op: 'give_hint' }
   | { op: 'finish'; outcome: 'success' | 'failure'; reason: string };
 ```
 
 This is the whole engine. Everything else is data.
 
----
+The DSL grew from the original six predicates and eight effects as the scenario's needs became
+concrete. Three additions earned their place:
+
+- **`arg_equals`** lets an action check the value of an argument, which is how a code lock works
+  (`unlock safe with 4821`) and how an action identifies its own target (`cut yellow wire`). It
+  compares after stripping articles, so "my keycard" and "keycard" are the same thing.
+- **`carrying`** names a fixed object rather than an argument, which is how one action refers to
+  another ("the vault door needs the keycard").
+- **`give_hint`** spends a hint credit, which keeps the hint economy inside the engine rather than
+  in the runner.
+
+Every member is used by the shipped adventure, and the kernel's own source names none of that
+adventure's objects. A test enforces both.
 
 ## 6. Data model
 
@@ -576,6 +594,8 @@ export interface Adventure {
   actions: ActionSpec[];
   goals: GoalSpec[];
   hints: HintSpec[];
+  /** The codes in play. The oracle searches them; the agent must read them. */
+  codes?: string[];
   initial: GameState;
 }
 
@@ -602,6 +622,8 @@ export interface GameObject {
   container?: { closed: boolean; contains: Id[]; lockedBy?: Id };
   /** Readable: `read` yields `detail`. */
   readable?: boolean;
+  /** Takeable: the object can be picked up and carried. */
+  takeable?: boolean;
 }
 
 export interface Door {
