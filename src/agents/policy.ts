@@ -33,3 +33,61 @@ export interface AgentPolicy {
   /** The next command, or null to end the run. */
   next(context: PolicyContext): Promise<string | null>;
 }
+
+/** What a policy did on its last turn. */
+export type PolicyTurnOutcome =
+  /** It produced a command. */
+  | 'command'
+  /** The model answered, but the answer held no command. */
+  | 'unparsable'
+  /** The provider call failed. */
+  | 'provider_error'
+  /** The policy chose to stop. */
+  | 'stopped';
+
+/** What a policy can report about itself, for the run metrics. */
+export interface PolicyMetrics {
+  /** What happened on the last turn. */
+  lastTurn: PolicyTurnOutcome;
+  /** How many responses held no command at all. */
+  unparsableResponses: number;
+  /** How many provider calls failed. */
+  transientErrors: number;
+  /** Tokens spent so far, input and output. */
+  tokensUsed: number;
+  /** How many times each rung of the extraction ladder produced a command. */
+  extractionRoutes: Record<string, number>;
+  /** The hash of the prompt used on the last turn. */
+  lastPromptHash: string;
+  /** The raw text the model returned on the last turn. */
+  lastResponse: string;
+}
+
+/**
+ * A policy that reports its own metrics.
+ *
+ * Optional, because a policy has no business being measurable to be useful.
+ * The runner asks for the metrics when they are there, and does without them
+ * when they are not.
+ */
+export interface MeasurablePolicy extends AgentPolicy {
+  metrics(): PolicyMetrics;
+}
+
+/** The metrics of a policy that does not report any. */
+export const EMPTY_METRICS: PolicyMetrics = {
+  lastTurn: 'stopped',
+  unparsableResponses: 0,
+  transientErrors: 0,
+  tokensUsed: 0,
+  extractionRoutes: {},
+  lastPromptHash: '',
+  lastResponse: '',
+};
+
+/** The metrics of a policy, if it reports them. */
+export function metricsOf(policy: AgentPolicy): PolicyMetrics | undefined {
+  const measurable = policy as Partial<MeasurablePolicy>;
+  if (typeof measurable.metrics !== 'function') return undefined;
+  return measurable.metrics();
+}

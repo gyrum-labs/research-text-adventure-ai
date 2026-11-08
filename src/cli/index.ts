@@ -8,9 +8,12 @@
 import { Command } from 'commander';
 import { adventureById, ADVENTURES } from '../adventures/index.js';
 import { GOLD_PATH } from '../adventures/mission-impossible/gold-path.js';
+import type { ContextStrategy } from '../agents/context.js';
 import { play } from './play.js';
 import { runAgent, type PolicyName } from './agent.js';
 import { runExp02 } from './exp-02.js';
+import { runExp03 } from './exp-03.js';
+import { createProvider, type ProviderName } from './provider.js';
 import { replayTranscript } from '../runner/replay.js';
 
 const program = new Command();
@@ -71,7 +74,11 @@ program
   .command('exp')
   .description('Run one of the experiments')
   .argument('<number>', 'the experiment number, 01 to 06')
-  .action(async (number: string) => {
+  .option('--provider <name>', 'mock, anthropic, openai or ollama', 'mock')
+  .option('--model <name>', 'the model to ask for')
+  .option('--strategy <name>', 'none, full, window or structured', 'structured')
+  .option('--max-turns <n>', 'turn budget', '30')
+  .action(async (number: string, options: Record<string, string>) => {
     switch (number) {
       case '01':
         await runAgent({
@@ -85,6 +92,15 @@ program
         break;
       case '02':
         console.log(runExp02(adventureById('mission-impossible')));
+        break;
+      case '03':
+        console.log(
+          await runExp03(adventureById('mission-impossible'), {
+            provider: createProvider(options['provider'] as ProviderName, options['model']),
+            strategy: options['strategy'] as ContextStrategy,
+            budgets: { maxTurns: Number(options['maxTurns']) },
+          }),
+        );
         break;
       default:
         console.error(`experiment ${number} is not implemented yet`);
