@@ -1,5 +1,5 @@
 /*
- * The adventures this project ships. One so far.
+ * The adventures this project ships.
  *
  * Every adventure is validated when this module loads. An adventure that does
  * not match the schema is a broken fixture, and a broken fixture discovered at
@@ -10,9 +10,11 @@
 import type { Adventure } from '../kernel/types.js';
 import { validateAdventure } from './schema.js';
 import { adventure as missionImpossible } from './mission-impossible/adventure.js';
+import { adventure as hotfix } from './hotfix-2-4-1/adventure.js';
 
 export const ADVENTURES: Record<string, Adventure> = {
   [missionImpossible.id]: validateAdventure(missionImpossible),
+  [hotfix.id]: validateAdventure(hotfix),
 };
 
 export function adventureById(id: string): Adventure {
