@@ -118,7 +118,7 @@ and every action spec of the adventure is proved executable by the reducer.
 
 ### T3.1 Provider port and adapters
 - [x] `src/agents/llm/provider.ts`. The `LlmProvider` interface
-- [x] `anthropic`, `openai` (OpenAI-compatible), `ollama` and `mock` adapters, all in `provider.ts`. All via `fetch`
+- [x] `anthropic`, `openai` (OpenAI-compatible), `ollama` and `mock` adapters, all in `src/agents/llm/provider.ts`. All via `fetch`
 - [x] Keys from env only; never logged; never written to a transcript
 - [x] **Done when:** `MockProvider` drives a full run with zero network calls; each adapter has a contract test against a local server that speaks its wire format
 
@@ -133,7 +133,7 @@ and every action spec of the adventure is proved executable by the reducer.
 - [x] **Done when:** tests cover each rung, code fences, `>` prompts, empty responses, and multi-`COMMAND:` responses
 
 ### T3.4 Policies
-- [x] `src/agents/policy.ts` (`AgentPolicy`, `PolicyContext`), `scripted.ts`, `random.ts`, `llm/policy.ts`
+- [x] `src/agents/policy.ts` (`AgentPolicy`, `PolicyContext`), `src/agents/scripted.ts`, `src/agents/random.ts`, `src/agents/llm/policy.ts`
 - [x] `RandomPolicy` samples uniformly from legal commands and is seeded
 - [x] **Done when:** the runner cannot distinguish policy types; all three run the same loop
 
@@ -229,7 +229,7 @@ and every action spec of the adventure is proved executable by the reducer.
 |---|---|
 | Kernel purity | `tests/architecture.test.ts` + ESLint `no-restricted-imports` |
 | No privileged information | `tests/leakage.test.ts` |
-| Interface equivalence | `tests/equivalence.test.ts`. Not built yet: it needs the browser client of Phase 5 |
+| Interface equivalence | tests/equivalence.test.ts. Not built yet: it needs the browser client of Phase 5 |
 | Engine determinism | `tests/runner/replay.test.ts` |
 | Strict typing | `npm run typecheck` |
 | Budgets enforced | `tests/runner/budgets.test.ts` |
