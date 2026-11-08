@@ -96,7 +96,7 @@ them. The reason was not the world but the action DSL: the agent can "unlock" an
 reach, and each unlock plants a flag that no predicate and no observation ever reads. The space
 filled with states that differ only in a flag nobody can see.
 
-`src/adventures/mission-impossible/reachable.ts` now keeps a state only when it differs in a way
+`src/runner/reachable.ts` now keeps a state only when it differs in a way
 that matters. A flag is meaningful when some predicate reads it, or when the observation reads
 it. Everything else is bookkeeping. With that projection the search terminates on its own, and
 the result is every state the agent can be in.

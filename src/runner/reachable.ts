@@ -17,10 +17,10 @@
  * approximation.
  */
 
-import type { Adventure, GameState, Id } from '../../kernel/types.js';
-import { parseCommand } from '../../kernel/parser.js';
-import { reduce } from '../../kernel/reduce.js';
-import { searchCommands, stateKey } from './oracle.js';
+import type { Adventure, GameState, Id } from '../kernel/types.js';
+import { parseCommand } from '../kernel/parser.js';
+import { reduce } from '../kernel/reduce.js';
+import { searchCommands } from './oracle.js';
 
 export interface ReachableResult {
   /** One representative state per meaningful equivalence class. */
@@ -172,9 +172,3 @@ export function reachableStates(
 
   return { states, explored, exhausted: false };
 }
-
-/**
- * The full state key, kept for callers that need to tell two representatives
- * apart. The oracle owns the definition.
- */
-export { stateKey };

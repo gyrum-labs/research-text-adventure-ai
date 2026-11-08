@@ -26,7 +26,7 @@ import { join, relative } from 'node:path';
 import ts from 'typescript';
 import { adventure } from '../../src/adventures/mission-impossible/adventure.js';
 import { GOLD_PATH } from '../../src/adventures/mission-impossible/gold-path.js';
-import { reachableStates } from '../../src/adventures/mission-impossible/reachable.js';
+import { reachableStates } from '../../src/runner/reachable.js';
 import { buildObservation, messagesFromEvents } from '../../src/kernel/observation.js';
 import { parseCommand } from '../../src/kernel/parser.js';
 import { reduce } from '../../src/kernel/reduce.js';

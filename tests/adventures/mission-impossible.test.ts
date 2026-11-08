@@ -3,7 +3,7 @@ import type { GameState } from '../../src/kernel/types.js';
 import { parseCommand } from '../../src/kernel/parser.js';
 import { reduce } from '../../src/kernel/reduce.js';
 import { buildObservation } from '../../src/kernel/observation.js';
-import { reachable, shortestWinningPath } from '../../src/adventures/mission-impossible/oracle.js';
+import { reachable, shortestWinningPath } from '../../src/runner/oracle.js';
 import { RandomPolicy } from '../../src/agents/random.js';
 import { DEFAULT_MAX_TURNS, run } from '../../src/runner/run.js';
 import { adventure } from '../../src/adventures/mission-impossible/adventure.js';

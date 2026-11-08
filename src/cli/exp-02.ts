@@ -15,7 +15,7 @@ import { buildKnownFacts, buildObservation, messagesFromEvents } from '../kernel
 import { parseCommand } from '../kernel/parser.js';
 import { reduce } from '../kernel/reduce.js';
 import { GOLD_PATH } from '../adventures/mission-impossible/gold-path.js';
-import { reachableStates } from '../adventures/mission-impossible/reachable.js';
+import { reachableStates } from '../runner/reachable.js';
 
 /** One line of the comparison: what is true, and what the agent can see. */
 export interface ComparisonRow {
