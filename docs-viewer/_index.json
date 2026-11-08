@@ -101,6 +101,11 @@
         },
         {
           "type": "file",
+          "name": "design-system.md",
+          "path": "docs/design-system.md"
+        },
+        {
+          "type": "file",
           "name": "DIAGRAMS.md",
           "path": "docs/DIAGRAMS.md"
         },
