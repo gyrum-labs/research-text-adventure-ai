@@ -52,6 +52,8 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
   private unparsableResponses = 0;
   private transientErrors = 0;
   private tokensUsed = 0;
+  private inputTokens = 0;
+  private outputTokens = 0;
   private readonly extractionRoutes: Record<string, number> = {};
   private promptHash = '';
   private response = '';
@@ -88,8 +90,9 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
       return null;
     }
 
-    this.tokensUsed +=
-      (response.usage?.inputTokens ?? 0) + (response.usage?.outputTokens ?? 0);
+    this.inputTokens += response.usage?.inputTokens ?? 0;
+    this.outputTokens += response.usage?.outputTokens ?? 0;
+    this.tokensUsed = this.inputTokens + this.outputTokens;
 
     const extraction = extractCommand(response.text, (candidate) =>
       this.canParse(candidate, context),
@@ -113,6 +116,8 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
       unparsableResponses: this.unparsableResponses,
       transientErrors: this.transientErrors,
       tokensUsed: this.tokensUsed,
+      inputTokens: this.inputTokens,
+      outputTokens: this.outputTokens,
       extractionRoutes: { ...this.extractionRoutes },
       lastPromptHash: this.promptHash,
       lastResponse: this.response,

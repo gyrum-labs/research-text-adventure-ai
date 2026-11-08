@@ -17,6 +17,16 @@ export type ParseResult =
 /** Verbs that read information rather than change the world. */
 export const DESCRIBE_VERBS = ['look', 'inventory', 'help'] as const;
 
+/**
+ * The two refusals that name an object.
+ *
+ * The failure classifier reads these prefixes, so the shapes are exported
+ * rather than written twice. A refusal that says what is possible is a
+ * contract, and a contract that only one side knows is not a contract.
+ */
+export const NOT_VISIBLE_PREFIX = "You can't see anything called";
+export const NOT_CARRYING_PREFIX = "You aren't carrying anything called";
+
 const CONNECTIVES = [' with ', ' on ', ' to '];
 
 export function parseCommand(
@@ -194,9 +204,9 @@ function resolveArgument(
   }
 
   if (spec.role === 'object-in-inventory') {
-    return { error: `You aren't carrying anything called "${value}".\n${carryingList(matches)}` };
+    return { error: `${NOT_CARRYING_PREFIX} "${value}".\n${carryingList(matches)}` };
   }
-  return { error: `You can't see anything called "${value}" here.\n${visibleList(matches)}` };
+  return { error: `${NOT_VISIBLE_PREFIX} "${value}" here.\n${visibleList(matches)}` };
 }
 
 /**
