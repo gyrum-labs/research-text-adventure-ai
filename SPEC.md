@@ -1142,35 +1142,54 @@ transcript and one metrics record.
 **Process metrics (the interesting ones)**
 | Metric | Definition |
 |---|---|
-| `invalidActionRate` | Invalid actions ÷ total commands. Proxies "does it ground its actions in the game?" |
+| `invalidActionRate` | Invalid actions ÷ commands produced. Proxies "does it ground its actions in the game?" |
 | `unparsableRate` | Responses the extractor could not turn into a command ÷ total turns |
-| `hallucinationRate` | Commands referencing an object not present in room ∪ inventory ÷ total commands. The grounding proxy |
-| `repeatStateRate` | Commands that changed nothing ÷ total commands |
+| `hallucinationRate` | Commands naming an object not present in room ∪ inventory ÷ commands produced. The grounding proxy |
+| `repeatStateRate` | Commands that changed nothing ÷ commands produced |
 | `explorationSteps` | Turns before the first state-changing action |
 | `recoveryRate` | After a failure, did the agent try something different within 2 turns? (0…1) |
 | `orderingViolations` | Attempts to use a gated action before its precondition (e.g. cutting a wire before reading the manual) |
 
+**Commands produced** means every command the agent issued, whether the parser accepted it or
+not. A hallucination is a command that never became an accepted command, so a denominator of
+accepted commands alone would make the hallucination rate meaningless.
+
 **Cost metrics**
-`inputTokens`, `outputTokens`, `estimatedCostUsd`, `wallClockMs`, `msPerTurn`.
+`inputTokens`, `outputTokens`, `estimatedCostUsd`, `wallClockMs`, `msPerTurn`. The cost estimate
+uses a table of prices per million tokens, which is an estimate and goes stale; it lives in one
+place so that refreshing it is a single edit.
 
 ### 12.3 Failure taxonomy (S3: the reusable artefact)
 
-Every unsuccessful run is classified into exactly one primary category, in this priority order:
+Every unsuccessful run is classified into exactly one primary category.
+
+**The order matters, and it is not the order the codes are numbered in.** A category that names
+what actually ended the run comes before one that explains the path, because the terminal fact is
+the most consequential single thing about the run. A refusal that names an object that is not
+there is more specific than a refusal about the shape of the command, so it comes before the
+general parsing category. The behavioural categories then explain the path, and the process
+metrics in §12.2 record the detail separately so that nothing is lost by the choice of a single
+code.
 
 | Code | Category | Definition |
 |---|---|---|
-| `F1` | Parsing | The model could not produce a command the parser accepted |
+| `F6` | Lethal trap | The run ended in failure: the model detonated the bomb |
+| `F8` | Provider error | The run ended in a provider failure; the agent is not at fault |
+| `F9` | Abstention / early stop | The run ended because the model stopped or declared itself stuck |
 | `F2` | Hallucination | The model referenced objects that do not exist in scope |
-| `F3` | Planning | The model acted against its own stated plan, or repeated a failed action |
-| `F4` | Ordering / precondition | The model attempted a gated action before discovering the gate (e.g. cut before read) |
+| `F1` | Parsing | The model never produced a command the parser accepted |
+| `F3` | Planning | The model repeated an action that had already failed |
+| `F4` | Ordering / precondition | The model attempted a gated action before discovering the gate |
 | `F5` | Exploration failure | The model never found a required fact within the budget |
-| `F6` | Lethal trap | The model detonated the bomb |
 | `F7` | Budget exhaustion | No specific above; ran out of turns |
-| `F8` | Provider error | API/network failure |
-| `F9` | Abstention / early stop | The model declared itself stuck or stopped early |
+
+`F3` covers the half of "planning" a deterministic classifier can see. The other half, acting
+against the model's own stated plan, would need the model to judge itself, and the classifier
+never calls a model.
 
 The taxonomy is computed **from the transcript** by a deterministic classifier, not by hand. The
-classifier's rules are unit-tested.
+classifier's rules are unit-tested against synthetic transcripts, one per category, and the
+classifier reads the transcript and the adventure's own data and nothing else.
 
 ### 12.4 Experiment matrix (minimum viable run)
 
