@@ -54,20 +54,38 @@ function requireKey(name: string): string {
   return key;
 }
 
+/**
+ * Where a provider is and how it is keyed.
+ *
+ * The OpenAI-compatible adapter talks to whatever endpoint it is given, and
+ * there is more than one such endpoint. A model served by somebody other than
+ * OpenAI is reached by naming its base URL, and its key usually lives in a
+ * variable of its own. Both are named here, so a caller can point the
+ * harness at a provider that is not the one the adapter is named after.
+ */
+export interface Endpoint {
+  /** The base URL of the API. The adapter adds the path of its own call. */
+  readonly baseUrl?: string;
+  /** The environment variable the key is read from. */
+  readonly apiKeyEnv?: string;
+}
+
 /** Build the provider the command line asked for. */
-export function createProvider(name: ProviderName, model?: string): LlmProvider {
+export function createProvider(name: ProviderName, model?: string, endpoint: Endpoint = {}): LlmProvider {
   switch (name) {
     case 'mock':
       return new MockProvider(MOCK_RESPONSES, model ?? DEFAULT_MODELS.mock);
     case 'anthropic':
       return new AnthropicProvider({
-        apiKey: requireKey('ANTHROPIC_API_KEY'),
+        apiKey: requireKey(endpoint.apiKeyEnv ?? 'ANTHROPIC_API_KEY'),
         model: model ?? DEFAULT_MODELS.anthropic,
+        ...(endpoint.baseUrl === undefined ? {} : { baseUrl: endpoint.baseUrl }),
       });
     case 'openai':
       return new OpenAiProvider({
-        apiKey: requireKey('OPENAI_API_KEY'),
+        apiKey: requireKey(endpoint.apiKeyEnv ?? 'OPENAI_API_KEY'),
         model: model ?? DEFAULT_MODELS.openai,
+        ...(endpoint.baseUrl === undefined ? {} : { baseUrl: endpoint.baseUrl }),
       });
     case 'ollama':
       return new OllamaProvider({ model: model ?? DEFAULT_MODELS.ollama });

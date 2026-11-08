@@ -121,6 +121,19 @@ written first where practical.
 **Use the mock provider for development.** Do not burn API tokens while building the harness.
 The whole pipeline must be exercisable offline.
 
+**Reach a live provider when the evidence needs one.** The OpenAI-compatible adapter
+talks to whatever endpoint it is given, so a model served by somebody other than
+OpenAI is reached by naming its endpoint and the variable its key is in:
+
+```sh
+npm run exp:03 -- --provider openai --model <model> \
+  --base-url <endpoint> --api-key-env <variable>
+```
+
+A key stays in the variable it was issued under, so nothing has to be copied into
+the name of the provider it belongs to. Leave both options off and the adapter uses
+its own endpoint and its own variable.
+
 **Verify before claiming.** A phase is complete only when `npm run check` (typecheck + lint + test)
 passes. Do not report a phase as done on the strength of code that has not been run.
 
