@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { run } from '../../src/runner/run.js';
 import { Transcript } from '../../src/runner/transcript.js';
 import type { AgentPolicy, PolicyContext } from '../../src/agents/policy.js';
+import type { Observation } from '../../src/kernel/types.js';
 import { adventure } from '../../src/adventures/mission-impossible/adventure.js';
 
 /** A policy that says one thing and then stops. */
@@ -71,6 +72,26 @@ describe('the runner', () => {
     const hint = result.events.find((event) => event.type === 'hint_given');
     expect(hint).toBeDefined();
     expect(result.state.hintsLeft).toBe(adventure.hints.length - 1);
+  });
+
+  it('delivers the hint to the agent, because the observation is its only channel', async () => {
+    const seen: Observation[] = [];
+
+    await run({
+      adventure,
+      policy: {
+        id: 'asker',
+        async next(context: PolicyContext) {
+          return context.turn === 0 ? 'hint' : null;
+        },
+      },
+      maxTurns: 3,
+      onObservation: (observation) => seen.push(observation),
+    });
+
+    expect(seen.length).toBeGreaterThan(1);
+    expect(seen[0]!.messages.join(' ')).not.toContain(adventure.hints[0]!.text);
+    expect(seen[1]!.messages.join(' ')).toContain(adventure.hints[0]!.text);
   });
 
   it('writes a transcript that can be read back', async () => {

@@ -1,13 +1,17 @@
 /*
  * Rendering. The kernel's facts, turned into prose a person can read.
  *
- * Two renderers exist and they must agree: `renderObservation` produces the
- * block the human sees, and the agent receives the same facts as data. A
- * disagreement between them would make the human and agent transcripts
- * incomparable.
+ * Three renderers exist and they must agree: `renderObservation` produces the
+ * block the human sees, `renderObservationJson` produces the machine
+ * representation, and `renderObservationStructured` produces the version a
+ * model reads. A disagreement between them would make the human and agent
+ * transcripts incomparable.
  */
 
 import type { Adventure, GameState, Observation } from './types.js';
+
+/** The rendering variants an interface may ask for. */
+export type RendererVariant = 'text' | 'json' | 'text-structured';
 
 export function renderRoom(adventure: Adventure, state: GameState): string {
   const room = adventure.rooms[state.roomId];
@@ -40,6 +44,13 @@ export function renderInventory(adventure: Adventure, state: GameState): string 
 
 export function renderObservation(observation: Observation): string {
   const lines: string[] = [];
+
+  // What the world said last turn comes first, because it is the most recent
+  // thing the reader was told.
+  for (const message of observation.messages) {
+    lines.push(message);
+  }
+
   lines.push(`${observation.room.name}`);
   lines.push(observation.room.description);
 
@@ -66,6 +77,91 @@ function renderExits(observation: Observation): string {
     return `${exit.direction} → ${exit.toName}${status}`;
   });
   return `Exits: ${parts.join(', ')}.`;
+}
+
+/**
+ * The machine rendering.
+ *
+ * The keys are written out in a fixed order rather than dumped from the
+ * observation, so a transcript diffs cleanly and a token count stays
+ * comparable between runs. The content is exactly the observation.
+ */
+export function renderObservationJson(observation: Observation): string {
+  return JSON.stringify(
+    {
+      turn: observation.turn,
+      room: {
+        id: observation.room.id,
+        name: observation.room.name,
+        description: observation.room.description,
+      },
+      visible: observation.visible.map((object) => ({
+        id: object.id,
+        name: object.name,
+        description: object.description,
+        ...(object.readable === true ? { readable: true } : {}),
+      })),
+      inventory: observation.inventory.map((object) => ({
+        id: object.id,
+        name: object.name,
+        description: object.description,
+      })),
+      exits: observation.exits.map((exit) => ({
+        direction: exit.direction,
+        label: exit.label,
+        toName: exit.toName,
+        status: exit.status,
+      })),
+      messages: [...observation.messages],
+      goals: observation.goals.map((goal) => ({
+        id: goal.id,
+        text: goal.text,
+        status: goal.status,
+      })),
+    },
+    null,
+    2,
+  );
+}
+
+/**
+ * The model rendering: the prose, then the facts spelled out.
+ *
+ * A model reads the prose and the checklist differently from a person, and
+ * the checklist is what it tends to act on.
+ */
+export function renderObservationStructured(observation: Observation): string {
+  const lines: string[] = [renderObservation(observation), '', 'Facts you know:'];
+  lines.push(`  Location: ${observation.room.name}`);
+  lines.push(`  Visible: ${observation.visible.map((object) => object.name).join(', ') || 'nothing'}`);
+  lines.push(
+    `  Carrying: ${observation.inventory.map((object) => object.name).join(', ') || 'nothing'}`,
+  );
+  lines.push(`  Exits: ${renderExitList(observation)}`);
+  lines.push('  Objectives:');
+  for (const goal of observation.goals) {
+    lines.push(`    - ${goal.text} [${goal.status === 'complete' ? 'done' : 'not done'}]`);
+  }
+  return lines.join('\n');
+}
+
+/** Render an observation in the requested variant. */
+export function renderObservationWith(observation: Observation, variant: RendererVariant): string {
+  switch (variant) {
+    case 'json':
+      return renderObservationJson(observation);
+    case 'text-structured':
+      return renderObservationStructured(observation);
+    case 'text':
+      return renderObservation(observation);
+  }
+}
+
+function renderExitList(observation: Observation): string {
+  if (observation.exits.length === 0) return 'none';
+  return observation.exits
+    .map((exit) => `${exit.direction} → ${exit.toName}${exit.status === 'locked' ? ' (locked)' : ''}`)
+    .join(', ');
 }
 
 function visibleObjects(adventure: Adventure, state: GameState) {

@@ -9,6 +9,14 @@ export { evaluatePredicate, type EvalContext } from './predicates.js';
 export { applyEffect, type EffectContext } from './effects.js';
 export { reduce, interpolate } from './reduce.js';
 export { parseCommand, type ParseResult, DESCRIBE_VERBS } from './parser.js';
-export { buildObservation, buildKnownFacts } from './observation.js';
-export { renderRoom, renderInventory, renderObservation } from './render.js';
+export { buildObservation, buildKnownFacts, messagesFromEvents } from './observation.js';
+export {
+  renderRoom,
+  renderInventory,
+  renderObservation,
+  renderObservationJson,
+  renderObservationStructured,
+  renderObservationWith,
+  type RendererVariant,
+} from './render.js';
 export { isGoalAchieved, allGoalsAchieved, achievedGoalIds } from './goals.js';

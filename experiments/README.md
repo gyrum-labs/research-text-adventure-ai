@@ -11,23 +11,24 @@ its own, and leaves the reader with something they can see. You work through the
 each builds on the one before.
 
 The style follows Karpathy's: `microgpt`, `llm.c`, `nanochat`. A handful of files, no frameworks,
+the code readable in one sitting, and a README that tells you what you are building and what you
+should see when it works. The reason to work this way is not tidiness. It is that **you cannot
+evaluate an AI agent's reliability until you are certain the environment itself is reliable**.
+Every experiment exists to remove one more way for the answer to be wrong.
+
 > **Reader track**
 >
 > - **Five minutes.** Read the table below and Experiment 01's opening. That is the shape of the
 >   whole project.
 > - **Thirty minutes.** Read Experiment 01 in full. It is the foundation.
 > - **An afternoon.** Start Experiment 01. Write the first test before the first line of kernel.
-the code readable in one sitting, and a README that tells you what you are building and what you
-should see when it works. The reason to work this way is not tidiness. It is that **you cannot
-evaluate an AI agent's reliability until you are certain the environment itself is reliable**.
-Every experiment exists to remove one more way for the answer to be wrong.
 
 ## The series
 
 | # | Experiment | The one idea | Status |
 |---|---|---|---|
-| **01** | [The game](./exp-01-the-game/) | A deterministic world you can trust, playable by a human *and* by the agent | Spec ready |
-| **02** | [What the agent sees](./exp-02-what-the-agent-sees/) | The agent's view of the world is smaller than the world, and that gap is the experiment | Spec ready |
+| **01** | [The game](./exp-01-the-game/) | A deterministic world you can trust, playable by a human *and* by the agent | Built, 63 tests green |
+| **02** | [What the agent sees](./exp-02-what-the-agent-sees/) | The agent's view of the world is smaller than the world, and that gap is the experiment | Built, 98 tests green |
 | **03** | [The agent plays](./exp-03-the-agent-plays/) | A model can drive a state machine if you give it a clean loop and a fair error message | Spec ready |
 | **04** | [Why it failed](./exp-04-why-it-failed/) | "It failed" is not a finding; the category is | Spec ready |
 | **05** | [The matrix](./exp-05-the-matrix/) | One number is an anecdote; a cell of a matrix is a result | Spec ready |

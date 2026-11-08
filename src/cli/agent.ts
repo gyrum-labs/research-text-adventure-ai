@@ -62,7 +62,9 @@ export async function runAgent(options: AgentOptions): Promise<void> {
       if (observation.room.id === lastRoom) return;
       lastRoom = observation.room.id;
       console.log('');
-      console.log(renderObservation(observation));
+      // The outcome was already printed by onMessage, so the room view does
+      // not repeat it.
+      console.log(renderObservation({ ...observation, messages: [] }));
     },
     onMessage: (message) => {
       if (!options.quiet && message.length > 0) console.log(message);
