@@ -13,12 +13,14 @@ import type { ConditionId } from '../agents/conditions.js';
 import {
   costPerSolvedMission,
   failureHistogram,
+  providerFor,
   runMatrix,
   summariseMatrix,
   type CellSummary,
   type MatrixConfig,
 } from '../runner/matrix.js';
 import { evaluateHypotheses, type HypothesisVerdict } from '../runner/hypotheses.js';
+import { createProvider, type ProviderName } from './provider.js';
 
 export interface Exp05Options {
   config: MatrixConfig;
@@ -90,7 +92,19 @@ export async function runExp05(
   const resultsDir = options.resultsDir ?? 'results';
   mkdirSync(resultsDir, { recursive: true });
 
-  const runs = await runMatrix(adventure, options.config, { root });
+  const runs = await runMatrix(adventure, options.config, {
+    root,
+    // The surrogate is the matrix's own, and it needs no key. A live model is
+    // built here, where the environment is read, and it is told which endpoint
+    // and which variable the configuration named.
+    providerFor: (model, seed) =>
+      model.provider === 'surrogate'
+        ? providerFor(model, seed)
+        : createProvider(model.provider as ProviderName, model.model, {
+            ...(model.baseUrl === undefined ? {} : { baseUrl: model.baseUrl }),
+            ...(model.apiKeyEnv === undefined ? {} : { apiKeyEnv: model.apiKeyEnv }),
+          }),
+  });
   const summaries = summariseMatrix(runs, options.config);
   const verdicts = evaluateHypotheses(summaries, runs);
   const failures = failureHistogram(summaries);

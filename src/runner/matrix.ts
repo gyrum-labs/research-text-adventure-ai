@@ -32,6 +32,10 @@ export interface MatrixModel {
   provider: 'surrogate' | 'mock' | 'anthropic' | 'openai' | 'ollama';
   /** The model name passed to the provider. */
   model: string;
+  /** The endpoint of an OpenAI-compatible provider, when it is not the default. */
+  baseUrl?: string;
+  /** The environment variable the provider's key is read from. */
+  apiKeyEnv?: string;
   /** How much of the prompt the surrogate can attend to, in tokens. */
   attentionTokens?: number;
   /** How reliably the surrogate recalls a fact it read. */
@@ -50,9 +54,23 @@ export interface MatrixConfig {
   goldPathLength: number;
 }
 
+/** How a matrix run is carried out. */
+export interface MatrixOptions {
+  /** Where the runs are written. */
+  readonly root?: string;
+  /**
+   * How to build the provider for a model.
+   *
+   * The default builds the offline ones and refuses a live provider, because
+   * the runner never reads the environment. A caller that does read it passes
+   * the factory in, and the matrix then runs whatever the configuration names,
+   * live models included.
+   */
+  readonly providerFor?: (model: MatrixModel, seed: number) => LlmProvider;
+}
+
 /** One run of the matrix. */
-export interface CellRun {
-  model: string;
+export interface CellRun {  model: string;
   condition: ConditionId;
   seed: number;
   metrics: RunMetrics | null;
@@ -125,9 +143,10 @@ export function providerFor(model: MatrixModel, seed: number): LlmProvider {
 export async function runMatrix(
   adventure: Adventure,
   config: MatrixConfig,
-  options: { root?: string } = {},
+  options: MatrixOptions = {},
 ): Promise<CellRun[]> {
   const root = options.root ?? 'runs';
+  const build = options.providerFor ?? providerFor;
   const runs: CellRun[] = [];
 
   for (const model of config.models) {
@@ -146,7 +165,7 @@ export async function runMatrix(
         }
 
         const spec = CONDITIONS[condition];
-        const provider = providerFor(model, seed);
+        const provider = build(model, seed);
         const policy = new LlmPolicy({
           adventure,
           provider,
