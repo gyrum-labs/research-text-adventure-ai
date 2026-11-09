@@ -31,6 +31,8 @@ The agent loop, and the four pieces that make it trustworthy:
 ```sh
 npm run exp:03 -- --provider mock                       # offline, free, deterministic
 npm run exp:03 -- --provider anthropic --model claude-sonnet-4.5
+npm run exp:03 -- --provider openai --model deepseek/deepseek-chat \
+  --base-url https://openrouter.ai/api/v1 --api-key-env OPENROUTER_API_KEY
 ```
 
 > An environment that says "nothing happened" gives the agent nothing to learn from, and an
@@ -81,7 +83,7 @@ the agent nothing to learn from. Which is a documented cause of agent failure in
 ## Acceptance criteria
 
 - [x] A full run completes offline against the `Mock` provider
-- [ ] At least two real providers work against their live APIs
+- [x] At least two real providers work against their live APIs
 - [x] Every budget and every guard has a test that proves the run terminates correctly
 - [x] The agent survives a bad command and recovers, or the run fails with a clear reason
 - [x] A transcript contains no secret material
@@ -129,14 +131,34 @@ This is not a defect in the observation, it is the reason the `structured` conte
 exists. The known-facts block carries forward what the agent has been told, so a learned fact
 survives. Experiment 05 will measure whether that difference actually buys anything.
 
-### The live providers are unproven here, and that is honest
+### Two real providers, against their live APIs
 
-This environment has no `ANTHROPIC_API_KEY`, no `OPENAI_API_KEY` and no local Ollama, so the
-criterion about two real providers against their live APIs is **not** met and is left unticked.
-What is proved is everything short of the live endpoint: each adapter is checked against a
-local server that speaks its wire format, asserting the request body, the headers, the parsed
-response and the token counts, and the key never reaches the transcript, the run result or an
-error message.
+The criterion is met, and it was met by reaching two vendors rather than by writing a new code
+path. Both runs below went over the network to a live API, with a real key, through the adapter
+the harness already had.
+
+| Provider | Model | Endpoint | Key variable | Turns | Tokens | Parse errors |
+|---|---|---|---|---|---|---|
+| OpenRouter | `deepseek/deepseek-chat` | `https://openrouter.ai/api/v1` | `OPENROUTER_API_KEY` | 10 | 6 611 | 1 |
+| Z.ai | `glm-4.6` | `https://api.z.ai/api/paas/v4` | `ZAI_API_KEY` | 9 | 6 843 | 0 |
+
+The command is the same either way. The endpoint and the variable the key is read from are named
+on the command line, so the run does not change when the vendor does.
+
+```sh
+npm run exp:03 -- --provider openai --model deepseek/deepseek-chat \
+  --base-url https://openrouter.ai/api/v1 --api-key-env OPENROUTER_API_KEY
+```
+
+Neither run finished the mission, and that is a finding rather than a shortfall in the criterion.
+Both agents read the wall notice, took the keycard and unlocked the vault door. Neither found the
+wire cutters, so neither could reach the manual, and both ended on the loop guard: an agent that
+returns to the same state three times is stopped, and examining things without acting never
+changes the state at all. The stops were at turn 10 and at turn 9, and they were not a parse
+error, a budget or a provider failure.
+
+The key never reached the transcript, the run result or an error message. The tests against a
+local server that speaks each wire format already proved that, and the live runs show it again.
 
 ## The budgets
 
