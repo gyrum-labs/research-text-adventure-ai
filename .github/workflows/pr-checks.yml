@@ -27,7 +27,9 @@ name: pr-checks
 # Quoted "on" key — YAML 1.1 reads a bare `on` as a boolean.
 "on":
   pull_request:
-    branches: [main]
+    # Every pull request, not only the ones that target main. The series is
+    # stacked, so five of the six sit on a branch rather than on main, and a
+    # reviewer deserves the same evidence on each of them.
     types: [opened, synchronize, reopened]
   push:
     branches: [main]
