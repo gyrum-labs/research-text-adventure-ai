@@ -17,7 +17,7 @@ import { CONDITIONS, type ConditionId } from '../agents/conditions.js';
 import { LlmPolicy } from '../agents/llm/policy.js';
 import { MISSION_IMPOSSIBLE_PLAN, SurrogateProvider } from '../agents/surrogate.js';
 import type { LlmProvider } from '../agents/llm/provider.js';
-import { run } from './run.js';
+import { run, type RunBudgets } from './run.js';
 import { Transcript, readTranscript } from './transcript.js';
 import { computeMetrics, type RunMetrics } from './metrics.js';
 import { wilsonInterval, median, type Interval } from './wilson.js';
@@ -52,6 +52,24 @@ export interface MatrixConfig {
   maxTurns: number;
   /** The length of the shortest winning route, for the efficiency metric. */
   goldPathLength: number;
+  /**
+   * Where the run artefacts go.
+   *
+   * A live matrix writes somewhere of its own, because the offline matrix's
+   * results are in the repository and a live run must not overwrite them.
+   */
+  runsDir?: string;
+  /** Where the summary artefacts go. */
+  resultsDir?: string;
+  /**
+   * The budgets a run is held to.
+   *
+   * The defaults are sized for the surrogate, whose prompts are tiny. A live
+   * model sends the whole observation every turn, so the token ceiling can
+   * arrive before the turn budget does, and the matrix would be measuring the
+   * harness rather than the model.
+   */
+  budgets?: Partial<RunBudgets>;
 }
 
 /** How a matrix run is carried out. */
@@ -195,7 +213,7 @@ export async function runMatrix(
         await run({
           adventure,
           policy,
-          budgets: { maxTurns: config.maxTurns },
+          budgets: { maxTurns: config.maxTurns, ...config.budgets },
           maskLegalActions: spec.masked,
           transcript,
         });
