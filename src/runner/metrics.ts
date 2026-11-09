@@ -34,6 +34,14 @@ export const PRICES: Record<string, ModelPrice> = {
   'openai/gpt-4o': { input: 2.5, output: 10 },
   'ollama/llama3.1': { input: 0, output: 0 },
   'mock/mock-model': { input: 0, output: 0 },
+  // The live matrix. The key is the adapter and the model as the transcript
+  // records them, so an OpenAI-compatible endpoint serving somebody else's
+  // model has its own price and does not borrow the default one.
+  // The prices are the published list prices, per million tokens.
+  'openai/anthropic/claude-sonnet-4.5': { input: 3, output: 15 },
+  'openai/openai/gpt-4.1-mini': { input: 0.4, output: 1.6 },
+  'openai/glm-5.3': { input: 1.4, output: 4.4 },
+  'openai/glm-4.5-air': { input: 0.2, output: 1.1 },
 };
 
 export interface RunMetrics {

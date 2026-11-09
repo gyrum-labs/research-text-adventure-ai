@@ -95,4 +95,25 @@ describe('the exp-05 output', () => {
 
     expect(summary.cells.find((cell) => cell.condition === 'D')?.successes).toBe(0);
   });
+
+  it('writes to the directory the configuration names', async () => {
+    const directory = mkdtempSync(join(tmpdir(), 'exp05-'));
+    const results = join(directory, 'results', 'live');
+    // The run happens from a scratch directory, so a build that ignores the
+    // configuration writes its fallback somewhere harmless instead of over
+    // the results this repository keeps.
+    const before = process.cwd();
+    process.chdir(directory);
+    try {
+      await runExp05(adventure, {
+        config: { ...CONFIG, resultsDir: results },
+        root: join(directory, 'runs'),
+      });
+    } finally {
+      process.chdir(before);
+    }
+
+    expect(existsSync(join(results, 'summary.json'))).toBe(true);
+    expect(existsSync(join(directory, 'results', 'summary.json'))).toBe(false);
+  });
 });

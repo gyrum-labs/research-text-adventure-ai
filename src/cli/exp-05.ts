@@ -88,8 +88,8 @@ export async function runExp05(
   adventure: Adventure,
   options: Exp05Options,
 ): Promise<string> {
-  const root = options.root ?? 'runs';
-  const resultsDir = options.resultsDir ?? 'results';
+  const root = options.root ?? options.config.runsDir ?? 'runs';
+  const resultsDir = options.resultsDir ?? options.config.resultsDir ?? 'results';
   mkdirSync(resultsDir, { recursive: true });
 
   const runs = await runMatrix(adventure, options.config, {

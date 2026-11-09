@@ -75,6 +75,23 @@ describe('the matrix', () => {
     }
   });
 
+  it('runs under the budgets the configuration names', async () => {
+    const root = scratch();
+    const runs = await runMatrix(adventure, { ...CONFIG, budgets: { maxTotalTokens: 1 } }, { root });
+
+    for (const run of runs) {
+      expect(run.metrics?.outcome).toBe('budget_exhausted');
+    }
+  });
+
+  it('runs under the default budgets when the configuration names none', async () => {
+    const runs = await runMatrix(adventure, CONFIG, { root: scratch() });
+
+    for (const run of runs) {
+      expect(run.metrics?.outcome).not.toBe('budget_exhausted');
+    }
+  });
+
   it('reports a cell with missing runs as incomplete rather than averaging it', async () => {
     const root = scratch();
     const full = await runMatrix(adventure, CONFIG, { root });
