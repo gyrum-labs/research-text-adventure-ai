@@ -134,28 +134,34 @@ survives. Experiment 05 will measure whether that difference actually buys anyth
 ### Two real providers, against their live APIs
 
 The criterion is met, and it was met by reaching two vendors rather than by writing a new code
-path. Both runs below went over the network to a live API, with a real key, through the adapter
-the harness already had.
+path. Every run below went over the network to a live API, with a real key, through an adapter the
+harness already had.
 
-| Provider | Model | Endpoint | Key variable | Turns | Tokens | Parse errors |
-|---|---|---|---|---|---|---|
-| OpenRouter | `deepseek/deepseek-chat` | `https://openrouter.ai/api/v1` | `OPENROUTER_API_KEY` | 10 | 6 611 | 1 |
-| Z.ai | `glm-4.6` | `https://api.z.ai/api/paas/v4` | `ZAI_API_KEY` | 9 | 6 843 | 0 |
+| Adapter | Provider | Model | Endpoint | Key variable | Turns | Tokens | Parse errors |
+|---|---|---|---|---|---|---|---|
+| OpenAI-compatible | OpenRouter | `deepseek/deepseek-chat` | `https://openrouter.ai/api/v1` | `OPENROUTER_API_KEY` | 10 | 6 611 | 1 |
+| OpenAI-compatible | Z.ai | `glm-4.6` | `https://api.z.ai/api/paas/v4` | `ZAI_API_KEY` | 9 | 6 843 | 0 |
+| Anthropic | Z.ai | `glm-4.6` | `https://api.z.ai/api/anthropic` | `ZAI_API_KEY` | 8 | 5 855 | 1 |
 
-The command is the same either way. The endpoint and the variable the key is read from are named
-on the command line, so the run does not change when the vendor does.
+Two of the four adapters in the port are now proved against a live API, and Z.ai serves both
+wire formats, so the same key reached two different protocols. The command is the same either way.
+The endpoint and the variable the key is read from are named on the command line, so the run does
+not change when the vendor does, and it does not change when the protocol does either.
 
 ```sh
 npm run exp:03 -- --provider openai --model deepseek/deepseek-chat \
   --base-url https://openrouter.ai/api/v1 --api-key-env OPENROUTER_API_KEY
+
+npm run exp:03 -- --provider anthropic --model glm-4.6 \
+  --base-url https://api.z.ai/api/anthropic --api-key-env ZAI_API_KEY
 ```
 
-Neither run finished the mission, and that is a finding rather than a shortfall in the criterion.
-Both agents read the wall notice, took the keycard and unlocked the vault door. Neither found the
-wire cutters, so neither could reach the manual, and both ended on the loop guard: an agent that
+No run finished the mission, and that is a finding rather than a shortfall in the criterion. Every
+agent read the wall notice, took the keycard and unlocked the vault door. None found the wire
+cutters, so none could reach the manual, and all three ended on the loop guard: an agent that
 returns to the same state three times is stopped, and examining things without acting never
-changes the state at all. The stops were at turn 10 and at turn 9, and they were not a parse
-error, a budget or a provider failure.
+changes the state at all. The stops were at turns 10, 9 and 8, and they were not a parse error, a
+budget or a provider failure.
 
 The key never reached the transcript, the run result or an error message. The tests against a
 local server that speaks each wire format already proved that, and the live runs show it again.
