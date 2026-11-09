@@ -78,7 +78,7 @@ describe('the turn-bound live matrix configuration', () => {
   });
 
   it('lets the turn budget bind, rather than the token ceiling or the loop guard', () => {
-    expect(TURN_BOUND.budgets?.maxTotalTokens).toBe(250000);
+    expect(TURN_BOUND.budgets?.maxTotalTokens).toBe(300000);
     expect(TURN_BOUND.budgets?.maxRepeatedStates).toBe(30);
   });
 

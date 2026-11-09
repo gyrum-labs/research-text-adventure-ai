@@ -40,7 +40,7 @@
   "runsDir": "runs/live-turnbound",
   "resultsDir": "results/live-turnbound",
   "budgets": {
-    "maxTotalTokens": 250000,
+    "maxTotalTokens": 300000,
     "maxRepeatedStates": 30
   }
 }
