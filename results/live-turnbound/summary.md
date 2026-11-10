@@ -2,26 +2,26 @@
 
 model                           cond  n      success (95% CI)  median turns  $/solve
 ------------------------------  ----  -----  ----------------  ------------  -------
-claude sonnet 4.5 (openrouter)  A     10/10  0%  (0–28%)       23            -      
+claude sonnet 4.5 (openrouter)  A     10/10  0%  (0–28%)       23            -
 claude sonnet 4.5 (openrouter)  B     10/10  90%  (60–98%)     13            $0.3549
 claude sonnet 4.5 (openrouter)  C     10/10  70%  (40–89%)     18            $0.1268
-claude sonnet 4.5 (openrouter)  D     10/10  0%  (0–28%)       30            -      
+claude sonnet 4.5 (openrouter)  D     10/10  0%  (0–28%)       30            -
 claude sonnet 4.5 (openrouter)  E     10/10  80%  (49–94%)     13            $0.4541
 glm 5.3 (z.ai)                  A     10/10  60%  (31–83%)     12            $0.1263
 glm 5.3 (z.ai)                  B     10/10  80%  (49–94%)     13            $0.1330
 glm 5.3 (z.ai)                  C     10/10  60%  (31–83%)     14            $0.0761
-glm 5.3 (z.ai)                  D     10/10  0%  (0–28%)       26            -      
+glm 5.3 (z.ai)                  D     10/10  0%  (0–28%)       26            -
 glm 5.3 (z.ai)                  E     10/10  60%  (31–83%)     13            $0.2480
 gpt-4.1-mini (openrouter)       A     10/10  40%  (17–69%)     23            $0.0451
 gpt-4.1-mini (openrouter)       B     10/10  50%  (24–76%)     23            $0.1386
-gpt-4.1-mini (openrouter)       C     10/10  0%  (0–28%)       24            -      
-gpt-4.1-mini (openrouter)       D     10/10  0%  (0–28%)       21            -      
+gpt-4.1-mini (openrouter)       C     10/10  0%  (0–28%)       24            -
+gpt-4.1-mini (openrouter)       D     10/10  0%  (0–28%)       21            -
 gpt-4.1-mini (openrouter)       E     10/10  20%  (6–51%)      23            $0.3825
-glm 4.5 air (z.ai)              A     10/10  0%  (0–28%)       25            -      
+glm 4.5 air (z.ai)              A     10/10  0%  (0–28%)       25            -
 glm 4.5 air (z.ai)              B     10/10  20%  (6–51%)      28            $0.1456
-glm 4.5 air (z.ai)              C     10/10  0%  (0–28%)       29            -      
-glm 4.5 air (z.ai)              D     10/10  0%  (0–28%)       28            -      
-glm 4.5 air (z.ai)              E     10/10  0%  (0–28%)       25            -      
+glm 4.5 air (z.ai)              C     10/10  0%  (0–28%)       29            -
+glm 4.5 air (z.ai)              D     10/10  0%  (0–28%)       28            -
+glm 4.5 air (z.ai)              E     10/10  0%  (0–28%)       25            -
 
 ## Failures
 

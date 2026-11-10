@@ -2,26 +2,26 @@
 
 model                           cond  n      success (95% CI)  median turns  $/solve
 ------------------------------  ----  -----  ----------------  ------------  -------
-claude sonnet 4.5 (openrouter)  A     10/10  0%  (0–28%)       15            -      
-claude sonnet 4.5 (openrouter)  B     10/10  0%  (0–28%)       4             -      
-claude sonnet 4.5 (openrouter)  C     10/10  0%  (0–28%)       4             -      
-claude sonnet 4.5 (openrouter)  D     10/10  0%  (0–28%)       4             -      
-claude sonnet 4.5 (openrouter)  E     10/10  0%  (0–28%)       4             -      
+claude sonnet 4.5 (openrouter)  A     10/10  0%  (0–28%)       15            -
+claude sonnet 4.5 (openrouter)  B     10/10  0%  (0–28%)       4             -
+claude sonnet 4.5 (openrouter)  C     10/10  0%  (0–28%)       4             -
+claude sonnet 4.5 (openrouter)  D     10/10  0%  (0–28%)       4             -
+claude sonnet 4.5 (openrouter)  E     10/10  0%  (0–28%)       4             -
 glm 5.3 (z.ai)                  A     10/10  10%  (2–40%)      13            $0.2697
-glm 5.3 (z.ai)                  B     10/10  0%  (0–28%)       4             -      
+glm 5.3 (z.ai)                  B     10/10  0%  (0–28%)       4             -
 glm 5.3 (z.ai)                  C     10/10  10%  (2–40%)      5             $0.1907
-glm 5.3 (z.ai)                  D     10/10  0%  (0–28%)       4             -      
-glm 5.3 (z.ai)                  E     10/10  0%  (0–28%)       4             -      
+glm 5.3 (z.ai)                  D     10/10  0%  (0–28%)       4             -
+glm 5.3 (z.ai)                  E     10/10  0%  (0–28%)       4             -
 gpt-4.1-mini (openrouter)       A     10/10  10%  (2–40%)      11            $0.0547
-gpt-4.1-mini (openrouter)       B     10/10  0%  (0–28%)       9             -      
-gpt-4.1-mini (openrouter)       C     10/10  0%  (0–28%)       9             -      
-gpt-4.1-mini (openrouter)       D     10/10  0%  (0–28%)       6             -      
-gpt-4.1-mini (openrouter)       E     10/10  0%  (0–28%)       9             -      
+gpt-4.1-mini (openrouter)       B     10/10  0%  (0–28%)       9             -
+gpt-4.1-mini (openrouter)       C     10/10  0%  (0–28%)       9             -
+gpt-4.1-mini (openrouter)       D     10/10  0%  (0–28%)       6             -
+gpt-4.1-mini (openrouter)       E     10/10  0%  (0–28%)       9             -
 glm 4.5 air (z.ai)              A     10/10  10%  (2–40%)      2             $0.0142
-glm 4.5 air (z.ai)              B     10/10  0%  (0–28%)       5             -      
-glm 4.5 air (z.ai)              C     10/10  0%  (0–28%)       5             -      
-glm 4.5 air (z.ai)              D     10/10  0%  (0–28%)       4             -      
-glm 4.5 air (z.ai)              E     10/10  0%  (0–28%)       7             -      
+glm 4.5 air (z.ai)              B     10/10  0%  (0–28%)       5             -
+glm 4.5 air (z.ai)              C     10/10  0%  (0–28%)       5             -
+glm 4.5 air (z.ai)              D     10/10  0%  (0–28%)       4             -
+glm 4.5 air (z.ai)              E     10/10  0%  (0–28%)       7             -
 
 ## Failures
 
