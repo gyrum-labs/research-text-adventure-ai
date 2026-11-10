@@ -55,6 +55,10 @@ export interface PolicyMetrics {
   transientErrors: number;
   /** Tokens spent so far, input and output. */
   tokensUsed: number;
+  /** Input tokens spent so far. */
+  inputTokens: number;
+  /** Output tokens spent so far. */
+  outputTokens: number;
   /** How many times each rung of the extraction ladder produced a command. */
   extractionRoutes: Record<string, number>;
   /** The hash of the prompt used on the last turn. */
@@ -80,6 +84,8 @@ export const EMPTY_METRICS: PolicyMetrics = {
   unparsableResponses: 0,
   transientErrors: 0,
   tokensUsed: 0,
+  inputTokens: 0,
+  outputTokens: 0,
   extractionRoutes: {},
   lastPromptHash: '',
   lastResponse: '',

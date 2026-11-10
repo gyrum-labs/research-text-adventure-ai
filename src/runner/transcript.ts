@@ -5,7 +5,7 @@
  * audit trail, and it is what replay reads back.
  */
 
-import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
 export interface TranscriptHeader {
@@ -53,4 +53,17 @@ export class Transcript {
   close(): void {
     /* every record is already on disk */
   }
+}
+
+/**
+ * Read a transcript back.
+ *
+ * The transcript is the audit trail, and the audit trail has to be readable by
+ * the things that judge a run: the failure classifier and the metrics.
+ */
+export function readTranscript(path: string): TranscriptRecord[] {
+  return readFileSync(path, 'utf8')
+    .split('\n')
+    .filter((line) => line.trim().length > 0)
+    .map((line) => JSON.parse(line) as TranscriptRecord);
 }

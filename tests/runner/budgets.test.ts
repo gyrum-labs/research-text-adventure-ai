@@ -43,6 +43,8 @@ class CountingPolicy implements AgentPolicy {
       unparsableResponses: reported.unparsableResponses ?? 0,
       transientErrors: reported.transientErrors ?? 0,
       tokensUsed: reported.tokensUsed ?? 0,
+      inputTokens: reported.inputTokens ?? 0,
+      outputTokens: reported.outputTokens ?? 0,
       extractionRoutes: reported.extractionRoutes ?? {},
       lastPromptHash: reported.lastPromptHash ?? '',
       lastResponse: reported.lastResponse ?? '',

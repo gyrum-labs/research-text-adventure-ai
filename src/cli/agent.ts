@@ -71,18 +71,6 @@ export async function runAgent(options: AgentOptions): Promise<void> {
     },
   });
 
-  transcript.write({
-    type: 'metrics',
-    turn: result.turns,
-    data: {
-      outcome: result.outcome,
-      reason: result.reason,
-      turns: result.turns,
-      parseErrors: result.parseErrors,
-      invalidActions: result.invalidActions,
-      hash: result.hash,
-    },
-  });
   transcript.close();
 
   if (!options.quiet) {

@@ -26,7 +26,7 @@ Two things that turn a pile of runs into evidence:
 |---|---|---|
 | `F1` | Parsing | could not produce a command the parser accepted |
 | `F2` | Hallucination | referenced objects that are not in the room or the inventory |
-| `F3` | Planning | repeated a failed action, or contradicted its own stated plan |
+| `F3` | Planning | repeated a failed action |
 | `F4` | Ordering / precondition | acted before discovering the fact the action needed |
 | `F5` | Exploration failure | never found a required fact inside the budget |
 | `F6` | Lethal trap | detonated the bomb |
@@ -43,24 +43,28 @@ npm run exp:04
 ## What you should see
 
 ```
-26 runs · 4 succeeded · 22 failed
+30 runs · 1 succeeded · 29 failed
 
-  F1  parsing                    0   ▏
-  F2  hallucination              1   ▎
-  F3  planning                   3   ███
-  F4  ordering / precondition    7   ███████
-  F5  exploration failure        6   ██████
-  F6  lethal trap                2   ██
-  F7  budget exhaustion           2   ██
-  F8  provider error             1   ▎
-  F9  abstention                 0   ▏
+  F6  lethal trap                  1   █
+  F8  provider error               1   █
+  F9  abstention                   1   █
+  F2  hallucination                1   █
+  F1  parsing                      1   █
+  F3  planning                     2   ██
+  F4  ordering / precondition      4   █████
+  F5  exploration failure         17   ████████████████████
+  F7  budget exhaustion            1   █
 
-cost per solved mission: $0.41
+cost per solved mission: $0.0000
 ```
 
 That histogram is the deliverable. It says *where* the model breaks, and it is directly
 actionable: `F4` dominant means the model acts before it has looked; `F5` dominant means it does
 not explore enough; `F2` dominant means the observation is confusing it.
+
+The sweep is nine fixtures, one per category, plus the gold path and twenty random-policy seeds.
+The fixtures are not experiments. They are what gives every category a run, so the classifier is
+proved against something rather than against one policy's habits.
 
 ## The tests, in the order they get written
 
@@ -73,10 +77,44 @@ not explore enough; `F2` dominant means the observation is confusing it.
 
 ## Acceptance criteria
 
-- [ ] Every metric in `SPEC.md` §12.2 is computed and recorded per run
-- [ ] Every failed run has exactly one category, computed from the transcript
-- [ ] The classifier's rules are unit-tested against synthetic transcripts, not just real ones
-- [ ] The histogram and the per-run annotations agree
+- [x] Every metric in `SPEC.md` §12.2 is computed and recorded per run
+- [x] Every failed run has exactly one category, computed from the transcript
+- [x] The classifier's rules are unit-tested against synthetic transcripts, not just real ones
+- [x] The histogram and the per-run annotations agree
+
+## What we found
+
+> **Key insight.** The order of the categories is not the order they are numbered in, and that
+> matters more than it sounds. A run that detonated the bomb is a lethal trap even if it also
+> hallucinated once, and a run that stopped is an abstention even if it had been muddling along.
+
+The nine categories do not compete evenly. Three of them name what actually ended the run, and
+those come first: a detonation, a provider failure, a stop. Then come the behavioural ones, from
+the most specific to the least: a refusal that names an object that is not there is a
+hallucination, and that is more useful to know than "it produced a bad command". Only when
+nothing more specific applies does a run get filed as budget exhaustion.
+
+### The random policy is an exploration failure, almost always
+
+Seventeen of the twenty random runs are `F5`. The random policy wanders, it does not explore
+with a purpose, and it almost never finds the manual that everything else depends on. Two are
+`F4` and one is `F3`. Not one of them detonates, which is a fact about the adventure rather than
+about the agent: the random policy rarely gets far enough to reach the wires.
+
+### The loop guard needed a narrower rule
+
+The runner's loop detector counted every repeated situation, and in a three-room adventure that
+meant the turn budget was unreachable: the agent ran out of distinct situations long before it
+ran out of turns. Only **consecutive** repeats count now. An agent that is stuck in one place is
+in a loop; an agent that wanders between two places is making a mess, and the turn budget is the
+right thing to stop it. Without that change the `F7` category could never be reached.
+
+### Half of "planning" is not a deterministic category
+
+`F3` is "acted against its own stated plan, or repeated a failed action". The first half would
+need the model to judge its own reasoning, and the classifier never calls a model. So `F3` is the
+second half only, and the specification now says so rather than leaving a promise the
+implementation cannot keep.
 
 ## Scaling path
 

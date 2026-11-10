@@ -100,6 +100,11 @@ export interface RunResult {
  * the same room reached by two different routes has two different hashes. The
  * hint count is part of the key, because spending a hint is progress even
  * though the room did not change.
+ *
+ * Only consecutive repeats count. An agent that is stuck in one place is in a
+ * loop; an agent that wanders between two places is making a mess, and the
+ * turn budget is the right thing to stop it. Counting every repeat would put
+ * a three-room adventure out of reach of its own turn budget.
  */
 function situationKey(state: GameState): string {
   return `${stateKey(state)}|h${state.hintsLeft}`;
@@ -118,7 +123,8 @@ export async function run(options: RunOptions): Promise<RunResult> {
   const events: Event[] = [];
   const commands: string[] = [];
   const history: Observation[] = [];
-  const situations = new Map<string, number>([[situationKey(state), 1]]);
+  let lastSituation = situationKey(state);
+  let repeats = 1;
   let messages: string[] = [];
   let parseErrors = 0;
   let invalidActions = 0;
@@ -128,10 +134,28 @@ export async function run(options: RunOptions): Promise<RunResult> {
   let extractionRoutes: Record<string, number> = {};
   let promptHash = '';
   let tokensUsed = 0;
+  let inputTokens = 0;
+  let outputTokens = 0;
 
   const finish = (outcome: RunOutcome, reason: string, turn: number): RunResult => {
     events.push({ type: 'run_ended', outcome, reason, turn });
     options.transcript?.write({ type: 'events', turn, data: [events[events.length - 1]!] });
+    options.transcript?.write({
+      type: 'metrics',
+      turn,
+      data: {
+        outcome,
+        reason,
+        turns: turn,
+        parseErrors,
+        invalidActions,
+        tokensUsed,
+        inputTokens,
+        outputTokens,
+        wallClockMs: clock() - startedAt,
+        hash,
+      },
+    });
     return {
       outcome,
       reason,
@@ -161,6 +185,8 @@ export async function run(options: RunOptions): Promise<RunResult> {
     const before = metricsOf(policy);
     if (before !== undefined) {
       tokensUsed = before.tokensUsed;
+      inputTokens = before.inputTokens;
+      outputTokens = before.outputTokens;
       if (tokensUsed > budgets.maxTotalTokens) {
         return finish(
           'budget_exhausted',
@@ -193,10 +219,27 @@ export async function run(options: RunOptions): Promise<RunResult> {
       },
     };
 
-    const raw = await policy.next(context);
+    let raw: string | null;
+    try {
+      raw = await policy.next(context);
+    } catch (error) {
+      // A policy that throws is a provider failure, not a crash. It is
+      // counted, retried, and the run stops cleanly when the budget is spent.
+      transientErrors += 1;
+      const reason = error instanceof Error ? error.message : 'the policy threw';
+      if (transientErrors >= budgets.maxTransientProviderErrors) {
+        return finish('provider_error', `The provider failed ${transientErrors} times in a row.`, turn);
+      }
+      messages = [`The provider could not be reached: ${reason}`];
+      options.onMessage?.(messages[0]!);
+      continue;
+    }
+
     const after = metricsOf(policy);
     if (after !== undefined) {
       tokensUsed = after.tokensUsed;
+      inputTokens = after.inputTokens;
+      outputTokens = after.outputTokens;
       extractionRoutes = after.extractionRoutes;
       promptHash = after.lastPromptHash;
       unparsableResponses = after.unparsableResponses;
@@ -293,12 +336,12 @@ export async function run(options: RunOptions): Promise<RunResult> {
     for (const message of messages) options.onMessage?.(message);
 
     const situation = situationKey(state);
-    const seen = (situations.get(situation) ?? 0) + 1;
-    situations.set(situation, seen);
-    if (seen >= budgets.maxRepeatedStates) {
+    repeats = situation === lastSituation ? repeats + 1 : 1;
+    lastSituation = situation;
+    if (repeats >= budgets.maxRepeatedStates) {
       return finish(
         'loop_detected',
-        `The agent returned to the same state ${seen} times and stopped making progress.`,
+        `The agent returned to the same state ${repeats} times in a row and stopped making progress.`,
         turn + 1,
       );
     }
