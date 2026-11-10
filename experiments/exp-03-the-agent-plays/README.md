@@ -191,8 +191,9 @@ The clock is injected, so the wall-clock budget is proved by a test rather than 
 >   metric rather than a mystery.
 > - An error message is part of the environment. A refusal that names what is possible is
 >   usable; one that says "no" is not.
-> - A measurement you cannot run is not a measurement. The live-provider check is written and
->   wired, but it is unticked because there is no key here to run it with.
+> - A measurement you cannot run is not a measurement. The live-provider check stayed unticked
+>   until a key arrived, and then two adapters ran against three real endpoints without a change
+>   to the harness.
 
 ## Scaling path
 
