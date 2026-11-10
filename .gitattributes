@@ -7,3 +7,8 @@
 .gyrum/branch-meta.json merge=ours
 .gyrum/branch-meta/** merge=ours
 # >>> gyrum-managed:end
+
+# Vendored third-party minified bundles. They are payload, not authored
+# code, so structural prose gates treat them as generated: minified lines
+# carry trailing whitespace by construction and no human edits them.
+docs-viewer/vendor/** linguist-generated
