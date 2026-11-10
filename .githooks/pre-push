@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# >>> gyrum-managed:start
+# Managed by gyrum-setup. Edits between these markers are overwritten on
+# the next `gyrum-setup` run. Add repo-local steps AFTER the end
+# marker — they will be preserved.
+exec "$HOME/.gyrum/devtools/pre-push.sh" "$@"
+# >>> gyrum-managed:end
+
+# Repo-local steps below — preserved across gyrum-setup runs.

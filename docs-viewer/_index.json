@@ -1,0 +1,145 @@
+{
+  "root": "..",
+  "tree": [
+    {
+      "type": "dir",
+      "name": "docs",
+      "children": [
+        {
+          "type": "dir",
+          "name": "gyrum",
+          "children": [
+            {
+              "type": "file",
+              "name": "devtools.md",
+              "path": "docs/gyrum/devtools.md"
+            },
+            {
+              "type": "file",
+              "name": "enforcement.md",
+              "path": "docs/gyrum/enforcement.md"
+            },
+            {
+              "type": "file",
+              "name": "warp.md",
+              "path": "docs/gyrum/warp.md"
+            }
+          ]
+        },
+        {
+          "type": "dir",
+          "name": "images",
+          "children": [
+            {
+              "type": "file",
+              "name": "README.md",
+              "path": "docs/images/README.md"
+            }
+          ]
+        },
+        {
+          "type": "dir",
+          "name": "runbooks",
+          "children": [
+            {
+              "type": "file",
+              "name": "update-docs.md",
+              "path": "docs/runbooks/update-docs.md"
+            }
+          ]
+        },
+        {
+          "type": "dir",
+          "name": "shared",
+          "children": [
+            {
+              "type": "file",
+              "name": "check-stack.md",
+              "path": "docs/shared/check-stack.md"
+            },
+            {
+              "type": "file",
+              "name": "doc-standards.md",
+              "path": "docs/shared/doc-standards.md"
+            },
+            {
+              "type": "file",
+              "name": "fleet-standards.md",
+              "path": "docs/shared/fleet-standards.md"
+            },
+            {
+              "type": "file",
+              "name": "gate-stack.md",
+              "path": "docs/shared/gate-stack.md"
+            },
+            {
+              "type": "file",
+              "name": "native-capture-provenance-contract.md",
+              "path": "docs/shared/native-capture-provenance-contract.md"
+            },
+            {
+              "type": "file",
+              "name": "README.md",
+              "path": "docs/shared/README.md"
+            },
+            {
+              "type": "file",
+              "name": "workflow-boilerplate.md",
+              "path": "docs/shared/workflow-boilerplate.md"
+            }
+          ]
+        },
+        {
+          "type": "file",
+          "name": "ADVENTURES.md",
+          "path": "docs/ADVENTURES.md"
+        },
+        {
+          "type": "file",
+          "name": "ARCHITECTURE.md",
+          "path": "docs/ARCHITECTURE.md"
+        },
+        {
+          "type": "file",
+          "name": "design-system.md",
+          "path": "docs/design-system.md"
+        },
+        {
+          "type": "file",
+          "name": "DIAGRAMS.md",
+          "path": "docs/DIAGRAMS.md"
+        },
+        {
+          "type": "file",
+          "name": "docs-guide.md",
+          "path": "docs/docs-guide.md"
+        },
+        {
+          "type": "file",
+          "name": "proposal.md",
+          "path": "docs/proposal.md"
+        },
+        {
+          "type": "file",
+          "name": "REFERENCES.md",
+          "path": "docs/REFERENCES.md"
+        },
+        {
+          "type": "file",
+          "name": "RESEARCH-CONTEXT.md",
+          "path": "docs/RESEARCH-CONTEXT.md"
+        },
+        {
+          "type": "file",
+          "name": "TESTING.md",
+          "path": "docs/TESTING.md"
+        },
+        {
+          "type": "file",
+          "name": "userguide.md",
+          "path": "docs/userguide.md"
+        }
+      ]
+    }
+  ]
+}

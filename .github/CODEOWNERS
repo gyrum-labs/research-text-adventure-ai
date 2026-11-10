@@ -1,0 +1,30 @@
+# Fleet-default CODEOWNERS — installed into every gyrum-labs/* repo by
+# gyrum-fleet-protection-sweep (warp#2914) and apply-fleet-branch-protection.sh.
+#
+# Why: the canonical branch-protection template sets
+# `require_code_owner_reviews: true`. For that flag to gate merges on
+# the 3-persona AI review (priya/marcus/lin per CLAUDE.md), the persona
+# bot accounts MUST own paths a PR is likely to touch. The catch-all
+# pattern below ensures every PR routes through a CODEOWNER review,
+# and the named accounts are the persona bots that `gyrum-review-pr`
+# posts approvals from.
+#
+# Required (count toward branch-protection's quorum):
+#   gyrum-priya, gyrum-marcus, gyrum-lin
+# Advisory (CLAUDE.md "advisory; gates local gyrum-review-pr only"):
+#   gyrum-dana, gyrum-sasha, gyrum-quinn
+#
+# All six are listed because GitHub's CODEOWNERS treats every named
+# owner as a potential reviewer; the 2-of-N gate is enforced by
+# `required_approving_review_count: 2` in the protection template.
+# Persona-recusal (warp#1392) drops a recused persona from the
+# effective quorum at gyrum-review-pr time; protection-side quorum
+# stays at 2 because warp-recusal already produces ≥2 remaining
+# approvers in every recusal scenario the policy allows.
+#
+# This file is canonical for the fleet. Do NOT hand-edit per repo —
+# any drift is overwritten on the next fleet sweep tick. To add a new
+# persona, edit `templates/CODEOWNERS` in gyrum-labs/devtools and let
+# the sweep propagate it.
+
+* @gyrum-priya @gyrum-marcus @gyrum-lin @gyrum-dana @gyrum-sasha @gyrum-quinn
