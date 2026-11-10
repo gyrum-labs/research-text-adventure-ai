@@ -11,4 +11,6 @@
 # Vendored third-party minified bundles. They are payload, not authored
 # code, so structural prose gates treat them as generated: minified lines
 # carry trailing whitespace by construction and no human edits them.
-docs-viewer/vendor/** linguist-generated
+# -whitespace opts the paths out of `git diff --check` (the whitespace
+# half of the conflict-marker gate) the git-native way.
+docs-viewer/vendor/** linguist-generated -whitespace
