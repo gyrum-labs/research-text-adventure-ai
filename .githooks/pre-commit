@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# >>> gyrum-managed:start
+# Managed by gyrum-setup. Edits between these markers are overwritten on
+# the next `gyrum-setup` / `bash setup-hooks.sh` run. Add repo-local
+# steps AFTER the end marker — they will be preserved.
+# Resolve the script at hook-run time (same portable pattern as pre-push,
+# warp#6808): a bare $DEVTOOLS would expand at setup-write time to the
+# absolute path of whatever worktree ran setup, baking a /tmp/gyrum-work/<gone>
+# path into the committed hook that breaks for every other clone.
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+if [ -x "$repo_root/pre-commit.sh" ]; then
+  exec "$repo_root/pre-commit.sh" "$@"
+fi
+exec "${GYRUM_DEVTOOLS_ROOT:-$HOME/.gyrum/devtools}/pre-commit.sh" "$@"
+# >>> gyrum-managed:end
+
+# Repo-local steps below — preserved across gyrum-setup runs.

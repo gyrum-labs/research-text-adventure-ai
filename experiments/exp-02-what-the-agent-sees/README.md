@@ -14,6 +14,7 @@ rather than merely unlikely.*
 >
 > - **Ten minutes.** The why and the state/observation comparison.
 > - **Thirty minutes.** The four context strategies and the leakage test.
+> - **An hour.** The two bugs the experiment found, and what they mean for every later one.
 
 ## Why this is the second experiment
 
@@ -48,21 +49,22 @@ agent would receive**. The difference between the two columns *is* the experimen
 Turn 0, in the Briefing Room:
 
 ```
-STATE                               OBSERVATION
-location: briefing                 location: Briefing Room
-objects: keycard, bulletin, desk   visible: keycard, bulletin, desk
-vault door: locked                 (not mentioned — it is in another room)
-manual: inside locker              (not mentioned — the locker is closed)
-safe code: 4821                    (not mentioned — not known yet)
-goals: disarm, recover             objectives: disarm, recover
+STATE                                    OBSERVATION
+location: briefing                       location: Briefing Room
+objects here: keycard, wall notice, desk visible: keycard, wall notice, desk
+carrying: nothing                        carrying: nothing
+vault door: locked                       (not mentioned — it is in another room)
+locker holds: wire cutters, defusal manual(not mentioned — the locker is closed)
+safe holds: case                         (not mentioned — the safe is closed)
+safe code: 4821                          (not mentioned — not known yet)
+goals: disarm, recover                   objectives: Disarm the bomb, Recover the case
 ```
 
 Turn 5, after the manual has been read:
 
 ```
-manual: read                       visible: (manual is in your inventory)
-safe code: 4821                    "The safe combination is 4821."
-safe wire: yellow                  "The safe wire is the yellow one."
+safe code: 4821                          safe code: 4821
+safe holds: case                         (not mentioned — the safe is closed)
 ```
 
 The agent learns a fact **only** by doing the thing that reveals it. That is the property to
@@ -79,12 +81,70 @@ protect.
   prompts from the same state
 - the observation builder imports nothing from the authoring side of the adventure
 
+## What we found
+
+The experiment is green, and it found two things worth more than the green.
+
+> **Key insight.** The whole world has 1,504 reachable states. The agent can tell only 109 of them
+> apart. Everything else it reaches is the same view again, so the agent's world is a small,
+> repeating set of situations, not a space it explores.
+
+### The search is complete, not a sample
+
+The first version of the leakage test enumerated states and ran out of room after 200,000 of
+them. The reason was not the world but the action DSL: the agent can "unlock" anything it can
+reach, and each unlock plants a flag that no predicate and no observation ever reads. The space
+filled with states that differ only in a flag nobody can see.
+
+`src/runner/reachable.ts` now keeps a state only when it differs in a way
+that matters. A flag is meaningful when some predicate reads it, or when the observation reads
+it. Everything else is bookkeeping. With that projection the search terminates on its own, and
+the result is every state the agent can be in.
+
+### Two bugs, both found by the leakage test
+
+**The hint never reached the agent.** The reducer emitted the hint text as an event, the human
+CLI printed it, and the observation never carried it. An agent that typed `hint` spent a credit
+and received "You think hard." with no hint attached. The hint was unreachable for the only
+audience that needed it.
+
+The cause was two copies of the rule that decides what an agent reads: one in the runner and one
+in the test. They had already drifted. The rule now lives in one function,
+`messagesFromEvents`, and both the runner and the tests call it.
+
+**The prose renderer dropped the messages.** `renderObservation` rendered the room, the objects
+and the objectives, and silently left out what the world had just said. So the `text` and `json`
+renderers did not agree on the facts, which is the one thing the three renderers have to do.
+
+### A finding, not a bug: the observation is memoryless
+
+A message lasts exactly one turn. Read the manual on turn 4 and the safe code is in the
+observation on turn 5; take any action on turn 6 and the code is gone again, because the
+observation carries no memory of it.
+
+This is not a defect in the observation. It is the reason the `structured` context strategy
+exists. The known-facts block carries forward what the agent has been told, so a learned fact
+survives. Without it, an agent reads the manual and then forgets the code, which would look
+exactly like an agent that never read it.
+
 ## Acceptance criteria
 
-- [ ] Exactly one function converts state into anything an agent can see
-- [ ] The leakage test passes for **every reachable state** of the adventure, not just a sample
-- [ ] The three renderers agree on the facts and differ only in presentation
-- [ ] The same state produces different prompts under different context strategies
+- [x] Exactly one function converts state into anything an agent can see
+- [x] The leakage test passes for **every reachable state** of the adventure, not just a sample
+- [x] The three renderers agree on the facts and differ only in presentation
+- [x] The same state produces different prompts under different context strategies
+
+> **Key takeaways**
+>
+> - The agent's view of the world is much smaller than the world. 109 distinct views across
+>   1,504 reachable states.
+> - A leak is a property of the whole state space, so the test has to be a search rather than a
+>   sample.
+> - "One function decides" is a claim you have to enforce in a test. Here a test walks the
+>   source with the TypeScript parser and fails if any second function takes a state and returns
+>   an observation.
+> - Two copies of a rule will drift. The hint bug was not a logic error, it was a duplicated
+>   rule.
 
 ## Scaling path
 

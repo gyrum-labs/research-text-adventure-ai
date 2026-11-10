@@ -6,7 +6,7 @@ import { adventure } from '../../src/adventures/mission-impossible/adventure.js'
 describe('the known-facts block', () => {
   it('summarises only what the agent has observed', () => {
     const first = buildObservation(adventure, structuredClone(adventure.initial));
-    const facts = buildKnownFacts(adventure, [first]);
+    const facts = buildKnownFacts([first]);
     expect(facts).toContain('Briefing Room');
     expect(facts).toContain('keycard');
     expect(facts).toContain('Disarm the bomb');
@@ -19,13 +19,13 @@ describe('the known-facts block', () => {
     const first = buildObservation(adventure, structuredClone(adventure.initial));
     const corridor = { ...structuredClone(adventure.initial), roomId: 'corridor' };
     const second = buildObservation(adventure, corridor);
-    const facts = buildKnownFacts(adventure, [first, second]);
+    const facts = buildKnownFacts([first, second]);
     expect(facts).toContain('Service Corridor');
     expect(facts).toContain('locker');
   });
 
   it('says nothing before anything has been seen', () => {
-    expect(buildKnownFacts(adventure, [])).toContain('none yet');
+    expect(buildKnownFacts([])).toContain('none yet');
   });
 });
 

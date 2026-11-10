@@ -18,13 +18,18 @@ export default tseslint.config(
   {
     files: ['src/**/*.ts', 'tests/**/*.ts'],
     rules: {
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
       'no-console': 'off',
       eqeqeq: ['error', 'smart'],
     },
   },
   {
-    // The kernel is a leaf. It may not reach back into the layers that use it.
+    // The kernel is a leaf. It may not reach back into the layers that use it,
+    // and it has no clock, no randomness and no I/O. The only exception is
+    // node:crypto, which hashes without breaking determinism.
     files: ['src/kernel/**/*.ts'],
     rules: {
       'no-restricted-imports': [
@@ -34,6 +39,20 @@ export default tseslint.config(
             {
               group: ['**/agents/**', '**/runner/**', '**/cli/**', '**/server/**', '**/web/**'],
               message: 'The kernel is a leaf. It cannot import from the layers above it.',
+            },
+            {
+              group: [
+                'node:fs',
+                'node:fs/*',
+                'node:http',
+                'node:https',
+                'node:os',
+                'node:path',
+                'node:child_process',
+                'node:worker_threads',
+              ],
+              message:
+                'The kernel is pure. It has no clock, no randomness and no I/O, so the same commands produce the same state every time.',
             },
           ],
         },

@@ -498,14 +498,18 @@ interfaces, asserting the final hash chain matches.
 
 ### 4.4 Dependency rules
 
-- `kernel` → nothing (except `room:crypto` for hashing).
-- `adventures` → `kernel` types only.
+- `kernel` → nothing (except `node:crypto` for hashing). No clock, no randomness, no I/O.
+- `adventures` → `kernel` types only. The adventure files are data; the search tools that
+  explore an adventure live in `runner`.
 - `session` → `kernel`.
 - `agents` → `kernel` types, `adventures` data.
-- `runner` → `kernel`, `agents`, `session`.
-- `cli` / `server` / `web` → `runner`, `session`, `kernel`.
+- `runner` → `kernel`, `agents`, `adventures`.
+- `cli` / `server` / `web` → `runner`, `kernel`, `adventures`.
 
-Enforced by `tests/architecture.test.ts` (C4).
+Every layer may look down and never up. The command line is the composition root, so it is
+the one layer that reaches the adventure data directly.
+
+Enforced by `tests/architecture.test.ts` (C4), and by a lint rule that keeps the kernel a leaf.
 
 ---
 
@@ -1410,6 +1414,9 @@ research-text-adventure-ai/
 ├── tests/
 │   ├── kernel/*.test.ts
 │   ├── adventures/*.test.ts
+│   ├── agents/*.test.ts
+│   ├── runner/*.test.ts
+│   ├── cli/*.test.ts
 │   ├── architecture.test.ts     ← C4 dependency rules
 │   ├── leakage.test.ts          ← C2 no privileged info
 │   ├── equivalence.test.ts      ← REQ-EQUIV-1 across the three interfaces

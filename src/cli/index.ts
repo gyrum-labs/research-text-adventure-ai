@@ -10,6 +10,7 @@ import { adventureById, ADVENTURES } from '../adventures/index.js';
 import { GOLD_PATH } from '../adventures/mission-impossible/gold-path.js';
 import { play } from './play.js';
 import { runAgent, type PolicyName } from './agent.js';
+import { runExp02 } from './exp-02.js';
 import { replayTranscript } from '../runner/replay.js';
 
 const program = new Command();
@@ -81,6 +82,9 @@ program
         console.log('');
         console.log('The gold path:');
         console.log(`  ${GOLD_PATH.join(' · ')}`);
+        break;
+      case '02':
+        console.log(runExp02(adventureById('mission-impossible')));
         break;
       default:
         console.error(`experiment ${number} is not implemented yet`);

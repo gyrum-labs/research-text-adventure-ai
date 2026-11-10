@@ -7,7 +7,7 @@
  */
 
 import type { Adventure, Event, GameState, Observation, RunOutcome } from '../kernel/types.js';
-import { buildObservation } from '../kernel/observation.js';
+import { buildObservation, messagesFromEvents } from '../kernel/observation.js';
 import { hashInitial, hashNext } from '../kernel/hash.js';
 import { parseCommand } from '../kernel/parser.js';
 import { reduce } from '../kernel/reduce.js';
@@ -111,11 +111,10 @@ export async function run(options: RunOptions): Promise<RunResult> {
     events.push(...transition.events);
     if (!transition.changed) invalidActions += 1;
 
-    const outcomeMessages = transition.events
-      .filter((event) => event.type === 'action_succeeded' || event.type === 'action_failed')
-      .map((event) => (event as { message: string }).message);
-    messages = outcomeMessages.length > 0 ? outcomeMessages : messages;
-
+    // The observation is the agent's only channel, so a hint that stayed in
+    // the event stream would be a hint the agent paid for and never read.
+    const said = messagesFromEvents(transition.events);
+    if (said.length > 0) messages = said;
     options.transcript?.write({
       type: 'command',
       turn,
@@ -130,7 +129,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
       hash,
       summary: { roomId: state.roomId, inventory: state.inventory, status: state.status },
     });
-    for (const message of outcomeMessages) options.onMessage?.(message);
+    for (const message of said) options.onMessage?.(message);
   }
 
   let outcome: RunOutcome;

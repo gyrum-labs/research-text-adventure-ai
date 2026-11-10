@@ -159,13 +159,13 @@ running the first.
 
 This experiment is done when all of these are true and the suite is green:
 
-- [ ] The kernel is pure, deterministic, and has no adventure-specific vocabulary
-- [ ] The adventure is pure data and validates at load
-- [ ] The gold path wins in 10 turns; BFS confirms it is shortest
-- [ ] The random policy fails 20/20 seeds
-- [ ] A human can play it to completion from the terminal
-- [ ] Every run produces a transcript that replays to an identical hash chain
-- [ ] Kernel line coverage is at least 90%
+- [x] The kernel is pure, deterministic, and has no adventure-specific vocabulary
+- [x] The adventure is pure data and validates at load
+- [x] The gold path wins in 10 turns; BFS confirms it is shortest
+- [x] The random policy fails 20/20 seeds
+- [x] A human can play it to completion from the terminal
+- [x] Every run produces a transcript that replays to an identical hash chain
+- [x] Kernel line coverage is at least 90%
 
 ## Scaling path
 

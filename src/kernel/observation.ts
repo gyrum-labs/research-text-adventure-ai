@@ -13,8 +13,33 @@
  * because the agent has to know what it is for. The method is not.
  */
 
-import type { Adventure, GameState, Id, Observation } from './types.js';
+import type { Adventure, Event, GameState, Id, Observation } from './types.js';
 import { isGoalAchieved } from './goals.js';
+
+/**
+ * What one transition said to the agent.
+ *
+ * The action outcome is what the world said. The hint text is what the game
+ * chose to tell the agent. Both reach the agent through the observation,
+ * because the observation is the only channel an agent has, and the rule
+ * lives here so that the runner and the tests cannot drift apart.
+ *
+ * A transition that says nothing (a movement, for instance) returns an empty
+ * list, and the caller decides what the agent sees instead.
+ */
+export function messagesFromEvents(events: Event[]): string[] {
+  const messages: string[] = [];
+
+  for (const event of events) {
+    if (event.type === 'action_succeeded' || event.type === 'action_failed') {
+      if (event.message.length > 0) messages.push(event.message);
+    } else if (event.type === 'hint_given') {
+      if (event.text.length > 0) messages.push(event.text);
+    }
+  }
+
+  return messages;
+}
 
 export function buildObservation(
   adventure: Adventure,
@@ -90,16 +115,18 @@ function doorStatus(
 
 /**
  * The known-facts block: a compact summary of everything the agent has
- * observed so far. Derived only from the agent's own observation history,
- * never from the adventure's authoring data.
+ * observed so far.
+ *
+ * Derived only from the agent's own observation history, never from the
+ * adventure's authoring data. That is why the adventure is not a parameter:
+ * the function could not reach the authoring data if it wanted to.
  */
-export function buildKnownFacts(
-  adventure: Adventure,
-  observations: Observation[],
-): string {
+export function buildKnownFacts(observations: Observation[]): string {
   const seen = new Map<string, string>();
   const rooms = new Set<string>();
   const goals = new Map<string, 'complete' | 'incomplete'>();
+  const latest = observations[observations.length - 1];
+  const told = new Set<string>();
 
   for (const observation of observations) {
     rooms.add(observation.room.name);
@@ -109,15 +136,33 @@ export function buildKnownFacts(
     for (const goal of observation.goals) {
       goals.set(goal.text, goal.status);
     }
+    // What the agent was told is a fact the agent keeps. The observation
+    // itself is memoryless: a message lasts one turn, so the agent has to
+    // remember it or lose it.
+    for (const message of observation.messages) {
+      for (const line of message.split('\n')) {
+        const trimmed = line.trim();
+        if (trimmed.length > 0) told.add(trimmed);
+      }
+    }
   }
 
   const lines: string[] = [];
+  lines.push(`Location: ${latest?.room.name ?? 'unknown'}.`);
+  lines.push(`Carrying: ${latest?.inventory.map((object) => object.name).join(', ') || 'nothing'}.`);
+  lines.push(`Visible: ${latest?.visible.map((object) => object.name).join(', ') || 'nothing'}.`);
   lines.push(`Rooms seen: ${[...rooms].join(', ') || 'none yet'}.`);
   lines.push(`Objects seen: ${[...seen.values()].join(', ') || 'none yet'}.`);
   if (goals.size > 0) {
     lines.push('Objectives:');
     for (const [text, status] of goals) {
       lines.push(`  - ${text} [${status === 'complete' ? 'done' : 'not done'}]`);
+    }
+  }
+  if (told.size > 0) {
+    lines.push('Facts you have been told:');
+    for (const fact of told) {
+      lines.push(`  - ${fact}`);
     }
   }
   return lines.join('\n');

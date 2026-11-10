@@ -15,9 +15,9 @@
  * silent timeout in a test is a lie.
  */
 
-import type { Adventure, GameState } from '../../kernel/types.js';
-import { parseCommand } from '../../kernel/parser.js';
-import { reduce } from '../../kernel/reduce.js';
+import type { Adventure, GameState } from '../kernel/types.js';
+import { parseCommand } from '../kernel/parser.js';
+import { reduce } from '../kernel/reduce.js';
 
 export interface OracleResult {
   /** The shortest winning route, in commands. Empty when the adventure cannot be won. */
