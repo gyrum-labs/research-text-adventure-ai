@@ -1,4 +1,4 @@
-<!-- page-version: 1.0.0 status: draft last-reviewed: 2026-11-08 -->
+<!-- page-version: 1.1.0 status: draft last-reviewed: 2026-11-10 -->
 
 # Results
 
@@ -14,56 +14,111 @@ document says so rather than estimating it.*
 
 ## The headline
 
-> **Key insight.** The environment is ready to answer the research questions, and the answers it
-> can give today are about the environment rather than about a model: the agent's view of the
-> world is 109 distinct observations across 1,504 reachable states, and the failures that a
-> competent-but-imperfect agent produces are reasoning failures, not malformed output.
+> **Key insight.** The live matrix found the instrument before it found the models. The guards
+> were written against a policy that acts immediately, and a real model looks before it acts, so
+> the shipped budgets stop the agents before the mission does and the pooled success rate is
+> 2.0%. With the turn budget in charge, the same four models score 31.5%, and the finding that
+> survives both sweeps is not about a model at all: the observation is memoryless, and an agent
+> with no memory scores 0% every time.
 
 The series built six things. A deterministic text adventure that a human and an agent can both
 play. A perception boundary with a proof rather than a promise. An agent loop with a provider
 port, a hashable prompt and enforceable budgets. A failure taxonomy that sorts every failed run
 into exactly one of nine categories. A matrix that runs the same experiment across models and
-conditions with Wilson intervals. And a second world, written as an adventure, that the same
-harness plays without a change to the kernel.
+conditions with Wilson intervals, and that ran against four live models, four hundred runs in
+all. And a second world, written as an adventure, that the same harness plays without a change
+to the kernel.
 
 ## What was measured, and what was not
 
 This matters more than anything else in the document, so it comes first.
 
-**There are no provider credentials in the environment this was built in.** No `ANTHROPIC_API_KEY`,
-no `OPENAI_API_KEY`, no local Ollama. Every number below therefore comes from a **surrogate**:
-a stand-in that has the plan and nothing else, and answers a step whose fact is not in the part
-of its prompt it can attend to with a guess.
+The matrix ran against **live models with real keys**, twice, and against a **surrogate** once,
+before any key was available. Four models were reachable through two vendors: `claude sonnet
+4.5` and `gpt-4.1-mini` through OpenRouter, `glm 5.3` and `glm 4.5 air` through Z.ai. Each live
+sweep is the same grid, four models across five conditions with ten seeds each: two hundred runs
+per sweep, four hundred live runs in all.
 
-The surrogate is an instrument, not a model. Its numbers are about the instrument. The live
-matrix is the same code with a different provider behind it, and the criterion that asks for it
-is left **unticked** rather than quietly claimed.
+The two live sweeps differ in one number: which budget binds. The first holds the budgets the
+harness ships with. The second lets the turn budget bind instead of the token ceiling and the
+loop guard. Three of the five hypothesis verdicts flip between them, and both sweeps are
+reported, because a matrix whose every cell is zero cannot tell a reader whether the models are
+weak or the instrument is blunt.
 
-What is proved, and proved against the real engine, is everything short of the live call:
+The surrogate is an instrument, not a model: it has the plan and nothing else, and answers a
+step whose fact is not in the part of its prompt it can attend to with a guess. Its numbers
+appear below for one reason: its runs are free and deterministic, so the mechanism the
+conditions manipulate, the memorylessness of the observation, is isolated from everything a
+real model brings.
+
+What is proved, and proved over the real network against the real engine:
 
 - The environment is deterministic and replays exactly.
 - The perception boundary holds for every reachable state, not a sample.
-- The agent loop, the prompt, the extraction ladder and the budgets work end to end.
+- The agent loop, the prompt, the extraction ladder and the budgets work end to end, against
+  four live models and two wire protocols.
 - The failure taxonomy sorts every failure into exactly one existing category, in both worlds.
 - The kernel did not change when the second world was written.
+- No key appears in any committed artefact. The summaries name the environment variable a key
+  is read from, and never the key.
+
+The four hundred live transcripts are not committed: they are too large for the repository. The
+two summaries are, in `results/live/` and `results/live-turnbound/`, every figure in this
+document traces to them, and the sweep is resumable from the committed configuration in
+`configs/`.
 
 ## RQ1: can an LLM agent complete a 10-command mission?
 
-**Not measured against a modern LLM, because there is no key here.** What is measured is that
-the environment can be completed, that the shortest route is 10 commands, and that the harness
-drives it without a human in the loop.
+**Not to the 80% bar, and the strongest cell in the matrix reaches 90%.** Four live models
+played the same grid twice.
 
-The surrogate's pooled success rate across the whole matrix is **50.0%** over 200 runs, against
-H1's threshold of 80%. H1 is therefore **falsified** on the surrogate, and the live matrix
-remains the test that would settle it.
+With the turn budget binding, the pooled success rate across every cell is **31.5%** (63 of 200
+runs), against H1's threshold of 80%. H1 is **falsified**. The best cell is `claude sonnet 4.5`
+with a JSON observation and the full history: **90%** (interval 60 to 98). The weakest result is
+not a model, it is the control: condition `D`, the same observation with no history, scores
+**0% for every model in both sweeps**.
+
+| Model | A | B | C | D | E |
+|---|---|---|---|---|---|
+| claude sonnet 4.5 | 0% | 90% | 70% | 0% | 80% |
+| glm 5.3 | 60% | 80% | 60% | 0% | 60% |
+| gpt-4.1-mini | 40% | 50% | 0% | 0% | 20% |
+| glm 4.5 air | 0% | 20% | 0% | 0% | 0% |
+
+With the budgets the harness ships with, the same models score **2.0%** pooled (4 of 200). The
+loop guard stops an agent that returns to the same state three times, and a real model examines
+the keycard and the wall notice before it acts, which is already three visits to the same state.
+155 of those 196 failures are exploration failures the guard caused, not the model.
+
+The environment is not the obstacle: the oracle proves the shortest route is 10 commands, and
+the harness drives it without a human in the loop. The surrogate, which acts on the first turn
+and never triggers the guard, pooled **50.0%** over its own 200 runs, against the same 80%
+threshold and the same falsified verdict.
 
 ## RQ2: when it fails, why?
 
-**Reasoning, overwhelmingly.** Across the matrix's 100 failures, **68 were reasoning, ordering
-or planning failures** and **32 were malformed output**. H4, that most failures are not parsing
-failures, is the one hypothesis the series **supports**.
+**It depends on which constraint stops the run, and the live matrix separated the two.**
 
-The failure histogram from the dedicated sweep, 29 failures:
+With the turn budget binding, the histogram over 137 failures is mostly hallucination: **80 are
+`F2`**, a command that names something the agent cannot see. The taxonomy counts `F2` as
+malformed output rather than reasoning, so H4 flips from supported to falsified between the
+sweeps: **80 of 137 malformed against 57 reasoning, ordering or planning**.
+
+| Code | Category | Runs |
+|---|---|---:|
+| `F2` | hallucination | 80 |
+| `F3` | planning | 23 |
+| `F5` | exploration failure | 23 |
+| `F7` | budget exhaustion | 8 |
+| `F4` | ordering / precondition | 3 |
+
+With the budgets the harness ships with, the histogram inverts: **155 of 196 failures are
+`F5`**, because the loop guard stops an exploring agent in its first three turns, and only 30
+are hallucination. An unwary reader of either sweep alone would report a different dominant
+failure, and both would be correct: the first sweep measures the guard, the second the models.
+
+The dedicated taxonomy sweep from Experiment 04, 29 surrogate failures across all nine
+categories, still holds as the proof that the classifier is total, one code per failed run:
 
 | Code | Category | Runs |
 |---|---|---:|
@@ -83,22 +138,27 @@ taxonomy keeps them apart.
 
 ## RQ3: how much does the success rate move across conditions?
 
-**The information content moves it enormously. The format does not move it at all.**
+**The information content moves it enormously, and on live models the format moves it too.**
 
 The control condition `D`, which is the same observation with no history, succeeds on **0% of
-runs at every reliability**. That is the largest single effect in the matrix, and it has a
-mechanism: the observation is memoryless, so the safe combination the agent read on turn 4 is
-gone from its view by turn 8.
+runs, for every model, at every budget, and at every surrogate reliability**. That is the
+largest single effect in the matrix, and it has a mechanism: the observation is memoryless, so
+the safe combination the agent read on turn 4 is gone from its view by turn 8.
 
-The other three comparisons move nothing:
+On live models with the turn budget binding:
 
 | Hypothesis | Claim | Measured | Verdict |
 |---|---|---|---|
-| `H2` | Masking the legal action space raises the success rate | 62.5% masked, 62.5% unmasked | **falsified** |
-| `H3` | A structured observation beats prose | 62.5% JSON, 62.5% prose | **falsified** |
-| `H5` | The full history dilutes the context | 62.5% in 9.8 turns, 62.5% in 9.8 turns | **falsified** |
+| `H2` | Masking the legal action space raises the success rate | 40.0% masked (`E`), 60.0% unmasked (`B`) | **falsified** |
+| `H3` | A structured observation beats prose | 60.0% JSON (`B`), 25.0% prose (`A`) | **supported** |
+| `H5` | The full history dilutes the context | 32.5% structured (`C`), 40.0% full (`E`) | **falsified** |
 
-What the format *does* change is the bill. The same mission costs the frontier surrogate
+`H3` is the hypothesis the live matrix was built to ask. The surrogate could not answer it: it
+has no attention mechanism, so its format cells came out identical, 62.5% against 62.5%, and
+its masked cells likewise. A real model reads a JSON observation better than prose, by **35
+percentage points** pooled across four models, and masking the legal actions costs it 20.
+
+What the format also changes is the bill. The same mission costs the frontier surrogate
 **8,720 tokens** per solve with a prose observation and **23,007 tokens** with a JSON one:
 JSON is **2.6x the tokens** for the same facts. The structured context brings it back down to
 **8,944**, within 3% of prose.
@@ -109,10 +169,18 @@ JSON is **2.6x the tokens** for the same facts. The structured context brings it
 
 ## RQ4: what does a solved mission cost?
 
-**Tokens: 8,720 to 23,007 per solve, depending on the observation format.** The dollar cost is
-**$0.00** because the surrogate is free, and the live cost needs a key. The token number is the
-one that scales, and it scales with two things: the depth of the chain and the verbosity of the
-observation.
+**Between $0.05 and $0.45 per solved mission on live models, and $0.2868 pooled.**
+
+With the turn budget binding, the cost per solved mission across the whole sweep is **$0.2868**.
+The cheapest cell is `gpt-4.1-mini` with a prose observation at **$0.0451** per solve; the
+dearest is `claude sonnet 4.5` with a masked JSON observation and the full history at
+**$0.4541**. With the budgets the harness ships with, the pooled figure is **$0.6239**, because
+a failed run spends its budget without producing a solve, and 196 of 200 runs failed.
+
+In tokens, the surrogate puts a floor under the same question. A solved mission costs **8,720
+tokens** with a prose observation and **23,007** with a JSON one: **2.6x** for the same facts.
+The token number is the one that scales, and it scales with two things: the depth of the chain
+and the verbosity of the observation.
 
 The open-weights surrogate needed **55,462 tokens** per solve where the frontier one needed
 **8,720**, because it fails more often and a failed run spends its whole budget. Cost per
@@ -158,8 +226,19 @@ project.
 
 ## Threats to validity
 
-- **No model was run.** Every number is a surrogate's. The live matrix is the same code with a
-  provider behind it, and it is the criterion that is open.
+- **Two sweeps, one grid, three flips.** The live matrix ran twice and the sweeps disagree on
+  three of the five hypotheses. The difference is one configuration number, which budget binds,
+  and a reader who takes one sweep without the other takes an answer the other sweep
+  contradicts. Both are reported for that reason.
+- **The live transcripts are not committed.** Four hundred of them are too large for the
+  repository. The summaries are committed and the sweep is resumable from `configs/`, but a
+  live run cannot be replayed from the repository alone: the engine replays exactly, the model
+  does not.
+- **One wire protocol.** All four live models were reached through the OpenAI-compatible
+  adapter over two vendors. The Anthropic-compatible adapter is live-proved by the single runs
+  in Experiment 03, not by the matrix.
+- **The dollar figures are list prices, not invoices.** They are computed from the published
+  per-million prices in one table, `src/runner/metrics.ts`, and that table goes stale.
 - **The surrogate models one failure mode.** It forgets facts and guesses. A real model also
   hallucinates, misreads and loops, and the weights between the nine categories would change.
 - **One adventure, then two.** Two worlds is enough to show the vocabulary transfers and not
@@ -168,7 +247,6 @@ project.
   significance below that.
 - **The engine is deterministic; the agent is not.** Every transcript replays exactly, and no
   agent run is claimed to reproduce.
-- **The prices are an estimate** and they go stale.
 
 ## What this means for running an organisation
 
@@ -182,25 +260,31 @@ agent, a bounded budget, a replayable audit trail, and a per-run category that s
 agent got stuck, acted too early, or ran out of budget.
 
 **What changes.** The verbs and the flags become the organisation's own, which is the point: the
-engine learns nothing. The dashboard payload has to be a *summary*, not a transcript, because the
-full history is both 2.6x the tokens and no better for the agent. And the memory has to live
-somewhere: the observation is deliberately memoryless, so the context strategy is the only place
-a discovered fact can survive.
+engine learns nothing. The dashboard payload is a JSON observation, which live models read
+better than prose by 35 percentage points, and it carries a *summary*, not the whole history:
+the summary holds the token bill within 3% of prose, and the live matrix falsified the claim
+that the full history dilutes the context, so the summary is bought for the bill rather than
+for the score. And the memory has to live somewhere: the observation is deliberately
+memoryless, so the context strategy is the only place a discovered fact can survive.
 
 **What it does not tell you.** Nothing here says an LLM can run an organisation. It says the
 harness can hold an organisation still enough to be measured, and it says where the agent
-fails. The next step is a real model against a real dashboard, and the measurement is the same
-one this series already knows how to take.
+fails. The live matrix ran the first world only; the organisation world has been driven by the
+scripted and random policies and the surrogate. The next step is a live model against the
+organisation's dashboard, and the measurement is the same one this series already knows how to
+take.
 
 > **Key takeaways**
 >
 > - The agent's view of the world is much smaller than the world: 109 distinct observations
 >   across 1,504 reachable states.
-> - The failures are reasoning failures, not malformed output: 68 of 100 in the matrix, and the
->   one hypothesis the series supports.
+> - The guards bind before the models do. At the shipped budgets a real model is stopped by the
+>   loop guard while it is still examining the room; with the turn budget in charge, four live
+>   models solve 31.5% of 200 runs, and the best cell of the twenty reaches 90%.
 > - The observation is memoryless, so the context strategy is not an optimisation, it is the
->   only place a learned fact can survive.
-> - The format of the observation changes the bill by 2.6x and the success rate by nothing.
+>   only place a learned fact can survive: no history, no solves, for any model at any budget.
+> - The format of the observation changes the bill by 2.6x and, on live models, the success
+>   rate by 35 percentage points. The JSON observation is read better and costs more.
 > - The vocabulary transfers. A second world was written with no change to the kernel, and the
 >   only thing it cost was one rule about argument shapes that a single world never reveals.
 
@@ -214,10 +298,15 @@ npm run exp:03                # the agent plays the game
 npm run exp:04                # the failure taxonomy and the histogram
 npm run exp:05                # the matrix, with the Wilson intervals
 npm run exp:06                # the two worlds side by side
+
+npm run exp:05 -- --matrix configs/matrix.live.json            # live models, shipped budgets
+npm run exp:05 -- --matrix configs/matrix.live-turnbound.json  # live models, turn budget binds
 ```
 
 Every artefact is on disk afterwards: a transcript and a metrics file per run, the matrix
-summary in `results/`, and the transfer comparison in `results/transfer.md`.
+summary in `results/`, and the transfer comparison in `results/transfer.md`. The two live
+matrices need `OPENROUTER_API_KEY` and `ZAI_API_KEY` in the environment; a model whose key is
+missing is refused before the sweep starts, and the sweep resumes from where it stopped.
 
 ## Reference
 
