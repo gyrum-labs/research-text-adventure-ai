@@ -51,6 +51,16 @@ export function parseCommand(
     };
   }
 
+  // A verb that takes no arguments must be the whole command. Without this,
+  // a stray sentence that happens to begin with a short synonym ("i have no
+  // idea") would be read as that verb, and prose would become an action.
+  if (first.args.length === 0 && rest.trim().length > 0) {
+    return {
+      ok: false,
+      message: `"${verb}" takes no arguments.`,
+    };
+  }
+
   const args: Record<string, string> = {};
   for (let index = 0; index < first.args.length; index += 1) {
     const spec = first.args[index]!;
@@ -184,9 +194,25 @@ function resolveArgument(
   }
 
   if (spec.role === 'object-in-inventory') {
-    return { error: `You aren't carrying anything called "${value}".` };
+    return { error: `You aren't carrying anything called "${value}".\n${carryingList(matches)}` };
   }
-  return { error: `You can't see any "${value}" here.` };
+  return { error: `You can't see anything called "${value}" here.\n${visibleList(matches)}` };
+}
+
+/**
+ * What is possible, said plainly.
+ *
+ * An error that only says "no" teaches the agent nothing it can use. Listing
+ * what is in the room, or what is in the bag, turns a refusal into a choice.
+ */
+function visibleList(matches: Array<{ name: string }>): string {
+  if (matches.length === 0) return 'There is nothing here.';
+  return `You can see: ${matches.map((match) => match.name).join(', ')}.`;
+}
+
+function carryingList(matches: Array<{ name: string }>): string {
+  if (matches.length === 0) return 'You are carrying nothing.';
+  return `You are carrying: ${matches.map((match) => match.name).join(', ')}.`;
 }
 
 function describeMatches(matches: Array<{ name: string }>): string {

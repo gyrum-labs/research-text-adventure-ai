@@ -126,3 +126,44 @@ describe('the parser', () => {
     expect(result.command.raw).toBe('Take Keycard');
   });
 });
+
+describe('the error contract', () => {
+  it('says what was attempted, what was wrong and what is possible', () => {
+    const result = parse('take the brass key');
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+
+    expect(result.message).toContain('the brass key');
+    expect(result.message).toContain('You can see:');
+    expect(result.message).toContain('keycard');
+  });
+
+  it('names what is possible when the object is not in the room', () => {
+    const result = parse('take cutters');
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+
+    expect(result.message).toContain('You can see:');
+    expect(result.message).toContain('wall notice');
+  });
+
+  it('says what is carried when the object is not being carried', () => {
+    const state = start();
+    const result = parse('cut keycard with cutters', state);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+
+    expect(result.message).toContain('carrying');
+  });
+
+  it('never says nothing happened', () => {
+    const state = start();
+    for (const raw of ['take the brass key', 'fly to the moon', 'unlock safe']) {
+      const result = parse(raw, state);
+      expect(result.ok).toBe(false);
+      if (result.ok) continue;
+      expect(result.message.length).toBeGreaterThan(20);
+      expect(result.message.toLowerCase()).not.toContain('nothing happened');
+    }
+  });
+});

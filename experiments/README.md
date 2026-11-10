@@ -27,9 +27,9 @@ Every experiment exists to remove one more way for the answer to be wrong.
 
 | # | Experiment | The one idea | Status |
 |---|---|---|---|
-| **01** | [The game](./exp-01-the-game/) | A deterministic world you can trust, playable by a human *and* by the agent | Built, 63 tests green |
-| **02** | [What the agent sees](./exp-02-what-the-agent-sees/) | The agent's view of the world is smaller than the world, and that gap is the experiment | Built, 98 tests green |
-| **03** | [The agent plays](./exp-03-the-agent-plays/) | A model can drive a state machine if you give it a clean loop and a fair error message | Spec ready |
+| **01** | [The game](./exp-01-the-game/) | A deterministic world you can trust, playable by a human *and* by the agent | Built and green |
+| **02** | [What the agent sees](./exp-02-what-the-agent-sees/) | The agent's view of the world is smaller than the world, and that gap is the experiment | Built and green |
+| **03** | [The agent plays](./exp-03-the-agent-plays/) | A model can drive a state machine if you give it a clean loop and a fair error message | Built and green, live providers proven |
 | **04** | [Why it failed](./exp-04-why-it-failed/) | "It failed" is not a finding; the category is | Spec ready |
 | **05** | [The matrix](./exp-05-the-matrix/) | One number is an anecdote; a cell of a matrix is a result | Spec ready |
 | **06** | [An organisation](./exp-06-an-organisation/) | The adventure vocabulary has to survive contact with a real org | Spec ready |
