@@ -1,0 +1,40 @@
+{
+  "models": [
+    {
+      "id": "surrogate-frontier",
+      "label": "surrogate (frontier)",
+      "provider": "surrogate",
+      "model": "surrogate-frontier",
+      "attentionTokens": 4000,
+      "reliability": 0.95
+    },
+    {
+      "id": "surrogate-strong",
+      "label": "surrogate (strong)",
+      "provider": "surrogate",
+      "model": "surrogate-strong",
+      "attentionTokens": 3000,
+      "reliability": 0.85
+    },
+    {
+      "id": "surrogate-mid",
+      "label": "surrogate (mid)",
+      "provider": "surrogate",
+      "model": "surrogate-mid",
+      "attentionTokens": 2200,
+      "reliability": 0.75
+    },
+    {
+      "id": "surrogate-open",
+      "label": "surrogate (open weights)",
+      "provider": "surrogate",
+      "model": "surrogate-open",
+      "attentionTokens": 1500,
+      "reliability": 0.6
+    }
+  ],
+  "conditions": ["A", "B", "C", "D", "E"],
+  "seeds": 10,
+  "maxTurns": 30,
+  "goldPathLength": 10
+}

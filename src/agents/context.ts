@@ -14,7 +14,7 @@
 
 import type { Observation } from '../kernel/types.js';
 import { buildKnownFacts } from '../kernel/observation.js';
-import { renderObservation } from '../kernel/render.js';
+import { renderObservationWith } from '../kernel/render.js';
 
 export type ContextStrategy = 'none' | 'full' | 'window' | 'structured';
 
@@ -32,6 +32,9 @@ export const WINDOW_TURNS = 5;
 /** How many past outcomes the structured strategy keeps. */
 export const STRUCTURED_OUTCOMES = 2;
 
+/** How an observation is rendered in the context. */
+export type ObservationRenderer = 'text' | 'json';
+
 /** One turn of the agent's own history. */
 export interface ContextTurn {
   /** The command the agent issued. */
@@ -48,6 +51,8 @@ export interface ContextInput {
   turns: ContextTurn[];
   /** The observation the agent is about to act on. */
   observation: Observation;
+  /** How the observations are rendered. Defaults to prose. */
+  renderer?: ObservationRenderer;
 }
 
 /**
@@ -58,44 +63,46 @@ export interface ContextInput {
  * the agent should do.
  */
 export function buildContext(strategy: ContextStrategy, input: ContextInput): string {
+  const renderer = input.renderer ?? 'text';
+
   switch (strategy) {
     case 'none':
-      return renderObservation(input.observation);
+      return renderObservationWith(input.observation, renderer);
     case 'full':
-      return renderFull(input);
+      return renderFull(input, renderer);
     case 'window':
-      return renderWindow(input);
+      return renderWindow(input, renderer);
     case 'structured':
-      return renderStructured(input);
+      return renderStructured(input, renderer);
   }
 }
 
 /** Everything: the brief, every command, every observation, every outcome. */
-function renderFull(input: ContextInput): string {
+function renderFull(input: ContextInput, renderer: ObservationRenderer): string {
   const sections: string[] = [input.brief];
 
   input.turns.forEach((turn, index) => {
     sections.push(`Turn ${index + 1}: ${turn.command}`);
-    sections.push(renderObservation(turn.observation));
+    sections.push(renderObservationWith(turn.observation, renderer));
   });
 
   sections.push('Now:');
-  sections.push(renderObservation(input.observation));
+  sections.push(renderObservationWith(input.observation, renderer));
   return sections.join('\n\n');
 }
 
 /** The brief and the last few turns. */
-function renderWindow(input: ContextInput): string {
+function renderWindow(input: ContextInput, renderer: ObservationRenderer): string {
   const recent = input.turns.slice(-WINDOW_TURNS);
   const sections: string[] = [input.brief];
 
   recent.forEach((turn, index) => {
     sections.push(`Turn ${index + 1}: ${turn.command}`);
-    sections.push(renderObservation(turn.observation));
+    sections.push(renderObservationWith(turn.observation, renderer));
   });
 
   sections.push('Now:');
-  sections.push(renderObservation(input.observation));
+  sections.push(renderObservationWith(input.observation, renderer));
   return sections.join('\n\n');
 }
 
@@ -105,7 +112,7 @@ function renderWindow(input: ContextInput): string {
  * The facts block is derived from the agent's own observations, so it is a
  * summary of what the agent has seen rather than a summary of the world.
  */
-function renderStructured(input: ContextInput): string {
+function renderStructured(input: ContextInput, renderer: ObservationRenderer): string {
   const observations = [...input.turns.map((turn) => turn.observation), input.observation];
   const sections: string[] = [input.brief, 'Facts you know:', buildKnownFacts(observations)];
 
@@ -116,6 +123,6 @@ function renderStructured(input: ContextInput): string {
   }
 
   sections.push('Now:');
-  sections.push(renderObservation(input.observation));
+  sections.push(renderObservationWith(input.observation, renderer));
   return sections.join('\n\n');
 }

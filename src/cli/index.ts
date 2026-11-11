@@ -14,6 +14,9 @@ import { runAgent, type PolicyName } from './agent.js';
 import { runExp02 } from './exp-02.js';
 import { runExp03 } from './exp-03.js';
 import { runExp04 } from './exp-04.js';
+import { runExp05 } from './exp-05.js';
+import { readFileSync } from 'node:fs';
+import type { MatrixConfig } from '../runner/matrix.js';
 import { createProvider, type ProviderName } from './provider.js';
 import { replayTranscript } from '../runner/replay.js';
 
@@ -40,6 +43,7 @@ program
   .option('--seed <n>', 'seed for the random policy', '1')
   .option('--max-turns <n>', 'turn budget', '30')
   .option('--seeds <n>', 'how many random-policy seeds to include', '20')
+  .option('--matrix <path>', 'the matrix configuration', 'configs/matrix.default.json')
   .option('-o, --out <path>', 'where to write the transcript')
   .option('-q, --quiet', 'print only the summary', false)
   .action(async (options: Record<string, string | boolean>) => {
@@ -83,6 +87,7 @@ program
   .option('--strategy <name>', 'none, full, window or structured', 'structured')
   .option('--max-turns <n>', 'turn budget', '30')
   .option('--seeds <n>', 'how many random-policy seeds to include', '20')
+  .option('--matrix <path>', 'the matrix configuration', 'configs/matrix.default.json')
   .action(async (number: string, options: Record<string, string>) => {
     switch (number) {
       case '01':
@@ -117,6 +122,12 @@ program
           }),
         );
         break;
+      case '05': {
+        const path = options['matrix'] ?? 'configs/matrix.default.json';
+        const config = JSON.parse(readFileSync(path, 'utf8')) as MatrixConfig;
+        console.log(await runExp05(adventureById('mission-impossible'), { config }));
+        break;
+      }
       default:
         console.error(`experiment ${number} is not implemented yet`);
         process.exitCode = 1;

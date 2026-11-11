@@ -1,0 +1,468 @@
+{
+  "generatedFrom": "runs/live-turnbound",
+  "models": [
+    {
+      "id": "live-frontier",
+      "label": "claude sonnet 4.5 (openrouter)",
+      "provider": "openai",
+      "model": "anthropic/claude-sonnet-4.5",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "apiKeyEnv": "OPENROUTER_API_KEY"
+    },
+    {
+      "id": "live-strong",
+      "label": "glm 5.3 (z.ai)",
+      "provider": "openai",
+      "model": "glm-5.3",
+      "baseUrl": "https://api.z.ai/api/paas/v4",
+      "apiKeyEnv": "ZAI_API_KEY"
+    },
+    {
+      "id": "live-mid",
+      "label": "gpt-4.1-mini (openrouter)",
+      "provider": "openai",
+      "model": "openai/gpt-4.1-mini",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "apiKeyEnv": "OPENROUTER_API_KEY"
+    },
+    {
+      "id": "live-open",
+      "label": "glm 4.5 air (z.ai)",
+      "provider": "openai",
+      "model": "glm-4.5-air",
+      "baseUrl": "https://api.z.ai/api/paas/v4",
+      "apiKeyEnv": "ZAI_API_KEY"
+    }
+  ],
+  "conditions": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E"
+  ],
+  "seeds": 10,
+  "cells": [
+    {
+      "model": "live-frontier",
+      "condition": "A",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 0,
+      "interval": {
+        "estimate": 0,
+        "lower": 0,
+        "upper": 0.2775327998628892
+      },
+      "medianTurns": 22.5,
+      "costPerSolve": 0,
+      "failures": {
+        "F2": 10
+      }
+    },
+    {
+      "model": "live-frontier",
+      "condition": "B",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 9,
+      "interval": {
+        "estimate": 0.9,
+        "lower": 0.5958499732047615,
+        "upper": 0.9821237869049271
+      },
+      "medianTurns": 13,
+      "costPerSolve": 0.354949,
+      "failures": {
+        "F3": 1
+      }
+    },
+    {
+      "model": "live-frontier",
+      "condition": "C",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 7,
+      "interval": {
+        "estimate": 0.7,
+        "lower": 0.39677814746114537,
+        "upper": 0.8922087325936989
+      },
+      "medianTurns": 17.5,
+      "costPerSolve": 0.1268267142857143,
+      "failures": {
+        "F7": 3
+      }
+    },
+    {
+      "model": "live-frontier",
+      "condition": "D",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 0,
+      "interval": {
+        "estimate": 0,
+        "lower": 0,
+        "upper": 0.2775327998628892
+      },
+      "medianTurns": 30,
+      "costPerSolve": 0,
+      "failures": {
+        "F3": 8,
+        "F5": 1,
+        "F2": 1
+      }
+    },
+    {
+      "model": "live-frontier",
+      "condition": "E",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 8,
+      "interval": {
+        "estimate": 0.8,
+        "lower": 0.4901624715366418,
+        "upper": 0.9433178485456248
+      },
+      "medianTurns": 13,
+      "costPerSolve": 0.454147125,
+      "failures": {
+        "F3": 2
+      }
+    },
+    {
+      "model": "live-strong",
+      "condition": "A",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 6,
+      "interval": {
+        "estimate": 0.6,
+        "lower": 0.31267376973365824,
+        "upper": 0.8318196702937638
+      },
+      "medianTurns": 11.5,
+      "costPerSolve": 0.12631223333333333,
+      "failures": {
+        "F5": 1,
+        "F2": 3
+      }
+    },
+    {
+      "model": "live-strong",
+      "condition": "B",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 8,
+      "interval": {
+        "estimate": 0.8,
+        "lower": 0.4901624715366418,
+        "upper": 0.9433178485456248
+      },
+      "medianTurns": 13,
+      "costPerSolve": 0.13299509999999998,
+      "failures": {
+        "F2": 1,
+        "F5": 1
+      }
+    },
+    {
+      "model": "live-strong",
+      "condition": "C",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 6,
+      "interval": {
+        "estimate": 0.6,
+        "lower": 0.31267376973365824,
+        "upper": 0.8318196702937638
+      },
+      "medianTurns": 13.5,
+      "costPerSolve": 0.0760881,
+      "failures": {
+        "F7": 3,
+        "F5": 1
+      }
+    },
+    {
+      "model": "live-strong",
+      "condition": "D",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 0,
+      "interval": {
+        "estimate": 0,
+        "lower": 0,
+        "upper": 0.2775327998628892
+      },
+      "medianTurns": 25.5,
+      "costPerSolve": 0,
+      "failures": {
+        "F3": 6,
+        "F2": 3,
+        "F5": 1
+      }
+    },
+    {
+      "model": "live-strong",
+      "condition": "E",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 6,
+      "interval": {
+        "estimate": 0.6,
+        "lower": 0.31267376973365824,
+        "upper": 0.8318196702937638
+      },
+      "medianTurns": 13,
+      "costPerSolve": 0.24803456666666665,
+      "failures": {
+        "F2": 2,
+        "F7": 1,
+        "F5": 1
+      }
+    },
+    {
+      "model": "live-mid",
+      "condition": "A",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 4,
+      "interval": {
+        "estimate": 0.4,
+        "lower": 0.16818032970623614,
+        "upper": 0.6873262302663417
+      },
+      "medianTurns": 22.5,
+      "costPerSolve": 0.04514200000000001,
+      "failures": {
+        "F2": 5,
+        "F5": 1
+      }
+    },
+    {
+      "model": "live-mid",
+      "condition": "B",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 5,
+      "interval": {
+        "estimate": 0.5,
+        "lower": 0.236593090512564,
+        "upper": 0.7634069094874361
+      },
+      "medianTurns": 22.5,
+      "costPerSolve": 0.13858688,
+      "failures": {
+        "F2": 5
+      }
+    },
+    {
+      "model": "live-mid",
+      "condition": "C",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 0,
+      "interval": {
+        "estimate": 0,
+        "lower": 0,
+        "upper": 0.2775327998628892
+      },
+      "medianTurns": 23.5,
+      "costPerSolve": 0,
+      "failures": {
+        "F2": 9,
+        "F3": 1
+      }
+    },
+    {
+      "model": "live-mid",
+      "condition": "D",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 0,
+      "interval": {
+        "estimate": 0,
+        "lower": 0,
+        "upper": 0.2775327998628892
+      },
+      "medianTurns": 21,
+      "costPerSolve": 0,
+      "failures": {
+        "F2": 10
+      }
+    },
+    {
+      "model": "live-mid",
+      "condition": "E",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 2,
+      "interval": {
+        "estimate": 0.2,
+        "lower": 0.05668215145437519,
+        "upper": 0.5098375284633583
+      },
+      "medianTurns": 22.5,
+      "costPerSolve": 0.38248920000000003,
+      "failures": {
+        "F2": 8
+      }
+    },
+    {
+      "model": "live-open",
+      "condition": "A",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 0,
+      "interval": {
+        "estimate": 0,
+        "lower": 0,
+        "upper": 0.2775327998628892
+      },
+      "medianTurns": 24.5,
+      "costPerSolve": 0,
+      "failures": {
+        "F2": 10
+      }
+    },
+    {
+      "model": "live-open",
+      "condition": "B",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 2,
+      "interval": {
+        "estimate": 0.2,
+        "lower": 0.05668215145437519,
+        "upper": 0.5098375284633583
+      },
+      "medianTurns": 28,
+      "costPerSolve": 0.1455669,
+      "failures": {
+        "F3": 1,
+        "F2": 3,
+        "F7": 1,
+        "F5": 3
+      }
+    },
+    {
+      "model": "live-open",
+      "condition": "C",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 0,
+      "interval": {
+        "estimate": 0,
+        "lower": 0,
+        "upper": 0.2775327998628892
+      },
+      "medianTurns": 28.5,
+      "costPerSolve": 0,
+      "failures": {
+        "F4": 3,
+        "F2": 3,
+        "F5": 3,
+        "F3": 1
+      }
+    },
+    {
+      "model": "live-open",
+      "condition": "D",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 0,
+      "interval": {
+        "estimate": 0,
+        "lower": 0,
+        "upper": 0.2775327998628892
+      },
+      "medianTurns": 28,
+      "costPerSolve": 0,
+      "failures": {
+        "F5": 7,
+        "F3": 2,
+        "F2": 1
+      }
+    },
+    {
+      "model": "live-open",
+      "condition": "E",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 0,
+      "interval": {
+        "estimate": 0,
+        "lower": 0,
+        "upper": 0.2775327998628892
+      },
+      "medianTurns": 24.5,
+      "costPerSolve": 0,
+      "failures": {
+        "F2": 6,
+        "F5": 3,
+        "F3": 1
+      }
+    }
+  ],
+  "failures": {
+    "F2": 80,
+    "F3": 23,
+    "F7": 8,
+    "F5": 23,
+    "F4": 3
+  },
+  "costPerSolvedMission": 0.2868016539682538,
+  "hypotheses": [
+    {
+      "id": "H1",
+      "hypothesis": "A capable LLM agent solves the mission ≥ 80% of runs within a 30-turn budget",
+      "verdict": "falsified",
+      "reason": "The pooled success rate across every cell is 31.5%, including the no-history control, against a threshold of 80%."
+    },
+    {
+      "id": "H2",
+      "hypothesis": "Masking the action space to legal commands raises the success rate",
+      "verdict": "falsified",
+      "reason": "The masked condition E succeeded on 40.0% of runs and the unmasked condition B on 60.0%. The two differ only in the masking."
+    },
+    {
+      "id": "H3",
+      "hypothesis": "A structured observation beats prose for multi-step reasoning",
+      "verdict": "supported",
+      "reason": "The JSON condition B succeeded on 60.0% of runs and the prose condition A on 25.0%. The two differ only in the rendering."
+    },
+    {
+      "id": "H4",
+      "hypothesis": "Most failures are not parsing failures but reasoning/ordering failures",
+      "verdict": "falsified",
+      "reason": "80 of the 137 failures were malformed output and 57 were reasoning, ordering or planning failures."
+    },
+    {
+      "id": "H5",
+      "hypothesis": "Full transcript history causes context dilution versus a structured memory summary",
+      "verdict": "falsified",
+      "reason": "The structured condition C succeeded on 32.5% of runs in 20.8 turns, the full-history condition E on 40.0% in 18.3 turns. The two differ only in the context strategy."
+    }
+  ]
+}

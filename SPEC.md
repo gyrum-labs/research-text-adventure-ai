@@ -338,7 +338,11 @@ stateful text environment, **given no privileged information about the solution*
 | H2 | Masking the action space to legal commands **raises** success rate | Success rate unchanged or lower |
 | H3 | A structured observation beats prose for multi-step reasoning | Structured condition does not dominate |
 | H4 | Most failures are **not** parsing failures but *reasoning/ordering* failures | > 50% of failures are unparsable/invalid commands |
-| H5 | Full transcript history causes **context dilution** vs a structured memory summary | `full` is worse than `structured` on both success and steps-to-solve |
+| H5 | Full transcript history causes **context dilution** vs a structured memory summary | `full` is **not** worse than `structured` on both success and steps-to-solve |
+
+H5's falsification condition was inverted in an earlier draft, which read that the hypothesis
+is falsified when `full` *is* worse. The hypothesis claims that dilution happens, so the
+evidence of dilution supports it and its absence falsifies it. The row now says so.
 
 H4 and H5 are the most valuable outcomes for the org-simulation goal and should be reported even if
 H1 holds.
@@ -911,7 +915,12 @@ export interface Observation {
   messages: string[];
   /** The mission objectives and whether each is demonstrably complete. */
   goals: Array<{ id: Id; text: string; status: 'unknown' | 'complete' | 'incomplete' }>;
-  /** Which verbs are legal right now (only in masked conditions). */
+  /**
+   * The commands that are legal right now (only in masked conditions).
+   *
+   * The commands, not the bare verbs: the legal verb list is the same on
+   * every turn of every room, so it would mask nothing.
+   */
   legalActions?: string[];
 }
 ```
@@ -1196,12 +1205,19 @@ classifier reads the transcript and the adventure's own data and nothing else.
 | Axis | Values |
 |---|---|
 | Model | ≥ 2 frontier models on ≥ 2 providers (e.g. Anthropic Claude, OpenAI GPT-class), plus 1 open-weights model via Ollama if available |
-| Condition | `A` free-form text obs + `full` context · `B` json obs + `full` · `C` json obs + `structured` + masked legal actions · `D` json obs + `none` (control) |
+| Condition | `A` free-form text obs + `full` context · `B` json obs + `full` · `C` json obs + `structured` + masked legal actions · `D` json obs + `none` (control) · `E` json obs + masked legal actions + `full` |
 | Seeds / repeats | ≥ 10 per cell (temperature > 0, distinct seeds) |
 | Total runs | ≥ 160 |
 
+`E` exists so that the three context hypotheses can be told apart. Without it, `C` differs
+from `B` in two ways at once, and the masking effect cannot be separated from the strategy
+effect. With it, each comparison holds everything else constant: `E` vs `B` is the masking,
+`B` vs `A` is the rendering, and `C` vs `E` is the context strategy.
+
 A cell is the (model × condition) pair; report success rate with a Wilson 95% interval, median
-turns, and the failure-code histogram.
+turns, and the failure-code histogram. A cell with fewer runs than its configuration asked for
+is reported as **incomplete**, not averaged: a rate over four runs looks like a fact and is not
+one.
 
 ### 12.5 Results artefacts
 
