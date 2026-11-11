@@ -10,7 +10,7 @@ import type { AgentPolicy } from '../agents/policy.js';
 import { run } from '../runner/run.js';
 import { renderObservation } from '../kernel/render.js';
 import { Transcript } from '../runner/transcript.js';
-import { GOLD_PATH } from '../adventures/mission-impossible/gold-path.js';
+import { goldPathFor } from '../adventures/index.js';
 
 export type PolicyName = 'scripted' | 'random';
 
@@ -27,7 +27,7 @@ export async function runAgent(options: AgentOptions): Promise<void> {
   const seed = options.seed ?? 1;
   const policy: AgentPolicy =
     options.policy === 'scripted'
-      ? new ScriptedPolicy(GOLD_PATH)
+      ? new ScriptedPolicy(goldPathFor(options.adventure.id))
       : new RandomPolicy(options.adventure, seed);
 
   const transcriptPath =
