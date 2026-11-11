@@ -66,7 +66,9 @@ export function renderTable(summaries: CellSummary[], labels: Map<string, string
     header.map((cell, index) => cell.padEnd(widths[index]!)).join('  '),
     widths.map((width) => '-'.repeat(width)).join('  '),
     ...rows.map((row) => row.map((cell, index) => cell.padEnd(widths[index]!)).join('  ')),
-  ].join('\n');
+  ]
+    .map((line) => line.trimEnd())
+    .join('\n');
 }
 
 /** The failure histogram, drawn. */

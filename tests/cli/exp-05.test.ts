@@ -10,9 +10,9 @@ import { describe, expect, it } from 'vitest';
 import { mkdtempSync, readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { runExp05 } from '../../src/cli/exp-05.js';
+import { runExp05, renderTable } from '../../src/cli/exp-05.js';
 import { adventure } from '../../src/adventures/mission-impossible/adventure.js';
-import type { MatrixConfig } from '../../src/runner/matrix.js';
+import type { CellSummary, MatrixConfig } from '../../src/runner/matrix.js';
 
 const CONFIG: MatrixConfig = {
   models: [
@@ -44,6 +44,29 @@ describe('the exp-05 output', () => {
       .split('\n')
       .filter((line) => line.includes('model one'));
     expect(rows).toHaveLength(CONFIG.conditions.length);
+    expect(rows.every((line) => line === line.trimEnd())).toBe(true);
+  });
+
+  it('pads the columns without leaving trailing whitespace', () => {
+    const summary: CellSummary = {
+      model: 'one',
+      condition: 'A',
+      expected: 1,
+      runs: 1,
+      complete: true,
+      successes: 0,
+      interval: { estimate: 0, lower: 0, upper: 0.5 },
+      medianTurns: 0,
+      costPerSolve: 0,
+      failures: { F1: 1 },
+    };
+
+    const table = renderTable([summary], new Map([['one', 'model one']]));
+    const lines = table.split('\n');
+
+    expect(lines.every((line) => line === line.trimEnd())).toBe(true);
+    expect(lines[0]).toContain('$/solve');
+    expect(lines[2]).toContain('model one');
   });
 
   it('writes the summary artefacts', async () => {
