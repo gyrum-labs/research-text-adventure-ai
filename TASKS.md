@@ -192,6 +192,8 @@ and every action spec of the adventure is proved executable by the reducer.
       The kernel bundles for the page with `node:crypto` aliased to a synchronous sha256 shim that
       a test holds to node:crypto's own answers
 - [x] Output pane, command input with ↑/↓ history, live log, status bar (turn, goals, hash)
+- [x] Optional browser agent demo, with streamed observations, final goals, start, stop and retry.
+      `tests/web/watch.test.ts` covers the stream lifecycle; the Chromium acceptance pass covers the controls
 - [x] **Done when:** a human completes the mission in the browser. A test cannot be a human, so
       `tests/web/ui.test.ts` types the ten commands through the same terminal code the page runs
       and watches the mission end in a success; `npm run serve` serves the built page itself
@@ -238,7 +240,7 @@ and every action spec of the adventure is proved executable by the reducer.
 |---|---|
 | Kernel purity | `tests/architecture.test.ts` + ESLint `no-restricted-imports` |
 | No privileged information | `tests/leakage.test.ts` |
-| Interface equivalence | tests/equivalence.test.ts. Not built yet: it needs the browser client of Phase 5 |
+| Interface equivalence | `tests/equivalence.test.ts`, with the same commands through memory, file and HTTP ports |
 | Engine determinism | `tests/runner/replay.test.ts` |
 | Strict typing | `npm run typecheck` |
 | Budgets enforced | `tests/runner/budgets.test.ts` |

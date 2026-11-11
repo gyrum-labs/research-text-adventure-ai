@@ -60,6 +60,12 @@ describe('watching an agent', () => {
     await expect(watchAgent(f.options)).rejects.toThrow('unknown run');
   });
 
+  it('explains a static host refusal without exposing a JSON parser error', async () => {
+    const f = fixture(streamOf(''));
+    f.fetch.mockReset().mockResolvedValue(new Response('<h1>Not found</h1>', { status: 404 }));
+    await expect(watchAgent(f.options)).rejects.toThrow('demo server refused the request (404)');
+  });
+
   it('reports a stream that closes before its end marker', async () => {
     const f = fixture(streamOf('data: {"type":"message","text":"still running"}\n\n'));
     await expect(watchAgent(f.options)).rejects.toThrow('before completion');

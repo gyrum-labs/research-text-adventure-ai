@@ -14,19 +14,44 @@
       margin: 0;
       background: #101418;
       color: #d7dee6;
-      display: flex;
-      justify-content: center;
       min-height: 100vh;
     }
-    #terminal {
+    .shell {
       width: min(72rem, 100vw);
+      margin: 0 auto;
+    }
+    .toolbar, .watch-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem;
+    }
+    .watch-controls { padding: 0; }
+    button, select {
+      font: inherit;
+      color: inherit;
+      background: #1b222b;
+      border: 1px solid #4d5f70;
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+    }
+    button { cursor: pointer; }
+    button[aria-pressed="true"] { background: #334657; }
+    button:disabled, select:disabled { opacity: 0.5; cursor: default; }
+    button:focus-visible, select:focus-visible { outline: 2px solid #8ea2b8; }
+    [hidden] { display: none !important; }
+    #terminal, #watch {
       display: grid;
-      grid-template-rows: 1fr auto auto;
+      grid-template-rows: 1fr auto auto auto;
       gap: 0.5rem;
       padding: 1rem;
       box-sizing: border-box;
-      height: 100vh;
+      height: calc(100vh - 5rem);
     }
+    #watch { grid-template-rows: auto minmax(0, 1fr) auto auto; }
+    .demo-note { color: #8ea2b8; font-size: 0.85rem; }
+    .status { overflow-wrap: anywhere; }
     .output {
       margin: 0;
       white-space: pre-wrap;
@@ -68,7 +93,28 @@
   </style>
 </head>
 <body>
-  <div id="terminal"></div>
+  <main class="shell">
+    <nav class="toolbar" aria-label="Interface">
+      <button id="play-mode" type="button" aria-pressed="true">Play</button>
+      <button id="watch-mode" type="button" aria-pressed="false">Watch an agent</button>
+      <span class="demo-note">Agent watching needs the optional demo server.</span>
+    </nav>
+    <section id="terminal" aria-label="Play the adventure"></section>
+    <section id="watch" aria-label="Watch an agent" hidden>
+      <div class="watch-controls">
+        <label>Policy <select class="watch-policy">
+          <option value="scripted">Scripted reference run</option>
+          <option value="random">Random agent</option>
+        </select></label>
+        <button class="watch-start" type="button">Start demo</button>
+        <button class="watch-stop" type="button" disabled>Stop watching</button>
+        <span class="demo-note">Local demo · no model calls</span>
+      </div>
+      <pre class="output watch-output" aria-live="polite"></pre>
+      <pre class="log watch-log" aria-label="Agent event log"></pre>
+      <div class="status watch-status" role="status">Ready to start.</div>
+    </section>
+  </main>
   <script src="./index.js"></script>
 </body>
 </html>
