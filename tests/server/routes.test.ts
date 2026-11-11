@@ -128,6 +128,12 @@ describe('the session server', () => {
 
       const ended = records.find((record) => record['type'] === 'end');
       const outcome = records.find((record) => record['type'] === 'run_ended');
+      const commands = records.filter(record => record['type'] === 'command');
+      expect(commands.map(record => record['raw'])).toEqual(GOLD_PATH);
+      expect(commands.map(record => record['turn'])).toEqual(GOLD_PATH.map((_, turn) => turn));
+      expect(records[0]?.['type']).toBe('observation');
+      expect(records[1]).toEqual({ type: 'command', turn: 0, raw: GOLD_PATH[0] });
+      expect(records[2]?.['type']).toBe('message');
       expect(ended).toBeDefined();
       expect((outcome?.['data'] as { outcome: string }).outcome).toBe('success');
       expect(records.some((record) => record['type'] === 'observation')).toBe(true);

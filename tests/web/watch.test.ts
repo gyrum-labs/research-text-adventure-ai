@@ -31,6 +31,7 @@ describe('watching an agent', () => {
   it('opens a bounded demo and reads split UTF-8 and SSE frames in order', async () => {
     const f = fixture(streamOf(
       ': heartbeat\r\n\r\n' +
+      'data: {"type":"command","turn":0,"raw":"examine <notice>"}\r\n\r\n' +
       'data: {"type":"message","text":"Hello 演劇 🎭"}\r\n\r\n' +
       'data: {"type":"run_ended","data":{"outcome":"success","turns":10,"hash":"sha256:done"}}\n\n' +
       'data: {"type":"end"}\n\n',
@@ -38,8 +39,9 @@ describe('watching an agent', () => {
 
     await watchAgent(f.options);
 
-    expect(f.records.map(record => record.type)).toEqual(['message', 'run_ended', 'end']);
-    expect(f.records[0]).toEqual({ type: 'message', text: 'Hello 演劇 🎭' });
+    expect(f.records.map(record => record.type)).toEqual(['command', 'message', 'run_ended', 'end']);
+    expect(f.records[0]).toEqual({ type: 'command', turn: 0, raw: 'examine <notice>' });
+    expect(f.records[1]).toEqual({ type: 'message', text: 'Hello 演劇 🎭' });
     expect(f.fetch.mock.calls[0]![0]).toBe('http://demo.test/api/runs');
     expect(JSON.parse(f.fetch.mock.calls[0]![1].body)).toEqual({
       adventureId: 'mission-impossible', policy: 'scripted', seed: 1,
