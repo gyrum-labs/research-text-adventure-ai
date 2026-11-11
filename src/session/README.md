@@ -7,7 +7,7 @@ Hold one adventure behind the same asynchronous interface, in memory, in a file,
 From the repository root, run a session through every port:
 
 ```sh
-npm test -- tests/session/ports.test.ts
+npm test -- tests/session/ports.test.ts tests/equivalence.test.ts
 ```
 
 ```ts
