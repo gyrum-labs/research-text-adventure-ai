@@ -9,7 +9,21 @@
 
 import { describe, expect, it } from 'vitest';
 import { adventure } from '../../src/adventures/mission-impossible/adventure.js';
+import { GOLD_PATH as hotfixGoldPath } from '../../src/adventures/hotfix-2-4-1/gold-path.js';
+import { goldPathFor } from '../../src/adventures/index.js';
 import { parseAdventure, validateAdventure } from '../../src/adventures/schema.js';
+
+describe('the adventure registry', () => {
+  it('gives each world its own gold path', () => {
+    expect(goldPathFor('hotfix-2-4-1')).toBe(hotfixGoldPath);
+    expect(goldPathFor('mission-impossible')).not.toBe(hotfixGoldPath);
+    expect(goldPathFor('mission-impossible')).toHaveLength(10);
+  });
+
+  it('refuses an unknown world rather than replaying another world route', () => {
+    expect(() => goldPathFor('no-such-world')).toThrow(/unknown adventure/);
+  });
+});
 
 describe('the adventure schema', () => {
   it('accepts the adventure this project ships', () => {

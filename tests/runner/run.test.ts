@@ -4,7 +4,8 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { run } from '../../src/runner/run.js';
 import { Transcript } from '../../src/runner/transcript.js';
-import type { AgentPolicy, PolicyContext } from '../../src/agents/policy.js';
+import type { AgentPolicy, PolicyContext, PolicyMetrics } from '../../src/agents/policy.js';
+import { EMPTY_METRICS } from '../../src/agents/policy.js';
 import type { Observation } from '../../src/kernel/types.js';
 import { adventure } from '../../src/adventures/mission-impossible/adventure.js';
 
@@ -29,6 +30,33 @@ class StoppingPolicy implements AgentPolicy {
   }
 }
 
+/**
+ * A policy whose provider fails a fixed number of times before it answers.
+ *
+ * The failure is reported the way the LLM policy reports one: a null command
+ * plus `lastTurn: 'provider_error'`.
+ */
+class FlakyPolicy implements AgentPolicy {
+  readonly id = 'flaky';
+  private calls = 0;
+
+  constructor(private readonly failures: number) {}
+
+  async next(): Promise<string | null> {
+    this.calls += 1;
+    if (this.calls <= this.failures) return null;
+    return 'take keycard';
+  }
+
+  metrics(): PolicyMetrics {
+    return {
+      ...EMPTY_METRICS,
+      lastTurn: this.calls <= this.failures ? 'provider_error' : 'command',
+      transientErrors: Math.min(this.calls, this.failures),
+    };
+  }
+}
+
 describe('the runner', () => {
   it('counts a parse error without ending the run', async () => {
     const result = await run({ adventure, policy: new SayingPolicy(), maxTurns: 5 });
@@ -41,6 +69,38 @@ describe('the runner', () => {
     const result = await run({ adventure, policy: new StoppingPolicy(), maxTurns: 5 });
     expect(result.outcome).toBe('provider_stopped');
     expect(result.reason).toContain('stuck');
+  });
+
+  it('waits longer after each provider failure before retrying', async () => {
+    const delays: number[] = [];
+    const result = await run({
+      adventure,
+      policy: new FlakyPolicy(2),
+      maxTurns: 5,
+      budgets: { providerRetryDelayMs: 100 },
+      sleep: async (milliseconds) => {
+        delays.push(milliseconds);
+      },
+    });
+
+    expect(delays).toEqual([100, 200]);
+    expect(result.outcome).not.toBe('provider_error');
+  });
+
+  it('gives up after the configured number of provider failures', async () => {
+    const delays: number[] = [];
+    const result = await run({
+      adventure,
+      policy: new FlakyPolicy(3),
+      maxTurns: 5,
+      budgets: { maxTransientProviderErrors: 3, providerRetryDelayMs: 100 },
+      sleep: async (milliseconds) => {
+        delays.push(milliseconds);
+      },
+    });
+
+    expect(result.outcome).toBe('provider_error');
+    expect(delays).toEqual([100, 200]);
   });
 
   it('runs out of turns and says so', async () => {

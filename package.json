@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "tsx src/cli/index.ts",
     "play": "tsx src/cli/index.ts play --scenario mission-impossible",
-    "agent": "tsx src/cli/index.ts agent --provider mock",
+    "agent": "tsx src/cli/index.ts agent",
     "sweep": "tsx src/cli/index.ts sweep",
     "replay": "tsx src/cli/index.ts replay",
     "eval": "tsx src/cli/index.ts eval",

@@ -42,6 +42,14 @@ export interface RunBudgets {
   maxWallClockMs: number;
   /** Provider failures the run tolerates before it stops. */
   maxTransientProviderErrors: number;
+  /**
+   * How long to wait before retrying a provider failure, in milliseconds.
+   *
+   * The first retry waits this long, the second twice as long. A rate limit
+   * is a request to slow down; retrying three times in the same instant
+   * turns a recoverable 429 into a recorded provider failure.
+   */
+  providerRetryDelayMs: number;
   /** Unparsable answers the run tolerates before it stops. */
   maxParseErrors: number;
   /** How many times the agent may return to the same situation. */
@@ -55,6 +63,7 @@ export const DEFAULT_BUDGETS: RunBudgets = {
   maxTotalTokens: 20_000,
   maxWallClockMs: 300_000,
   maxTransientProviderErrors: 3,
+  providerRetryDelayMs: 1_000,
   maxParseErrors: 10,
   maxRepeatedStates: 3,
 };
@@ -72,6 +81,8 @@ export interface RunOptions {
   onMessage?: (message: string) => void;
   /** Injected so the wall-clock budget is testable without waiting for it. */
   now?: () => number;
+  /** Injected so the provider backoff is testable without waiting for it. */
+  sleep?: (milliseconds: number) => Promise<void>;
   /**
    * Whether the legal action set is masked into the observation.
    *
@@ -125,6 +136,14 @@ export async function run(options: RunOptions): Promise<RunResult> {
 
   const clock = options.now ?? ((): number => Date.now());
   const startedAt = clock();
+  const sleep =
+    options.sleep ??
+    ((milliseconds: number) => new Promise<void>((resolve) => setTimeout(resolve, milliseconds)));
+  /** Wait longer after each consecutive provider failure. */
+  const backoff = async (failures: number): Promise<void> => {
+    const delay = budgets.providerRetryDelayMs * 2 ** Math.max(0, failures - 1);
+    if (delay > 0) await sleep(delay);
+  };
 
   let state: GameState = structuredClone(adventure.initial);
   let hash = hashInitial(state);
@@ -242,6 +261,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
       if (transientErrors >= budgets.maxTransientProviderErrors) {
         return finish('provider_error', `The provider failed ${transientErrors} times in a row.`, turn);
       }
+      await backoff(transientErrors);
       messages = [`The provider could not be reached: ${reason}`];
       options.onMessage?.(messages[0]!);
       continue;
@@ -279,6 +299,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
         if (transientErrors >= budgets.maxTransientProviderErrors) {
           return finish('provider_error', `The provider failed ${transientErrors} times in a row.`, turn);
         }
+        await backoff(transientErrors);
         messages = ['The provider could not be reached. Trying again.'];
         continue;
       }

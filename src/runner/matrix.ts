@@ -85,6 +85,14 @@ export interface MatrixOptions {
    * live models included.
    */
   readonly providerFor?: (model: MatrixModel, seed: number) => LlmProvider;
+  /**
+   * Summarise the transcripts already on disk and never call a provider.
+   *
+   * A partial matrix is still reportable, and reporting it must not spend
+   * money or invent runs for the cells that are missing. Missing runs are
+   * simply absent, and their cells are marked incomplete.
+   */
+  readonly summariseOnly?: boolean;
 }
 
 /** One run of the matrix. */
@@ -111,6 +119,10 @@ export interface CellSummary {
   medianTurns: number;
   /** The cost of the cell divided by the missions it solved. */
   costPerSolve: number;
+  /** The tokens the cell spent. */
+  tokensUsed: number;
+  /** The tokens the cell spent per mission it solved. */
+  tokensPerSolve: number;
   /** The failure histogram for the cell. */
   failures: Record<string, number>;
 }
@@ -181,6 +193,9 @@ export async function runMatrix(
           runs.push(existing);
           continue;
         }
+
+        // A summarise-only pass reports what exists and never invents a run.
+        if (options.summariseOnly === true) continue;
 
         const spec = CONDITIONS[condition];
         const provider = build(model, seed);
@@ -284,6 +299,7 @@ export function summariseMatrix(
         .map((run) => run.metrics?.turnsUsed ?? 0)
         .filter((count) => count > 0);
       const cost = cell.reduce((total, run) => total + (run.metrics?.estimatedCostUsd ?? 0), 0);
+      const tokens = cell.reduce((total, run) => total + (run.metrics?.tokensUsed ?? 0), 0);
       const failures: Record<string, number> = {};
 
       for (const run of cell) {
@@ -302,6 +318,8 @@ export function summariseMatrix(
         interval: wilsonInterval(successes, cell.length),
         medianTurns: median(turns),
         costPerSolve: successes === 0 ? 0 : cost / successes,
+        tokensUsed: tokens,
+        tokensPerSolve: successes === 0 ? 0 : tokens / successes,
         failures,
       });
     }

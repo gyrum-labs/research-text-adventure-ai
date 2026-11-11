@@ -58,6 +58,8 @@ describe('the exp-05 output', () => {
       interval: { estimate: 0, lower: 0, upper: 0.5 },
       medianTurns: 0,
       costPerSolve: 0,
+      tokensUsed: 0,
+      tokensPerSolve: 0,
       failures: { F1: 1 },
     };
 

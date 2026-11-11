@@ -1,0 +1,74 @@
+{
+  "worlds": [
+    {
+      "id": "mission-impossible",
+      "title": "Operation Nightingale",
+      "goldPathLength": 10,
+      "scripted": {
+        "outcome": "success",
+        "goalsCompleted": 2,
+        "turnsUsed": 10,
+        "goldPathLength": 10,
+        "efficiency": 1,
+        "wasteRatio": 1,
+        "hintsUsed": 0,
+        "invalidActionRate": 0,
+        "unparsableRate": 0,
+        "hallucinationRate": 0,
+        "repeatStateRate": 0,
+        "explorationSteps": 1,
+        "recoveryRate": 1,
+        "orderingViolations": 0,
+        "tokensUsed": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "estimatedCostUsd": 0,
+        "wallClockMs": 9,
+        "msPerTurn": 0.9,
+        "failure": null
+      },
+      "randomRuns": 20,
+      "randomSuccesses": 0,
+      "failures": {
+        "F5": 16,
+        "F4": 3,
+        "F3": 1
+      }
+    },
+    {
+      "id": "hotfix-2-4-1",
+      "title": "The 2.4.1 Hotfix",
+      "goldPathLength": 10,
+      "scripted": {
+        "outcome": "success",
+        "goalsCompleted": 2,
+        "turnsUsed": 10,
+        "goldPathLength": 10,
+        "efficiency": 1,
+        "wasteRatio": 1,
+        "hintsUsed": 0,
+        "invalidActionRate": 0,
+        "unparsableRate": 0,
+        "hallucinationRate": 0,
+        "repeatStateRate": 0,
+        "explorationSteps": 1,
+        "recoveryRate": 1,
+        "orderingViolations": 0,
+        "tokensUsed": 0,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "estimatedCostUsd": 0,
+        "wallClockMs": 3,
+        "msPerTurn": 0.3,
+        "failure": null
+      },
+      "randomRuns": 20,
+      "randomSuccesses": 0,
+      "failures": {
+        "F5": 20
+      }
+    }
+  ],
+  "taxonomyCoversBothWorlds": true,
+  "distributionsMatch": false
+}

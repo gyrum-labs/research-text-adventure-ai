@@ -26,6 +26,7 @@ as doors.
 > - **Twenty minutes.** Skim the experiment series. Six experiments, one idea each.
 > - **An hour.** Read the research context. It is the evidence behind every decision in the design.
 > - **A day.** Start Experiment 01. It is where the work actually begins.
+> - **An evening.** Read the findings. What the series found, with the numbers behind it.
 
 ---
 
@@ -39,6 +40,7 @@ as doors.
 | Hand it to an agent | [`AGENT_BRIEF.md`](./AGENT_BRIEF.md). Copy, paste, go |
 | Play with it | [`docs/userguide.md`](./docs/userguide.md) |
 | Know how it is proven | [`docs/TESTING.md`](./docs/TESTING.md) |
+| Know what it found | [`RESULTS.md`](./RESULTS.md). The findings, with the numbers behind them |
 
 Everything is built test first. Every experiment lists its tests in the order they get written, and
 the rule has a hard edge for this project: no change ships without a test that would catch the
@@ -77,6 +79,11 @@ Everything else it has to find. The defusal manual is inside a closed locker. Th
 the safe wire and the safe code. The vault door needs a keycard from the first room. Cutting the
 wrong wire ends the run.
 
+There is a **second world** too, and it is the test of the whole idea: a hotfix release, written
+as an adventure, with **no change to the kernel**. A team is a room, a ticket is an object, a gate
+is a door, and a blocked deploy is a detonation. The same harness plays it, and the kernel's file
+hashes are recorded in a manifest so a change to it fails a test rather than passing unnoticed.
+
 ---
 
 ## What the experiment reports
@@ -89,7 +96,13 @@ category, computed from the transcript: parsing, hallucination, planning, orderi
 failure, lethal trap, budget exhaustion, provider error, or abstention.
 
 That histogram is the thing worth having. It says where the model breaks, it tells you what to fix,
-and it transfers. The same categories apply to an agent working inside an organisation.
+and it transfers. The same categories apply to an agent working inside an organisation, and that
+is now proved rather than promised: the second world below was played by the same classifier with
+no change to it.
+
+The findings are in [`RESULTS.md`](./RESULTS.md), and they come with the caveat that matters most.
+There are no provider credentials in the environment this was built in, so every number there
+comes from a surrogate rather than from a live model. The live matrix is written and waiting.
 
 ---
 

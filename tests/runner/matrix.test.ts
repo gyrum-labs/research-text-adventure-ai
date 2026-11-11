@@ -122,7 +122,32 @@ describe('the matrix', () => {
     const after = (await import('node:fs')).readFileSync(before, 'utf8');
 
     expect(after).toBe(first);
-    expect(second).toHaveLength(CONFIG.models.length * CONFIG.conditions.length * CONFIG.seeds);
+    expect(second).toHaveLength(
+      CONFIG.models.length * CONFIG.conditions.length * CONFIG.seeds,
+    );
+  });
+
+  it('can summarise what is on disk without calling a provider', async () => {
+    const root = scratch();
+    const full = await runMatrix(adventure, CONFIG, { root });
+
+    // One run and one cell are deliberately missing.
+    const missing = join(root, 'one', 'D', '2');
+    (await import('node:fs')).rmSync(`${missing}.jsonl`);
+    (await import('node:fs')).rmSync(`${missing}.metrics.json`);
+
+    const only = await runMatrix(adventure, CONFIG, {
+      root,
+      summariseOnly: true,
+      providerFor: () => {
+        throw new Error('summarise-only must not build a provider');
+      },
+    });
+
+    expect(only).toHaveLength(full.length - 1);
+    expect(only.every((run) => run.complete)).toBe(true);
+    const summaries = summariseMatrix(only, CONFIG);
+    expect(summaries.find((summary) => summary.condition === 'D')?.complete).toBe(false);
   });
 
   it('aggregates the failures across the whole matrix', async () => {

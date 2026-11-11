@@ -15,6 +15,7 @@ import { runExp02 } from './exp-02.js';
 import { runExp03 } from './exp-03.js';
 import { runExp04 } from './exp-04.js';
 import { runExp05 } from './exp-05.js';
+import { runExp06 } from './exp-06.js';
 import { readFileSync } from 'node:fs';
 import type { MatrixConfig } from '../runner/matrix.js';
 import { createProvider, type ProviderName } from './provider.js';
@@ -88,7 +89,9 @@ program
   .option('--max-turns <n>', 'turn budget', '30')
   .option('--seeds <n>', 'how many random-policy seeds to include', '20')
   .option('--matrix <path>', 'the matrix configuration', 'configs/matrix.default.json')
-  .action(async (number: string, options: Record<string, string>) => {
+  .option('--adventure <id>', 'which world the exp 05 matrix plays', 'mission-impossible')
+  .option('--summarise-only', 'report the transcripts on disk without calling a provider', false)
+  .action(async (number: string, options: Record<string, string | boolean>) => {
     switch (number) {
       case '01':
         await runAgent({
@@ -106,9 +109,13 @@ program
       case '03':
         console.log(
           await runExp03(adventureById('mission-impossible'), {
-            provider: createProvider(options['provider'] as ProviderName, options['model'], {
-              ...(options['baseUrl'] === undefined ? {} : { baseUrl: options['baseUrl'] }),
-              ...(options['apiKeyEnv'] === undefined ? {} : { apiKeyEnv: options['apiKeyEnv'] }),
+            provider: createProvider(options['provider'] as ProviderName, options['model'] as string | undefined, {
+              ...(options['baseUrl'] === undefined
+                ? {}
+                : { baseUrl: String(options['baseUrl']) }),
+              ...(options['apiKeyEnv'] === undefined
+                ? {}
+                : { apiKeyEnv: String(options['apiKeyEnv']) }),
             }),
             strategy: options['strategy'] as ContextStrategy,
             budgets: { maxTurns: Number(options['maxTurns']) },
@@ -122,10 +129,19 @@ program
           }),
         );
         break;
+      case '06':
+        console.log(await runExp06());
+        break;
       case '05': {
-        const path = options['matrix'] ?? 'configs/matrix.default.json';
+        const path = String(options['matrix'] ?? 'configs/matrix.default.json');
         const config = JSON.parse(readFileSync(path, 'utf8')) as MatrixConfig;
-        console.log(await runExp05(adventureById('mission-impossible'), { config }));
+        const adventure = adventureById((options['adventure'] as string) ?? 'mission-impossible');
+        console.log(
+          await runExp05(adventure, {
+            config,
+            ...(options['summariseOnly'] === true ? { summariseOnly: true } : {}),
+          }),
+        );
         break;
       }
       default:

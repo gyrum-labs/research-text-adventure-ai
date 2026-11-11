@@ -54,10 +54,20 @@ And then the same two questions we asked of the game:
 2. **Does it fail the same way?** If the failure categories in the organisation are the same
    categories as in the game, the taxonomy transfers. And the game was a valid rehearsal.
 
+The measured answer:
+
+```
+world                scripted    turns   random baseline
+-------------------  ----------  ------  ---------------
+mission-impossible   success     10      0/20 solved
+hotfix-2-4-1         success     10      0/20 solved
+```
+
 ## The tests, in the order they get written
 
-- **`git diff --stat src/kernel` is empty.** The kernel is untouched. This is the experiment's
-  central assertion, and it is a test, not a promise.
+- **The kernel's file hashes match its manifest.** The kernel is untouched. This is the
+  experiment's central assertion, and it is a test, not a promise.
+- the kernel mentions no organisation vocabulary, so it has not been tuned to either world
 - the organisation's gold path wins, and BFS confirms it is shortest
 - the random policy fails on this world too
 - the failure classifier classifies organisation failures without modification. If it needs a new
@@ -66,12 +76,64 @@ And then the same two questions we asked of the game:
 
 ## Acceptance criteria
 
-- [ ] The organisation adventure is authored with **no change to `src/kernel`**. Enforced by a
+- [x] The organisation adventure is authored with **no change to `src/kernel`**. Enforced by a
       test that fails if the kernel's diff is non-empty
-- [ ] Its gold path wins; BFS confirms it is shortest; the random policy fails
-- [ ] The same agent harness runs it with no code change
-- [ ] `RESULTS.md` compares the two worlds: success rate, failure histogram, cost
-- [ ] A one-page "what this means for running an organisation" section is written
+- [x] Its gold path wins; BFS confirms it is shortest; the random policy fails
+- [x] The same agent harness runs it with no code change
+- [x] `RESULTS.md` compares the two worlds: success rate, failure histogram, cost
+- [x] The live turn-bound grid ran against this world: 103 valid runs, 0 solves, the unfunded
+      cells marked `incomplete` and the payment-failed runs deleted rather than counted
+- [x] A one-page "what this means for running an organisation" section is written
+
+## What we found
+
+> **Key insight.** The vocabulary transfers, and the constraint it found is worth more than the
+> transfer: **two actions with the same verb must agree on their argument shapes**, because the
+> parser resolves the arguments before the engine chooses between the candidate actions.
+
+The organisation wanted one `unlock` that took a held object and another that took a typed code,
+and it could not have both. The first world never found this, because it never had two actions
+that wanted different shapes. It would have been invisible in a single-world project.
+
+### The world changed more than the nouns
+
+| | The game | The organisation |
+|---|---|---|
+| Verbs | `take`, `cut`, `unlock` | `claim`, `deploy`, `unlock` |
+| The flag a verb asks for | `takeable` | `claimable` |
+| The credential | a keycard in the bag | the incident ticket in the bag |
+| The gated action | cut one of three wires | deploy one of three releases |
+| The failure | the bomb goes off | the wrong release goes out |
+
+The kernel's object type has a fixed set of fields, so the organisation's `claimable` flag lives
+in the runtime state, where the flags are free-form, and the kernel reads whatever key the action
+asks for. No kernel change was needed, and the manifest proves it.
+
+### The taxonomy transfers; the distributions do not
+
+Every failure in both worlds landed in one of the existing nine categories, and the classifier
+needed no new rule to sort them. That is the transfer claim.
+
+The proportions are different, and that is a finding about the worlds rather than about the
+taxonomy. The game's random baseline spread across `F3`, `F4` and `F5`; the organisation's
+spread entirely across `F5`. Its chain is harder to get wrong early, because every gate names
+what it wants, and a random agent mostly fails by never finding the runbook at all.
+
+### The live models played it too, and none of them won
+
+The matrix's turn-bound grid was pointed at this world
+(`configs/matrix.live-org-turnbound.json`). Of the planned 200 runs, **103 are valid and none is
+a solve: 0/103, Wilson interval 0 to 3.6%**. glm 5.3 spends its turns at gold-path speed, ten,
+and loses them to hallucinated objects; claude sonnet 4.5 and gpt-4.1-mini grind into budget
+exhaustion and planning loops. The failure mix moved from the game's hallucination-heavy
+histogram to planning (`F3` 40) and budget exhaustion (`F7` 26), inside the same nine
+categories.
+
+The other 97 runs never reached a model: both vendors' accounts ran out of credit mid-sweep,
+and those transcripts were deleted rather than counted. A run the provider was paid for and did
+not serve is a fact about the account, not about the agent. The committed summary marks the
+unplayed cells `incomplete`, and `--summarise-only` regenerates it from disk without spending
+anything. The sweep resumes where it stopped once the accounts are funded.
 
 ## The honest reading
 
@@ -84,3 +146,4 @@ a more useful answer than an untested assumption that it would work.
 
 - `SPEC.md` §18 (roadmap to organisation simulation), §16 Phase 7
 - `docs/RESEARCH-CONTEXT.md` §4.4 (Voyager's skill library) and §4.5 (WebArena)
+- `RESULTS.md`. What the whole series found
