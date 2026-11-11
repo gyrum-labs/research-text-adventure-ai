@@ -13,8 +13,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { InMemorySession } from '../../src/session/in-memory.js';
 import { FileSession } from '../../src/session/file.js';
+import { HttpSession } from '../../src/session/http.js';
+import { startSessionServer } from '../../src/server/server.js';
 import { adventure } from '../../src/adventures/mission-impossible/adventure.js';
 import { GOLD_PATH } from '../../src/adventures/mission-impossible/gold-path.js';
+import type { Session } from '../../src/session/types.js';
 
 describe('the in-memory session', () => {
   it('plays the gold path to a success', async () => {
@@ -78,5 +81,28 @@ describe('the file session', () => {
 
     expect((await session.snapshot()).turn).toBe(0);
     expect(existsSync(path)).toBe(false);
+  });
+});
+
+describe('the http session', () => {
+  it('plays the same game against the server', async () => {
+    const started = await startSessionServer();
+    try {
+      const opened = await fetch(`${started.url}/api/session`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ adventureId: adventure.id }),
+      });
+      const { id } = (await opened.json()) as { id: string };
+      const session: Session = new HttpSession(id, adventure, { baseUrl: started.url });
+
+      let last;
+      for (const command of GOLD_PATH) last = await session.send(command);
+
+      expect(last?.status).toBe('success');
+      expect((await session.snapshot()).turn).toBe(GOLD_PATH.length);
+    } finally {
+      await started.close();
+    }
   });
 });
