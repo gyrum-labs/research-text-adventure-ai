@@ -81,6 +81,8 @@ hotfix-2-4-1         success     10      0/20 solved
 - [x] Its gold path wins; BFS confirms it is shortest; the random policy fails
 - [x] The same agent harness runs it with no code change
 - [x] `RESULTS.md` compares the two worlds: success rate, failure histogram, cost
+- [x] The live turn-bound grid ran against this world: 103 valid runs, 0 solves, the unfunded
+      cells marked `incomplete` and the payment-failed runs deleted rather than counted
 - [x] A one-page "what this means for running an organisation" section is written
 
 ## What we found
@@ -116,6 +118,22 @@ The proportions are different, and that is a finding about the worlds rather tha
 taxonomy. The game's random baseline spread across `F3`, `F4` and `F5`; the organisation's
 spread entirely across `F5`. Its chain is harder to get wrong early, because every gate names
 what it wants, and a random agent mostly fails by never finding the runbook at all.
+
+### The live models played it too, and none of them won
+
+The matrix's turn-bound grid was pointed at this world
+(`configs/matrix.live-org-turnbound.json`). Of the planned 200 runs, **103 are valid and none is
+a solve: 0/103, Wilson interval 0 to 3.6%**. glm 5.3 spends its turns at gold-path speed, ten,
+and loses them to hallucinated objects; claude sonnet 4.5 and gpt-4.1-mini grind into budget
+exhaustion and planning loops. The failure mix moved from the game's hallucination-heavy
+histogram to planning (`F3` 40) and budget exhaustion (`F7` 26), inside the same nine
+categories.
+
+The other 97 runs never reached a model: both vendors' accounts ran out of credit mid-sweep,
+and those transcripts were deleted rather than counted. A run the provider was paid for and did
+not serve is a fact about the account, not about the agent. The committed summary marks the
+unplayed cells `incomplete`, and `--summarise-only` regenerates it from disk without spending
+anything. The sweep resumes where it stopped once the accounts are funded.
 
 ## The honest reading
 

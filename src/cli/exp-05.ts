@@ -31,6 +31,8 @@ export interface Exp05Options {
   root?: string;
   /** Where the summary artefacts go. */
   resultsDir?: string;
+  /** Report the transcripts on disk without calling a provider. */
+  summariseOnly?: boolean;
 }
 
 /** The table: one row per cell. */
@@ -168,6 +170,7 @@ export async function runExp05(
 
   const runs = await runMatrix(adventure, options.config, {
     root,
+    ...(options.summariseOnly === true ? { summariseOnly: true } : {}),
     // The surrogate is the matrix's own, and it needs no key. A live model is
     // built here, where the environment is read, and it is told which endpoint
     // and which variable the configuration named.
