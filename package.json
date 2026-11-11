@@ -29,7 +29,8 @@
     "check": "npm run typecheck && npm run lint && npm run test && npm run style",
     "coverage": "vitest run --coverage",
     "style": "bash vale.sh",
-    "build": "tsc --noEmit"
+    "build": "tsc --noEmit",
+    "serve": "tsx src/server/main.ts"
   },
   "dependencies": {
     "commander": "^12.1.0",
