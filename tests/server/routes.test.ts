@@ -131,6 +131,10 @@ describe('the session server', () => {
       expect(ended).toBeDefined();
       expect((outcome?.['data'] as { outcome: string }).outcome).toBe('success');
       expect(records.some((record) => record['type'] === 'observation')).toBe(true);
+      const final = records.filter(record => record['type'] === 'observation').at(-1)!;
+      expect(final['turn']).toBe(GOLD_PATH.length);
+      expect((final['data'] as { goals: Array<{ status: string }> }).goals
+        .every(goal => goal.status === 'complete')).toBe(true);
     } finally {
       await started.close();
     }
