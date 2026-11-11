@@ -7,8 +7,8 @@ own acceptance criteria. Work top to bottom; each card's "Done when" is the gate
 
 Status legend: `[ ]` not started · `[~]` in progress · `[x]` complete
 
-Phases 0 to 4, 6 and 7 are built and green. Phase 5 (the browser client and server) and Phase 8
-(the QuestJS comparison) are not started, and the cards say so.
+Phases 0 to 7 are built and green. Phase 8 (the QuestJS comparison) is not started, and the
+card says so.
 
 Two cards were written as a sketch and describe a layout the build did not use. The adapters all
 live in `src/agents/llm/provider.ts` rather than in a file each, and the budgets, the metrics and
@@ -174,18 +174,27 @@ and every action spec of the adventure is proved executable by the reducer.
 ## Phase 5: Web client and server
 
 ### T5.1 Session ports
-- [ ] `src/session/types.ts`, `in-memory.ts`, `file.ts`, `http.ts`
-- [ ] **Done when:** the same game logic works against all three session implementations
+- [x] `src/session/types.ts`, `in-memory.ts`, `file.ts`, `http.ts`
+- [x] **Done when:** the same game logic works against all three session implementations.
+      `tests/session/ports.test.ts` plays the gold path through each port;
+      `tests/equivalence.test.ts` proves the hash chains agree link for link
 
 ### T5.2 Server
-- [ ] `src/server/`. `room:http` + a small router; routes per `SPEC.md` §14.3
-- [ ] Server-held sessions; SSE endpoint for live agent runs
-- [ ] **Done when:** a browser session and an in-process session produce identical hash chains
+- [x] `src/server/`. `node:http` + a small router; routes per `SPEC.md` §14.3, plus the
+      reset the session interface needs
+- [x] Server-held sessions; SSE endpoint for live agent runs (`GET /api/runs/:id/stream`,
+      scripted and random policies, no provider keys server-side)
+- [x] **Done when:** a browser session and an in-process session produce identical hash chains.
+      `tests/equivalence.test.ts`, and `tests/server/routes.test.ts` covers every route
 
 ### T5.3 Web client
-- [ ] `src/web/`. Plain TS, esbuild bundle, no framework, **no game logic**
-- [ ] Output pane, command input with ↑/↓ history, live log, status bar (turn, goals, hash)
-- [ ] **Done when:** a human completes the mission in the browser
+- [x] `src/web/`. Plain TS, esbuild bundle (`npm run build:web`), no framework, **no game logic**.
+      The kernel bundles for the page with `node:crypto` aliased to a synchronous sha256 shim that
+      a test holds to node:crypto's own answers
+- [x] Output pane, command input with ↑/↓ history, live log, status bar (turn, goals, hash)
+- [x] **Done when:** a human completes the mission in the browser. A test cannot be a human, so
+      `tests/web/ui.test.ts` types the ten commands through the same terminal code the page runs
+      and watches the mission end in a success; `npm run serve` serves the built page itself
 
 ---
 
