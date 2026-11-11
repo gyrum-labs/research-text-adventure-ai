@@ -26,10 +26,11 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "check": "npm run typecheck && npm run lint && npm run test && npm run style",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run build:web && npm run style",
     "coverage": "vitest run --coverage",
     "style": "bash vale.sh",
     "build": "tsc --noEmit",
+    "build:web": "node scripts/build-web.mjs",
     "serve": "tsx src/server/main.ts"
   },
   "dependencies": {

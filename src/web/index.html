@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Operation Nightingale</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 15px;
+    }
+    body {
+      margin: 0;
+      background: #101418;
+      color: #d7dee6;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    #terminal {
+      width: min(72rem, 100vw);
+      display: grid;
+      grid-template-rows: 1fr auto auto;
+      gap: 0.5rem;
+      padding: 1rem;
+      box-sizing: border-box;
+      height: 100vh;
+    }
+    .output {
+      margin: 0;
+      white-space: pre-wrap;
+      overflow-y: auto;
+      background: #171d24;
+      border: 1px solid #2a333d;
+      padding: 1rem;
+      border-radius: 6px;
+    }
+    .log {
+      margin: 0;
+      white-space: pre-wrap;
+      overflow-y: auto;
+      max-height: 8rem;
+      color: #7f8fa0;
+      background: #131920;
+      border: 1px solid #232c35;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+    .command {
+      font: inherit;
+      color: inherit;
+      background: #1b222b;
+      border: 1px solid #2f3a46;
+      border-radius: 6px;
+      padding: 0.6rem 1rem;
+      outline: none;
+    }
+    .command:focus {
+      border-color: #4d5f70;
+    }
+    .status {
+      color: #8ea2b8;
+      font-size: 0.85rem;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div id="terminal"></div>
+  <script src="./index.js"></script>
+</body>
+</html>
