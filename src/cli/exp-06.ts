@@ -168,7 +168,9 @@ export function renderFailureComparison(worlds: WorldResult[]): string {
     lines.push(`  ${code.padEnd(6)}${counts.join('')}`);
   }
 
-  return lines.join('\n');
+  // The last column is padded like the rest, and a padded last column leaves
+  // trailing whitespace on every line, which the prose gates rightly refuse.
+  return lines.map((line) => line.trimEnd()).join('\n');
 }
 
 /** The whole experiment, ready to print. */

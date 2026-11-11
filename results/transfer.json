@@ -23,8 +23,8 @@
         "inputTokens": 0,
         "outputTokens": 0,
         "estimatedCostUsd": 0,
-        "wallClockMs": 12,
-        "msPerTurn": 1.2,
+        "wallClockMs": 9,
+        "msPerTurn": 0.9,
         "failure": null
       },
       "randomRuns": 20,

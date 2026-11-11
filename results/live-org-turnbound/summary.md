@@ -2,26 +2,26 @@
 
 model                           cond  n      success (95% CI)  median turns  tok/solve  $/solve
 ------------------------------  ----  -----  ----------------  ------------  ---------  -------
-claude sonnet 4.5 (openrouter)  A     10/10  0%  (0–28%)       24            -          -      
-claude sonnet 4.5 (openrouter)  B     10/10  0%  (0–28%)       21            -          -      
-claude sonnet 4.5 (openrouter)  C     10/10  0%  (0–28%)       23            -          -      
-claude sonnet 4.5 (openrouter)  D     10/10  0%  (0–28%)       30            -          -      
-claude sonnet 4.5 (openrouter)  E     0/10   incomplete        -             -          -      
-glm 5.3 (z.ai)                  A     10/10  0%  (0–28%)       10            -          -      
-glm 5.3 (z.ai)                  B     10/10  0%  (0–28%)       10            -          -      
-glm 5.3 (z.ai)                  C     10/10  0%  (0–28%)       13            -          -      
-glm 5.3 (z.ai)                  D     10/10  0%  (0–28%)       25            -          -      
-glm 5.3 (z.ai)                  E     10/10  0%  (0–28%)       11            -          -      
-gpt-4.1-mini (openrouter)       A     10/10  0%  (0–28%)       22            -          -      
-gpt-4.1-mini (openrouter)       B     3/10   incomplete        23            -          -      
-gpt-4.1-mini (openrouter)       C     0/10   incomplete        -             -          -      
-gpt-4.1-mini (openrouter)       D     0/10   incomplete        -             -          -      
-gpt-4.1-mini (openrouter)       E     0/10   incomplete        -             -          -      
-glm 4.5 air (openrouter)        A     0/10   incomplete        -             -          -      
-glm 4.5 air (openrouter)        B     0/10   incomplete        -             -          -      
-glm 4.5 air (openrouter)        C     0/10   incomplete        -             -          -      
-glm 4.5 air (openrouter)        D     0/10   incomplete        -             -          -      
-glm 4.5 air (openrouter)        E     0/10   incomplete        -             -          -      
+claude sonnet 4.5 (openrouter)  A     10/10  0%  (0–28%)       24            -          -
+claude sonnet 4.5 (openrouter)  B     10/10  0%  (0–28%)       21            -          -
+claude sonnet 4.5 (openrouter)  C     10/10  0%  (0–28%)       23            -          -
+claude sonnet 4.5 (openrouter)  D     10/10  0%  (0–28%)       30            -          -
+claude sonnet 4.5 (openrouter)  E     0/10   incomplete        -             -          -
+glm 5.3 (z.ai)                  A     10/10  0%  (0–28%)       10            -          -
+glm 5.3 (z.ai)                  B     10/10  0%  (0–28%)       10            -          -
+glm 5.3 (z.ai)                  C     10/10  0%  (0–28%)       13            -          -
+glm 5.3 (z.ai)                  D     10/10  0%  (0–28%)       25            -          -
+glm 5.3 (z.ai)                  E     10/10  0%  (0–28%)       11            -          -
+gpt-4.1-mini (openrouter)       A     10/10  0%  (0–28%)       22            -          -
+gpt-4.1-mini (openrouter)       B     3/10   incomplete        23            -          -
+gpt-4.1-mini (openrouter)       C     0/10   incomplete        -             -          -
+gpt-4.1-mini (openrouter)       D     0/10   incomplete        -             -          -
+gpt-4.1-mini (openrouter)       E     0/10   incomplete        -             -          -
+glm 4.5 air (openrouter)        A     0/10   incomplete        -             -          -
+glm 4.5 air (openrouter)        B     0/10   incomplete        -             -          -
+glm 4.5 air (openrouter)        C     0/10   incomplete        -             -          -
+glm 4.5 air (openrouter)        D     0/10   incomplete        -             -          -
+glm 4.5 air (openrouter)        E     0/10   incomplete        -             -          -
 
 ## Failures
 
