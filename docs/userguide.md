@@ -192,3 +192,5 @@ fell into; look for `F5` (exploration failure) or `F7` (budget exhaustion).
 
 **The docs viewer shows an old version of a document.**
 Readers cache the index at startup. Restart the reader after adding or removing documents.
+
+The watcher prints each selected action as `> command` before the game response. This includes invalid attempts. The scripted and random demos make no model calls.

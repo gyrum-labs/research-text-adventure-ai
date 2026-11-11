@@ -207,6 +207,9 @@ async function driveRun(
       onMessage: (message) => {
         push({ type: 'message', text: message });
       },
+      onCommand: (command) => {
+        push({ type: 'command', ...command });
+      },
     });
     push({ type: 'observation', turn: result.turns, data: buildObservation(adventure, result.state) });
     push({

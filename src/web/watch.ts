@@ -4,6 +4,7 @@ import type { FetchLike } from '../session/http.js';
 /** The public records emitted by the optional demo server. */
 export type RunRecord =
   | { type: 'observation'; turn: number; data: Observation }
+  | { type: 'command'; turn: number; raw: string }
   | { type: 'message'; text: string }
   | { type: 'run_ended'; data: { outcome: string; reason?: string; turns?: number; hash?: string } }
   | { type: 'end' };
@@ -51,7 +52,7 @@ function recordFrom(block: string): RunRecord | undefined {
   if (data.length === 0) return undefined;
   const record: unknown = JSON.parse(data);
   if (record === null || typeof record !== 'object' || !('type' in record) ||
-      !['observation', 'message', 'run_ended', 'end'].includes(String(record.type))) {
+      !['observation', 'command', 'message', 'run_ended', 'end'].includes(String(record.type))) {
     throw new Error('The demo server sent an invalid event.');
   }
   return record as RunRecord;

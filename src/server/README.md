@@ -18,6 +18,8 @@ the random agent demonstrates the same runner without that script.
 For a different port, use `PORT=8788 npm run serve`. `HOST` defaults to `127.0.0.1` and
 `STATIC_ROOT` defaults to `dist/web`. Sessions and run records live in process memory.
 
+Command records carry `{ type: 'command', turn, raw }` before parsing and feedback, so invalid attempts remain visible. Only public actions are streamed.
+
 ## API
 
 Import `createSessionServer`, `startSessionServer` and `SessionServerOptions` from `server.ts`.

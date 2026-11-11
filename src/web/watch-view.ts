@@ -19,9 +19,11 @@ function renderRecord(root: HTMLElement, record: RunRecord): void {
   const status = element(root, '.watch-status');
   log.textContent += `${record.type}\n`;
   if (record.type === 'observation') {
-    output.textContent += `${renderObservation(record.data)}\n\n`;
+    output.textContent += `${renderObservation({ ...record.data, messages: [] })}\n\n`;
     const complete = record.data.goals.filter(goal => goal.status === 'complete').length;
     status.textContent = `Turn ${record.turn} · goals ${complete}/${record.data.goals.length}`;
+  } else if (record.type === 'command') {
+    output.textContent += `> ${record.raw}\n`;
   } else if (record.type === 'message') {
     output.textContent += `${record.text}\n`;
   } else if (record.type === 'run_ended') {

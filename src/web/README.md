@@ -35,7 +35,7 @@ can serve the in-memory game without the optional server; watching requires the 
 | `watch-view.ts`: `mountWatchView`, `WatchViewOptions` | Render records and manage start, stop and retry controls |
 | `shims/node-crypto.ts`: `createHash` | The synchronous browser hash adapter used by the kernel |
 
-Rendering uses text content, so event text is displayed literally. Streams are decoded across
+The watcher shows each chosen action as `> command` before its feedback, including invalid attempts. Feedback appears once; observations omit the messages already shown by the stream. Rendering uses text content, so event text is displayed literally. Streams are decoded across
 chunk and UTF-8 boundaries. A disconnect or malformed stream surfaces an error and leaves retry
 available. An aborted older request cannot replace a newer run's view. Demo policies are scripted
 or random, with no paid model calls; they are separate from the research matrix.
