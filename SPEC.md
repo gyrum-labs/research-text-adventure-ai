@@ -662,7 +662,7 @@ export interface ActionSpec {
   requires: Predicate[];
   /** Applied on success. */
   effects: Effect[];
-  /** Prose for success / failure. */
+  /** Prose: `{arg}` names the argument; `{arg.description}` gives its public description. */
   text: { success: string; failure: string };
   /** Optional: hint index consumed when this action fails informatively. */
   failureHint?: number;
@@ -1109,6 +1109,11 @@ guards:
 ```
 
 ### 11.2 Budgets (defaults, all overridable by CLI flag)
+
+Loop detection compares consecutive gameplay states, including each object's string
+state, flags, position and remaining hints. It excludes the turn counter. A first
+inspection that sets `examined` counts as progress; repeating an inspection after
+that state is set does not. Three identical consecutive situations still stop the run.
 
 | Budget | Default | Rationale |
 |---|---|---|

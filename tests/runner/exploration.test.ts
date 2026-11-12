@@ -8,15 +8,15 @@ import { InMemorySession } from '../../src/session/in-memory.js';
 describe('exploration progress', () => {
   it('processes a fourth action after the exact reported three-command sequence', async () => {
     const commands = ['take keycard', 'examine wall notice', 'examine desk', 'go south'];
-    const feedback: string[] = [];
+    const rooms: string[] = [];
     const result = await run({ adventure, policy: new ScriptedPolicy(commands),
-      onMessage: message => feedback.push(message) });
+      onObservation: observation => rooms.push(observation.room.name) });
     expect(result.commands).toEqual(commands);
     expect(result.state.roomId).toBe('corridor');
     expect(result.outcome).not.toBe('loop_detected');
     expect(result.state.objects['bulletin']?.state['examined']).toBe('true');
     expect(result.state.objects['desk']?.state['examined']).toBe('true');
-    expect(feedback.at(-1)).toContain('Service Corridor');
+    expect(rooms.at(-1)).toBe('Service Corridor');
   });
 
   it.each([

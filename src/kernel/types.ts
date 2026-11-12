@@ -88,7 +88,7 @@ export interface ActionSpec {
   requires: Predicate[];
   /** Applied on success. */
   effects: Effect[];
-  /** Prose for success and failure. `{arg}` interpolates the resolved argument. */
+  /** Prose: `{arg}` names the argument; `{arg.description}` gives an object's public description. */
   text: { success: string; failure: string };
 }
 
