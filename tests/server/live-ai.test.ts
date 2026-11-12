@@ -94,6 +94,27 @@ describe('the real-model demo', () => {
     } finally { await started.close(); }
   });
 
+  it('keeps the old 20k guard and gives the new live default headroom for the final actions', async () => {
+    // regression: warp#22695 — a full next-request reservation could strand a nearly won run.
+    let calls = 0;
+    modelFetch(async () => Response.json({ choices: [{ message: { content: `COMMAND: ${GOLD_PATH[calls++]}` } }],
+      usage: { prompt_tokens: 1900, completion_tokens: 5 } }));
+    for (const ceiling of [20_000, undefined]) {
+      calls = 0;
+      const configuration = ceiling === undefined ? {} : { budgets: { maxTotalTokens: ceiling, providerRetryDelayMs: 0 } };
+      const started = await startSessionServer({ liveAi: demo(configuration).liveAi });
+      try {
+        const health = await (await fetch(`${started.url}/api/health`)).json();
+        expect(health.ai.budgets.maxTotalTokens).toBe(ceiling ?? 30_000);
+        const { id } = await (await open(started.url)).json();
+        const stream = await records(started.url, id);
+        expect(stream.find(record => record.type === 'run_ended')?.data?.['outcome'])
+          .toBe(ceiling === undefined ? 'success' : 'budget_exhausted');
+        expect(calls).toBeLessThanOrEqual(10);
+      } finally { await started.close(); }
+    }
+  });
+
   it('makes no model call for health, offline demos or a cancelled pending start', async () => {
     const remote = vi.fn(async () => Response.json({}));
     modelFetch(remote);
