@@ -75,6 +75,14 @@ Where a figure is quoted, the paper is cited with its section number so it can b
   attributes, dynamic text, a text command parser.
 - **Why we cite it:** the strongest alternative engine, and the subject of the Phase 8 comparison
   (same adventure, same agent harness, different runtime).
+- **textadventures/questkit**: <https://github.com/textadventures/questkit>
+- **Licence: MIT** (verified via the GitHub API and the npm registry). JavaScript; runs in Node.
+- **What it is:** the maintained JavaScript Quest toolkit: the engine core, a compiler, and a
+  YAML world format. Its compiler takes YAML world sections, not ASL.
+- **Why we cite it:** it is the QuestJS-lineage engine that can be driven headlessly, which is
+  what the Phase 8 comparison needs.
+- **ASL, the Quest authoring language**: see `docs/ASL-RESEARCH.md` for the language, its model,
+  and how it compares with our DSL.
 
 ### A6. ink
 

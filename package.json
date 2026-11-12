@@ -26,12 +26,14 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "check": "npm run typecheck && npm run lint && npm run test && npm run build:web && npm run style",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run build:web && npm run maps:check && npm run style",
     "coverage": "vitest run --coverage",
     "style": "bash vale.sh",
     "build": "tsc --noEmit",
     "build:web": "node scripts/build-web.mjs",
-    "serve": "tsx src/server/main.ts"
+    "serve": "tsx src/server/main.ts",
+    "maps": "tsx scripts/generate-maps.ts",
+    "maps:check": "tsx scripts/generate-maps.ts --check"
   },
   "dependencies": {
     "commander": "^12.1.0",
