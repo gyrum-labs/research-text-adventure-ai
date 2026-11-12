@@ -327,4 +327,3 @@ graph LR
 |---|---|
 | ship | Ship the 2.4.1 hotfix |
 | notify | Notify the customer |
-

@@ -212,6 +212,7 @@ export function buildMaps(root: string = process.cwd()): string {
     parts.push('');
   }
 
+  // The document ends after the last line, with no blank line after it.
+  while (parts.length > 0 && parts[parts.length - 1] === '') parts.pop();
   return `${parts.join('\n')}\n`;
 }
-
