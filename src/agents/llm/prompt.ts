@@ -23,7 +23,7 @@ import type { ChatMessage } from './provider.js';
 import { commandHelp } from '../../kernel/parser.js';
 
 /** Bumped whenever the prompt changes, so a result can be tied to it. */
-export const PROMPT_VERSION = 'llm-prompt-v2';
+export const PROMPT_VERSION = 'llm-prompt-v3';
 
 export interface PromptOptions {
   /** How much of the past the model is shown. */

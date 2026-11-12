@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import type { Adventure } from '../kernel/types.js';
 import { canonicalJson } from '../kernel/hash.js';
 import { LlmPolicy } from '../agents/llm/policy.js';
+import { PROMPT_VERSION } from '../agents/llm/prompt.js';
 import { OpenAiProvider, redact, type LlmProvider, type LlmRequest } from '../agents/llm/provider.js';
 import { DEFAULT_BUDGETS, RunBudgetExceeded, type RunBudgets } from '../runner/run.js';
 import { PRICES } from '../runner/metrics.js';
@@ -133,7 +134,7 @@ export function createLiveAiDemo(options: LiveAiOptions): LiveAiDemo {
         policy: policy.id, provider: guarded.provider.id, model: configuration.model, seed,
         maxTurns: budgets.maxTurns, startedAt: new Date().toISOString(), engineVersion: '0.1.0',
       });
-      transcript.write({ type: 'demo_config', strategy: 'structured', renderer: 'json', thinking: false, budgets, maxPromptBytes });
+      transcript.write({ type: 'demo_config', promptVersion: PROMPT_VERSION, strategy: 'structured', renderer: 'json', thinking: false, budgets, maxPromptBytes });
       const timer = setTimeout(() => controller.abort(new DOMException('AI run time limit.', 'TimeoutError')), budgets.maxWallClockMs);
       timer.unref();
       return { policy, budgets: { ...budgets }, signal: controller.signal, transcript,

@@ -77,7 +77,7 @@ describe('the real-model demo', () => {
       // regression: warp#22688 — prose dropped public descriptions and readable flags.
       const firstContext = requests[0]!.messages.map(message => message.content).join('\n');
       expect(firstContext).toContain(adventure.objects['bulletin']!.description);
-      expect(firstContext).toContain('"readable": true');
+      expect(firstContext).toMatch(/"readable"\s*:\s*true/);
       expect(JSON.stringify(requests[0])).not.toContain('4821');
       expect(JSON.stringify(requests[0])).not.toContain('cut yellow wire');
       expect(stream.find(record => record['type'] === 'run_started')?.['data']?.['provider']).toBe('OpenRouter');

@@ -1050,6 +1050,13 @@ fences and `>` prompts.
 
 ### 10.4 Context strategy (a first-class experimental variable)
 
+Command history pairs each command with the observation produced after it, even
+when provider retries occur between actions. The initial public view is retained.
+The recent-outcome section names the corresponding commands so a model can avoid
+repeating an action with unchanged results. JSON in model context uses compact,
+stable serialization with the same public fields. Prompt version `llm-prompt-v3`
+identifies this revision; historical run artifacts are not rewritten.
+
 | Strategy | What the model sees |
 |---|---|
 | `none` | The current observation only. The control: pure reactive behaviour |
