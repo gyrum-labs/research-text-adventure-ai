@@ -30,6 +30,8 @@ export interface ModelPrice {
  * them is one table.
  */
 export const PRICES: Record<string, ModelPrice> = {
+  // OpenRouter models API, 2026-11-12; estimates, not billing authority.
+  'openrouter/deepseek/deepseek-chat': { input: 0.32, output: 0.89 },
   'anthropic/claude-sonnet-4.5': { input: 3, output: 15 },
   'openai/gpt-4o': { input: 2.5, output: 10 },
   'ollama/llama3.1': { input: 0, output: 0 },

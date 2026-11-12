@@ -37,8 +37,15 @@ can serve the in-memory game without the optional server; watching requires the 
 
 The watcher shows each chosen action as `> command` before its feedback, including invalid attempts. Feedback appears once; observations omit the messages already shown by the stream. Rendering uses text content, so event text is displayed literally. Streams are decoded across
 chunk and UTF-8 boundaries. A disconnect or malformed stream surfaces an error and leaves retry
-available. An aborted older request cannot replace a newer run's view. Demo policies are scripted
-or random, with no paid model calls; they are separate from the research matrix.
+available. An aborted older request cannot replace a newer run's view. Scripted and random
+policies make no model calls; they are separate from the research matrix.
+
+When the server has `OPENROUTER_API_KEY` and `AI_DEMO_MODEL`, Policy also offers an AI
+agent. **Start AI run** explicitly starts model calls and shows the model, limits,
+commands and usage. **Stop AI run** or switching to Play cancels inference and retries
+without changing the human game. Cancellation uses an independent DELETE request;
+cancelling a pending POST never opens its model stream. See the
+[server setup](../server/README.md#real-ai-demo) for budgets and transcripts.
 
 Run `npm test -- tests/web` and `npm run build:web`. The crypto tests compare the browser hash
 adapter against Node, and the session equivalence tests compare complete command hash chains.
