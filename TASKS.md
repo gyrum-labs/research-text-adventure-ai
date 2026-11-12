@@ -228,9 +228,15 @@ and every action spec of the adventure is proved executable by the reducer.
 
 ## Phase 8: Engine comparison (stretch)
 
-- [ ] Port the adventure to QuestJS; run the same agent harness against it
-- [ ] Compare agent success rate and authoring cost
-- [ ] **Done when:** P8.1–P8.2 pass
+- [x] Port the adventure to QuestJS; run the same agent harness against it.
+      The port is QuestKit, the maintained JavaScript toolkit of the Quest engine family (MIT):
+      `src/adventures/questkit-mission-impossible/`, run in Node, with the same ten-command
+      gold path winning under it
+- [x] Compare agent success rate and authoring cost.
+      `results/exp-08` and `RESULTS.md`: 0/30 on the other engine against 4/10 on ours for
+      the one model that solves the game at all, and a world definition 24% shorter with the
+      toolkit's verbs inherited rather than declared
+- [x] **Done when:** P8.1–P8.2 pass
 
 ---
 

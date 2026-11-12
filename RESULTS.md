@@ -277,6 +277,86 @@ repository's history at the merge that carried Experiment 06, so the claim rests
 artefact either way. The honest reading is unchanged by the completion: 0 of 150 fresh runs
 bounds the pooled rate below 2.0%, and 0 of 200 across both attempts.
 
+## Phase 8: is our engine the reason it works?
+
+**On the other engine the agent does no better, and on the one model our engine
+can solve it does worse. The instrument is carrying weight, and the series
+should say so.**
+
+Phase 8 is the control on everything above. The same agent, the same prompt,
+the same budgets, the same transcript format and the same taxonomy were run
+against **Operation Nightingale ported to QuestKit**, the maintained JavaScript
+toolkit of the Quest engine family (MIT), with the rules of the world living
+in that engine rather than in ours. Same models, same seeds, same condition:
+prose observations and the full history.
+
+| Model | Our engine | QuestKit | Our failure mix | QuestKit failure mix |
+|---|---|---|---|---|
+| claude sonnet 4.5 | 0/10 | 0/10 | 10 x hallucination | 10 x planning |
+| gpt-4.1-mini | **4/10** | **0/10** | 5 hallucination, 1 loop | 10 x planning |
+| glm 4.5 air | 0/10 | 0/10 | 10 x hallucination | 10 x planning |
+
+Two readings, and the second is the one to keep.
+
+**The agent does not transfer.** The model that solves our world 40% of the
+time solves the other one none of the time, and the two models that score
+zero on ours stay at zero. Whatever makes the mission solvable here is not
+the model's general ability with text adventures; it is something about how
+this engine presents the world.
+
+**But the difference is not significant, and the honest claim is "no better",
+not "worse".** With ten seeds a cell of 4/10 and a cell of 0/10 overlap: the
+Wilson intervals are 20 to 70% and 0 to 28%. What the comparison settles is
+that the other engine does not give the agent an advantage; what it does not
+settle is that it takes one away.
+
+**The failure mode moves, and it moves the informative way.** On our engine
+the models fail by hallucination: 88 of 100 runs in these cells named objects
+that were not in the room. On QuestKit every one of the 30 runs is a planning
+loop, the model repeating an action that had already failed. Two engines, one
+agent, two different mistakes, and the second one is the engine talking: the
+toolkit's surface is a wall of prose that lists everything in the room and
+every exit, and a model that tries to move through it circles.
+
+**What is being compared, exactly.** The observation surfaces differ by
+construction, and that difference cannot be separated from the engine in this
+design. Our engine shows the agent what it has perceived; QuestKit shows it
+everything in scope, because that is what scope means there. The perception
+boundary is one of our design choices, so the comparison is a comparison of
+design choices, which is what Phase 8 set out to measure.
+
+**Authoring the same world twice.**
+
+| | Our engine | The QuestKit port |
+|---|---|---|
+| World definition | 569 lines, 18,578 bytes | 431 lines, 11,323 bytes |
+| Verbs the world declares | 19, each with its arguments, predicates and effects | 9 commands, each with a script |
+| Verbs the world inherits | none | look, examine, take, drop, inventory and the directional go commands, from the toolkit |
+| Validation | every world is checked against a schema when it loads | none: the engine runs what the script says |
+| Determinism | a pure reducer and a hash chain | ordinary mutable state |
+
+The port is smaller, and the difference is mostly the standard library: the
+toolkit hands over six verbs that our world has to declare, with their
+argument shapes and their rules. Our verb table is part of the experiment,
+because it is one of the things the matrix varies.
+
+**What the port cost.** The toolkit's engine is a browser engine, so the port
+runs it in a Node context and compiles the world's sections the way the
+toolkit's own compiler does. Two things about it are worth recording, because
+they are the kind of thing only a comparison finds: a command pattern with two
+`#object#` slots is one argument twice, so the second silently shadows the
+first; and the engine's `set` only takes three arguments when the value is
+truthy, so `set(exit, 'locked', false)` sets the wrong thing entirely.
+
+**What this does not settle.** One condition, three models, ten seeds, and a
+port written by the same hand as the engine it is compared against. The port
+is tested (its gold path wins under the toolkit, and its lock, its code, its
+case and its bomb each have a test), but a port is not the original game, and
+a difference between the two could be a difference between the port and the
+original rather than between the engines. The claim this supports is the
+narrow one: **the numbers in this document are not a fact about the agent
+alone.**
+
 ## Threats to validity
 
 - **Two sweeps, one grid, three flips.** The live matrix ran twice and the sweeps disagree on
@@ -345,6 +425,10 @@ first attempt agree from the preserved summary.
 >   rate by 35 percentage points. The JSON observation is read better and costs more.
 > - The vocabulary transfers. A second world was written with no change to the kernel, and the
 >   only thing it cost was one rule about argument shapes that a single world never reveals.
+> - The engine is part of the result. The same agent, prompt and budgets score 4/10 on our
+>   engine and 0/10 on QuestKit's for the one model that can solve the game at all, and the
+>   failure changes from hallucination to looping. The numbers here are not a fact about the
+>   agent alone, and the comparison that shows it is now part of the series.
 > - The organisation world is where the live agents stop: 0 solves on 150 completed-grid runs
 >   and 0 on glm 5.3's fifty from the first attempt. The failure is hallucination, not
 >   hesitancy: 88 of 150 runs acted on objects that were not in the room, and longer budgets
@@ -361,11 +445,13 @@ npm run exp:03                # the agent plays the game
 npm run exp:04                # the failure taxonomy and the histogram
 npm run exp:05                # the matrix, with the Wilson intervals
 npm run exp:06                # the two worlds side by side
+npm run exp:08                # the same agent, on somebody else's engine
 
 npm run exp:05 -- --matrix configs/matrix.live.json            # live models, shipped budgets
 npm run exp:05 -- --matrix configs/matrix.live-turnbound.json  # live models, turn budget binds
 npm run exp:05 -- --matrix configs/matrix.live-org-turnbound.json \
     --adventure hotfix-2-4-1                                  # live models, the organisation world
+npm run exp:08 -- --matrix configs/matrix.live-questjs.json   # live models, the QuestKit engine
 npm run exp:05 -- --matrix configs/matrix.live-org-turnbound.json \
     --adventure hotfix-2-4-1 --summarise-only                 # report the runs on disk, spend nothing
 ```
