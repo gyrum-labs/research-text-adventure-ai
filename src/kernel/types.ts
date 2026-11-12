@@ -52,7 +52,7 @@ export interface GameObject {
   /** Extra words that resolve to this object (e.g. "cutter", "pliers"). */
   aliases?: string[];
   description: string;
-  /** Rendered only when `examine`d or `read` — may reveal detail not in `description`. */
+  /** Private detail, disclosed only by declared read actions with their prerequisites. */
   detail?: string;
   /** Container semantics: opening reveals `contains`. */
   container?: { closed: boolean; contains: Id[] };
@@ -88,7 +88,7 @@ export interface ActionSpec {
   requires: Predicate[];
   /** Applied on success. */
   effects: Effect[];
-  /** Prose: `{arg}` names the argument; `{arg.description}` gives an object's public description. */
+  /** Prose slots: `{arg}` names, `{arg.description}` public descriptions, `{commands}` grammar. */
   text: { success: string; failure: string };
 }
 

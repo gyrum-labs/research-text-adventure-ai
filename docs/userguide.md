@@ -151,6 +151,11 @@ for configuration, request limits and replay. The key stays on the server.
 
 ## Common workflows
 
+Type `help` for the command forms accepted by the parser. Two-argument commands
+use `with` between the target and the item or code. Parser errors and the model's
+instructions use the same forms. Only the appropriate locks accept unlocking;
+repeating an unlock reports that the object is already unlocked.
+
 Use `examine <object>` to see an accessible object's public description. Use `read`
 for written details; examining a manual does not reveal its unread contents. First-time
 inspections count as progress. Repeating actions without changing gameplay state can

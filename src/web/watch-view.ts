@@ -67,9 +67,10 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): { 
     stop.textContent = ai ? 'Stop AI run' : 'Stop watching';
     element(root, '.watch-note').textContent = ai
       ? model === undefined ? 'AI is unavailable on this server.' : describeModel(model)
-      : `Local demo · no model calls. ${model === undefined ? 'AI is unavailable on this server.' : 'AI is available in Policy.'}`;
+      : `${policy.value === 'random' ? 'Random baseline · choices can fail or loop' : 'Scripted reference · known solution'} · no model calls. ${model === undefined ? 'AI is unavailable on this server.' : 'Choose AI agent in Policy for real model play.'}`;
   };
   policy.addEventListener('change', updatePolicy);
+  updatePolicy();
   void discoverAi();
 
   async function discoverAi(): Promise<void> {

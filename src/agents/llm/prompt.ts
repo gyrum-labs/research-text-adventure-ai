@@ -20,9 +20,10 @@ import {
   type ObservationRenderer,
 } from '../context.js';
 import type { ChatMessage } from './provider.js';
+import { commandHelp } from '../../kernel/parser.js';
 
 /** Bumped whenever the prompt changes, so a result can be tied to it. */
-export const PROMPT_VERSION = 'llm-prompt-v1';
+export const PROMPT_VERSION = 'llm-prompt-v2';
 
 export interface PromptOptions {
   /** How much of the past the model is shown. */
@@ -52,18 +53,7 @@ const STRATEGY_NOTE: Record<ContextStrategy, string> = {
 
 /** The verbs, with the shape each one takes. */
 function verbLines(adventure: Adventure): string[] {
-  const seen = new Set<string>();
-  const lines: string[] = [];
-
-  for (const spec of adventure.actions) {
-    if (seen.has(spec.verb)) continue;
-    seen.add(spec.verb);
-
-    const shapes = spec.args.map((arg) => `<${arg.name}>`).join(' ');
-    lines.push(spec.args.length === 0 ? spec.verb : `${spec.verb} ${shapes}`);
-  }
-
-  return lines;
+  return commandHelp(adventure).split('\n');
 }
 
 /**
@@ -106,6 +96,10 @@ export function buildSystemPrompt(
     '- Only refer to things you can currently see or carry.',
     '- If you are unsure, explore rather than guess.',
     '- A failed action does not cost the mission. Read what the world said and try something else.',
+    '- Prioritize the stated objectives and read objects marked readable.',
+    '- Use descriptions already provided; avoid repeating inspections that give no new information.',
+    '- After a failure, correct the syntax or change course. Repeat only after relevant state changes.',
+    '- When a room offers no new useful information, explore an available exit.',
     '',
     '## How to answer',
     envelope,

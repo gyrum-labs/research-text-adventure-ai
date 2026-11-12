@@ -39,6 +39,10 @@ The watcher shows each chosen action as `> command` before its feedback, includi
 chunk and UTF-8 boundaries. A disconnect or malformed stream surfaces an error and leaves retry
 available. An aborted older request cannot replace a newer run's view. Scripted and random
 policies make no model calls; they are separate from the research matrix.
+The choices are labeled **Scripted reference (no AI)** and **Random baseline (no AI)**.
+The reference follows a known solution. Random choices may fail or loop; their
+outcomes do not measure a model's performance. Select **AI agent** and press
+**Start AI run** to watch the configured model make its own choices.
 
 When the server has `OPENROUTER_API_KEY` and `AI_DEMO_MODEL`, Policy also offers an AI
 agent. **Start AI run** explicitly starts model calls and shows the model, limits,

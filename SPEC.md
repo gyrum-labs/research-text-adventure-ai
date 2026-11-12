@@ -847,6 +847,12 @@ random policy fails 20/20 seeds.
 
 ## 8. Command grammar
 
+`commandSyntax(action)` in `src/kernel/parser.ts` formats one public argument
+shape; `commandHelp(adventure)` lists the first parser-supported shape for each
+verb. Human help, model instructions and parser errors use these same functions.
+Two-argument forms include the connective `with`, without supplying private values.
+Action text can insert the public list with `{commands}`.
+
 ### 8.1 Verbs
 
 | Verb | Synonyms | Args | Notes |
@@ -1089,6 +1095,11 @@ adventure needs no prompt change.
 ## 11. Runner, budgets and safety guards
 
 ### 11.1 The turn loop
+
+Action variants first match their object and room argument identities, then check
+the remaining prerequisites. Text values such as codes remain prerequisites and
+never become suggested answers. An unrelated target receives a refusal about the
+attempted command. An already unlocked object does not receive another unlock success.
 
 ```
 create session → state = adventure.initial
