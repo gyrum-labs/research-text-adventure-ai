@@ -23,7 +23,7 @@ import type { ChatMessage } from './provider.js';
 import { commandHelp } from '../../kernel/parser.js';
 
 /** Bumped whenever the prompt changes, so a result can be tied to it. */
-export const PROMPT_VERSION = 'llm-prompt-v3';
+export const PROMPT_VERSION = 'llm-prompt-v4';
 
 export interface PromptOptions {
   /** How much of the past the model is shown. */
@@ -97,6 +97,8 @@ export function buildSystemPrompt(
     '- If you are unsure, explore rather than guess.',
     '- A failed action does not cost the mission. Read what the world said and try something else.',
     '- Prioritize the stated objectives and read objects marked readable.',
+    '- Objects marked takeable can be carried without opening them. Only containers can be opened.',
+    '- When a container is open, consider its newly visible contents against your objectives.',
     '- Use descriptions already provided; avoid repeating inspections that give no new information.',
     '- After a failure, correct the syntax or change course. Repeat only after relevant state changes.',
     '- When a room offers no new useful information, explore an available exit.',

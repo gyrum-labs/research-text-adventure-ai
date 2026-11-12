@@ -176,7 +176,12 @@ export interface Transition {
 export interface Observation {
   turn: number;
   room: { id: Id; name: string; description: string };
-  visible: Array<{ id: Id; name: string; description: string; readable?: boolean }>;
+  visible: Array<{
+    id: Id; name: string; description: string; readable?: boolean;
+    /** Public portability and visible container state; never hidden contents. */
+    takeable?: boolean;
+    container?: { open: boolean; locked: boolean };
+  }>;
   inventory: Array<{ id: Id; name: string; description: string }>;
   exits: Array<{ direction: string; label: string; toName: string; status: 'open' | 'locked' }>;
   messages: string[];

@@ -155,6 +155,8 @@ Type `help` for the command forms accepted by the parser. Two-argument commands
 use `with` between the target and the item or code. Parser errors and the model's
 instructions use the same forms. Only the appropriate locks accept unlocking;
 repeating an unlock reports that the object is already unlocked.
+Visible items show whether they can be carried, and containers show their open or
+locked state. Opening an open container reports that it is already open.
 
 Use `examine <object>` to see an accessible object's public description. Use `read`
 for written details; examining a manual does not reveal its unread contents. First-time

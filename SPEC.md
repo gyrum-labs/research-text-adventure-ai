@@ -912,7 +912,10 @@ export interface Observation {
   turn: number;
   location: { id: Id; name: string; description: string };
   /** GameObjects present and visible in the current room. */
-  visible: Array<{ id: Id; name: string; description: string; readable?: boolean; container?: boolean }>;
+  visible: Array<{
+    id: Id; name: string; description: string; readable?: boolean; takeable?: boolean;
+    container?: { open: boolean; locked: boolean };
+  }>;
   /** Carried objects. */
   inventory: Array<{ id: Id; name: string; description: string }>;
   /** Exits and their status. 'locked' is observable (a locked door is visible and closed). */
@@ -1054,7 +1057,9 @@ Command history pairs each command with the observation produced after it, even
 when provider retries occur between actions. The initial public view is retained.
 The recent-outcome section names the corresponding commands so a model can avoid
 repeating an action with unchanged results. JSON in model context uses compact,
-stable serialization with the same public fields. Prompt version `llm-prompt-v3`
+stable serialization with the same public fields. Visible portability and container
+open/locked state are public properties; closed contents and codes remain hidden.
+Prompt version `llm-prompt-v4`
 identifies this revision; historical run artifacts are not rewritten.
 
 | Strategy | What the model sees |

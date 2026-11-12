@@ -41,7 +41,7 @@ function objectState(at: string | null, flags: Record<string, boolean> = {}): Ga
 export const adventure: Adventure = {
   id: 'mission-impossible',
   title: 'Operation Nightingale',
-  version: '1.0.2',
+  version: '1.0.3',
 
   brief:
     'Mission brief. A booby-trapped case is locked in the server vault. Two objectives: ' +

@@ -155,16 +155,24 @@ function failureMessage(spec: ActionSpec | undefined, command: Command, context:
   }
   for (const predicate of spec.requires) {
     if (predicate.op !== 'arg_flag') continue;
-    const object = context.state.objects[context.bindings[predicate.arg] ?? ''];
-    if (object === undefined) continue;
-    const already = predicate.key === 'unlocked' && !predicate.value && object.flags['unlocked'] === true ||
-      predicate.key === 'locked' && predicate.value && object.flags['locked'] === false;
-    if (already) {
-      const name = context.adventure.objects[context.bindings[predicate.arg]!]!.name;
-      return `The ${name} is already unlocked.`;
-    }
+    const message = stateRefusal(predicate, context);
+    if (message !== undefined) return message;
   }
   return interpolate(spec.text.failure, context.adventure, command.args);
+}
+
+function stateRefusal(predicate: Extract<Predicate, { op: 'arg_flag' }>, context: EvalContext): string | undefined {
+  const id = context.bindings[predicate.arg];
+  if (id === undefined) return undefined;
+  const object = context.state.objects[id];
+  const definition = context.adventure.objects[id];
+  if (object === undefined || definition === undefined) return undefined;
+  const actual = object.flags[predicate.key];
+  if (actual === undefined || actual === predicate.value) return undefined;
+  if (predicate.key === 'locked') return `The ${definition.name} is ${predicate.value ? 'already unlocked' : 'locked'}.`;
+  if (predicate.key === 'unlocked' && !predicate.value) return `The ${definition.name} is already unlocked.`;
+  if (predicate.key === 'closed' && predicate.value && definition.container !== undefined) return `The ${definition.name} is already open.`;
+  return undefined;
 }
 
 function makeContext(
