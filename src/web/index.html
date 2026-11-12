@@ -95,9 +95,11 @@
 <body>
   <main class="shell">
     <nav class="toolbar" aria-label="Interface">
+      <label>Scenario <select class="scenario-select"></select></label>
       <button id="play-mode" type="button" aria-pressed="true">Play</button>
       <button id="watch-mode" type="button" aria-pressed="false">Watch an agent</button>
       <span class="demo-note">Agent watching needs the optional demo server.</span>
+      <span class="demo-note scenario-note" role="status" aria-live="polite"></span>
     </nav>
     <section id="terminal" aria-label="Play the adventure"></section>
     <section id="watch" aria-label="Watch an agent" hidden>

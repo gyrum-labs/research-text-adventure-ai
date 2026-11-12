@@ -115,6 +115,17 @@ function part(root: StubElement, className: string): StubElement {
   return found;
 }
 
+/**
+ * The panel, as the page hands it over.
+ *
+ * The stand-in implements the DOM surface the panel uses, so the code under
+ * test is the code the page runs. The cast is where that stand-in meets the
+ * browser's own types.
+ */
+function panel(root: StubElement): HTMLElement {
+  return root as unknown as HTMLElement;
+}
+
 /** A stream of one record, delivered when the test says so. */
 function lateStream(record: unknown): { response: Response; deliver: () => void } {
   let deliver!: () => void;
@@ -131,7 +142,7 @@ describe('the watched-run panel', () => {
   it('runs the world the page has selected', async () => {
     const root = watchPanel();
     const fetch = vi.fn().mockResolvedValue(Response.json({ ok: true, ai: null }));
-    const view = mountWatchView(root, { baseUrl: 'http://demo.test', adventureId: 'mission-impossible', fetch });
+    const view = mountWatchView(panel(root), { baseUrl: 'http://demo.test', adventureId: 'mission-impossible', fetch });
 
     view.setScenario('hotfix-2-4-1');
     part(root, 'watch-start').fire('click');
@@ -155,7 +166,7 @@ describe('the watched-run panel', () => {
       if (init?.method === 'DELETE') return Promise.resolve(Response.json({ stopped: true }));
       return Promise.resolve(new Response('', { status: 404 }));
     });
-    const view = mountWatchView(root, { baseUrl: 'http://demo.test', adventureId: 'mission-impossible', fetch });
+    const view = mountWatchView(panel(root), { baseUrl: 'http://demo.test', adventureId: 'mission-impossible', fetch });
 
     part(root, 'watch-start').fire('click');
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -174,7 +185,7 @@ describe('the watched-run panel', () => {
   it('clears the previous world\'s transcript when the world changes', async () => {
     const root = watchPanel();
     const fetch = vi.fn().mockResolvedValue(Response.json({ ok: true, ai: null }));
-    const view = mountWatchView(root, { baseUrl: 'http://demo.test', adventureId: 'mission-impossible', fetch });
+    const view = mountWatchView(panel(root), { baseUrl: 'http://demo.test', adventureId: 'mission-impossible', fetch });
 
     part(root, 'watch-output').textContent = 'take keycard\n';
     view.setScenario('hotfix-2-4-1');
@@ -196,7 +207,7 @@ describe('the watched-run panel', () => {
       if (init?.method === 'DELETE') return Promise.resolve(Response.json({ stopped: true }));
       return Promise.resolve(new Response('', { status: 404 }));
     });
-    mountWatchView(root, { baseUrl: 'http://demo.test', adventureId: 'mission-impossible', fetch });
+    mountWatchView(panel(root), { baseUrl: 'http://demo.test', adventureId: 'mission-impossible', fetch });
 
     part(root, 'watch-start').fire('click');
     await new Promise((resolve) => setTimeout(resolve, 0));
