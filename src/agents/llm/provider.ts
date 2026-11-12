@@ -160,10 +160,16 @@ export class AnthropicProvider implements LlmProvider {
       };
     }
 
-    const payload = (await response.json()) as {
+    let payload: {
       content?: Array<{ type?: string; text?: string }>;
       usage?: { input_tokens?: number; output_tokens?: number };
     };
+    try {
+      payload = (await response.json()) as typeof payload;
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : 'the response could not be read';
+      return { text: '', transientError: redact(`the anthropic response failed: ${reason}`, this.apiKey) };
+    }
 
     const text = (payload.content ?? [])
       .filter((block) => block.type === undefined || block.type === 'text')
@@ -233,10 +239,16 @@ export class OpenAiProvider implements LlmProvider {
       return { text: '', transientError: `the openai api answered ${response.status}` };
     }
 
-    const payload = (await response.json()) as {
+    let payload: {
       choices?: Array<{ message?: { content?: string } }>;
       usage?: { prompt_tokens?: number; completion_tokens?: number };
     };
+    try {
+      payload = (await response.json()) as typeof payload;
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : 'the response could not be read';
+      return { text: '', transientError: redact(`the openai response failed: ${reason}`, this.apiKey) };
+    }
 
     const text = payload.choices?.[0]?.message?.content ?? '';
 
