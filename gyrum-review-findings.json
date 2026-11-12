@@ -1,0 +1,60 @@
+{
+  "schema_version": "1",
+  "review_run_id": "510518ef-be79-4711-824f-87ace1889e8d",
+  "ts": "2026-11-11T23:18:33Z",
+  "ticket": "warp#22661",
+  "agent_label": "jon-ThinkPad-P1-Gen-4i-20260929",
+  "review_pr_version": "v61.2.587",
+  "exit_code": 0,
+  "findings": [],
+  "gate_timings": [
+    {
+      "gate": "no conflict markers/ws",
+      "status": "pass",
+      "duration_ms": 25,
+      "mode": "executed",
+      "saved_ms": 0,
+      "reason": "ineligible"
+    },
+    {
+      "gate": "npm run build",
+      "status": "pass",
+      "duration_ms": 0,
+      "mode": "reused",
+      "saved_ms": 3870,
+      "reason": "review-receipt-match"
+    },
+    {
+      "gate": "npm test",
+      "status": "pass",
+      "duration_ms": 0,
+      "mode": "reused",
+      "saved_ms": 23197,
+      "reason": "review-receipt-match"
+    },
+    {
+      "gate": "tsc --noEmit",
+      "status": "pass",
+      "duration_ms": 4300,
+      "mode": "executed",
+      "saved_ms": 0,
+      "reason": "ineligible"
+    },
+    {
+      "gate": "shellcheck (changed)",
+      "status": "pass",
+      "duration_ms": 296,
+      "mode": "executed",
+      "saved_ms": 0,
+      "reason": "no-receipt"
+    },
+    {
+      "gate": "first-use smoke",
+      "status": "pass",
+      "duration_ms": 2876,
+      "mode": "executed",
+      "saved_ms": 0,
+      "reason": "not-reused"
+    }
+  ]
+}
