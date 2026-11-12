@@ -6,6 +6,7 @@
  */
 
 import { startSessionServer } from './server.js';
+import { liveAiFromEnvironment } from './live-ai.js';
 
 const port = Number(process.env.PORT ?? 8787);
 const host = process.env.HOST ?? '127.0.0.1';
@@ -14,6 +15,7 @@ const started = await startSessionServer({
   port,
   host,
   staticRoot: process.env.STATIC_ROOT ?? 'dist/web',
+  liveAi: liveAiFromEnvironment(),
 });
 
 console.log(`listening on ${started.url}`);

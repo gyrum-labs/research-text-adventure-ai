@@ -167,9 +167,9 @@ describe('the real-model demo', () => {
 
   it('refuses oversized prompts and stops before another call at the token ceiling', async () => {
     const remote = vi.fn(async () => Response.json({ choices: [{ message: { content: 'COMMAND: take keycard' } }],
-      usage: { prompt_tokens: 150, completion_tokens: 50 } }));
+      usage: { prompt_tokens: 5900, completion_tokens: 100 } }));
     modelFetch(remote);
-    for (const options of [{ maxPromptBytes: 1 }, { budgets: { maxTotalTokens: 200, providerRetryDelayMs: 0 } }]) {
+    for (const options of [{ maxPromptBytes: 1 }, { budgets: { maxTotalTokens: 6000, providerRetryDelayMs: 0 } }]) {
       const before = remote.mock.calls.length;
       const started = await startSessionServer({ liveAi: demo(options).liveAi });
       try {
@@ -186,6 +186,9 @@ describe('the real-model demo', () => {
     try {
       expect((await open(started.url, 'llm', { origin: 'https://unrelated.example' })).status).toBe(403);
       const { id } = await (await open(started.url)).json();
+      expect((await fetch(`${started.url}/api/runs/${id}/stream`, {
+        headers: { 'sec-fetch-site': 'cross-site' },
+      })).status).toBe(403);
       const result = await records(started.url, id);
       expect(result.find(record => record['type'] === 'run_ended')?.['data']?.['outcome']).toBe('provider_error');
       expect(JSON.stringify(result)).not.toContain(secret);

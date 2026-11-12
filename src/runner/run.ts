@@ -23,6 +23,9 @@ import type { Transcript } from './transcript.js';
 
 export const DEFAULT_MAX_TURNS = 30;
 
+/** A policy can refuse an unaffordable request before contacting a provider. */
+export class RunBudgetExceeded extends Error {}
+
 /**
  * The budgets.
  *
@@ -69,6 +72,8 @@ export const DEFAULT_BUDGETS: RunBudgets = {
 };
 
 export interface RunOptions {
+  /** Stop the policy and its provider request without applying a late answer. */
+  signal?: AbortSignal;
   adventure: Adventure;
   policy: AgentPolicy;
   /** Shorthand for `budgets.maxTurns`, kept for the older call sites. */
@@ -144,7 +149,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
   /** Wait longer after each consecutive provider failure. */
   const backoff = async (failures: number): Promise<void> => {
     const delay = budgets.providerRetryDelayMs * 2 ** Math.max(0, failures - 1);
-    if (delay > 0) await sleep(delay);
+    if (delay > 0) await sleepOrAbort(delay, sleep, options.signal);
   };
 
   let state: GameState = structuredClone(adventure.initial);
@@ -202,21 +207,29 @@ export async function run(options: RunOptions): Promise<RunResult> {
     };
   };
 
-  for (let turn = 0; turn < budgets.maxTurns && state.status === 'running'; turn += 1) {
-    if (clock() - startedAt >= budgets.maxWallClockMs) {
+  const interrupted = (turn: number): RunResult | undefined => {
+    if (clock() - startedAt >= budgets.maxWallClockMs ||
+        (options.signal?.aborted && options.signal.reason instanceof Error && options.signal.reason.name === 'TimeoutError')) {
       return finish(
         'budget_exhausted',
         `The run used all of its ${budgets.maxWallClockMs}ms of wall-clock time.`,
         turn,
       );
     }
+    if (options.signal?.aborted) return finish('provider_stopped', 'The run was stopped.', turn);
+    return undefined;
+  };
+
+  for (let turn = 0; turn < budgets.maxTurns && state.status === 'running'; turn += 1) {
+    const stopped = interrupted(turn);
+    if (stopped !== undefined) return stopped;
 
     const before = metricsOf(policy);
     if (before !== undefined) {
       tokensUsed = before.tokensUsed;
       inputTokens = before.inputTokens;
       outputTokens = before.outputTokens;
-      if (tokensUsed > budgets.maxTotalTokens) {
+      if (tokensUsed >= budgets.maxTotalTokens) {
         return finish(
           'budget_exhausted',
           `The run used ${tokensUsed} tokens, over its ceiling of ${budgets.maxTotalTokens}.`,
@@ -236,6 +249,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
 
     let stopReason: string | undefined;
     const context: PolicyContext = {
+      signal: options.signal,
       history,
       observation,
       state,
@@ -256,6 +270,9 @@ export async function run(options: RunOptions): Promise<RunResult> {
     try {
       raw = await policy.next(context);
     } catch (error) {
+      const stopped = interrupted(turn);
+      if (stopped !== undefined) return stopped;
+      if (error instanceof RunBudgetExceeded) return finish('budget_exhausted', error.message, turn);
       // A policy that throws is a provider failure, not a crash. It is
       // counted, retried, and the run stops cleanly when the budget is spent.
       transientErrors += 1;
@@ -284,6 +301,8 @@ export async function run(options: RunOptions): Promise<RunResult> {
     if (after !== undefined && after.lastResponse.length > 0) {
       options.transcript?.write({ type: 'response', turn, text: after.lastResponse });
     }
+    const interruptedAfterReply = interrupted(turn);
+    if (interruptedAfterReply !== undefined) return interruptedAfterReply;
 
     if (raw === null) {
       const lastTurn = after?.lastTurn ?? 'stopped';
@@ -292,6 +311,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
         // The model answered but held no command. Ask it again rather than
         // ending the run: the turn is spent, but the mission is not.
         messages = ['Your last answer held no command. Reply with one line: COMMAND: <command>.'];
+        options.onMessage?.(messages[0]!);
         options.transcript?.write({ type: 'unparsable_response', turn });
         continue;
       }
@@ -303,6 +323,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
         }
         await backoff(transientErrors);
         messages = ['The provider could not be reached. Trying again.'];
+        options.onMessage?.(messages[0]!);
         continue;
       }
 
@@ -390,4 +411,13 @@ export async function run(options: RunOptions): Promise<RunResult> {
     return finish('failure', 'A fatal action ended the run.', state.turn);
   }
   return finish('budget_exhausted', `The agent used all ${budgets.maxTurns} turns.`, state.turn);
+}
+
+async function sleepOrAbort(milliseconds: number, sleep: (ms: number) => Promise<void>, signal?: AbortSignal): Promise<void> {
+  if (signal === undefined) return sleep(milliseconds);
+  if (signal.aborted) return;
+  let wake!: () => void;
+  const aborted = new Promise<void>(resolve => { wake = resolve; signal.addEventListener('abort', wake, { once: true }); });
+  try { await Promise.race([sleep(milliseconds), aborted]); }
+  finally { signal.removeEventListener('abort', wake); }
 }

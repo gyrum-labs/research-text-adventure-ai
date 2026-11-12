@@ -18,6 +18,8 @@ export interface ChatMessage {
 }
 
 export interface LlmRequest {
+  /** Cancel a local in-flight model request. */
+  signal?: AbortSignal;
   system: string;
   messages: ChatMessage[];
   maxOutputTokens?: number;
@@ -137,6 +139,7 @@ export class AnthropicProvider implements LlmProvider {
     let response: Response;
     try {
       response = await fetch(`${this.baseUrl}/v1/messages`, {
+        signal: req.signal,
         method: 'POST',
         headers: {
           'content-type': 'application/json',
@@ -213,6 +216,7 @@ export class OpenAiProvider implements LlmProvider {
     let response: Response;
     try {
       response = await fetch(`${this.baseUrl}/chat/completions`, {
+        signal: req.signal,
         method: 'POST',
         headers: {
           'content-type': 'application/json',
@@ -282,6 +286,7 @@ export class OllamaProvider implements LlmProvider {
     let response: Response;
     try {
       response = await fetch(`${this.baseUrl}/api/chat`, {
+        signal: req.signal,
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(body),

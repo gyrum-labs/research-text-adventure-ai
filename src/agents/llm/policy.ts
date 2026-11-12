@@ -81,6 +81,7 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
     this.promptHash = bundle.systemHash;
 
     const response = await this.provider.complete({
+      signal: context.signal,
       system: bundle.system,
       messages: bundle.messages,
       ...(this.maxOutputTokens === undefined ? {} : { maxOutputTokens: this.maxOutputTokens }),

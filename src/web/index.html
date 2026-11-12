@@ -49,7 +49,7 @@
       box-sizing: border-box;
       height: calc(100vh - 5rem);
     }
-    #watch { grid-template-rows: auto minmax(0, 1fr) auto auto; }
+    #watch { grid-template-rows: auto minmax(0, 1fr) auto auto auto; }
     .demo-note { color: #8ea2b8; font-size: 0.85rem; }
     .status { overflow-wrap: anywhere; }
     .output {
@@ -105,14 +105,16 @@
         <label>Policy <select class="watch-policy">
           <option value="scripted">Scripted reference run</option>
           <option value="random">Random agent</option>
+          <option value="llm" disabled>AI agent (unavailable)</option>
         </select></label>
         <button class="watch-start" type="button">Start demo</button>
         <button class="watch-stop" type="button" disabled>Stop watching</button>
-        <span class="demo-note">Local demo · no model calls</span>
+        <span class="demo-note watch-note">Local demo · no model calls. AI is unavailable on this server.</span>
       </div>
       <pre class="output watch-output" aria-live="polite"></pre>
       <pre class="log watch-log" aria-label="Agent event log"></pre>
       <div class="status watch-status" role="status">Ready to start.</div>
+      <div class="status watch-usage" aria-label="Model usage"></div>
     </section>
   </main>
   <script src="./index.js"></script>
