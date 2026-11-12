@@ -16,6 +16,7 @@ import { runExp03 } from './exp-03.js';
 import { runExp04 } from './exp-04.js';
 import { runExp05 } from './exp-05.js';
 import { runExp06 } from './exp-06.js';
+import { runComparison, renderComparison, providersFor } from './exp-08.js';
 import { readFileSync } from 'node:fs';
 import type { MatrixConfig } from '../runner/matrix.js';
 import { createProvider, type ProviderName } from './provider.js';
@@ -132,6 +133,35 @@ program
       case '06':
         console.log(await runExp06());
         break;
+      case '08': {
+        const path = String(options['matrix'] ?? 'configs/matrix.live-questjs.json');
+        const config = JSON.parse(readFileSync(path, 'utf8')) as {
+          models: Array<{
+            id: string;
+            provider: string;
+            model: string;
+            baseUrl?: string;
+            apiKeyEnv?: string;
+          }>;
+          conditions?: string[];
+          seeds?: number;
+          maxTurns?: number;
+        };
+        const cells = await runComparison({
+          models: providersFor(config.models),
+          conditions: config.conditions,
+          seeds: config.seeds,
+          maxTurns: config.maxTurns,
+          root: 'runs/exp-08',
+        });
+        console.log('Experiment 08: the engine comparison.');
+        console.log('');
+        console.log(renderComparison(cells));
+        const solved = cells.filter((cell) => cell.outcome === 'success').length;
+        console.log('');
+        console.log(`solved ${solved} of ${cells.length} runs on the QuestKit engine`);
+        break;
+      }
       case '05': {
         const path = String(options['matrix'] ?? 'configs/matrix.default.json');
         const config = JSON.parse(readFileSync(path, 'utf8')) as MatrixConfig;

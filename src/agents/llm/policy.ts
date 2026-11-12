@@ -35,6 +35,14 @@ export interface LlmPolicyOptions {
   renderer?: ObservationRenderer;
   temperature?: number;
   maxOutputTokens?: number;
+  /**
+   * How a candidate command is judged before it is sent to the world.
+   *
+   * The default asks our own parser. A world that parses for itself, such as
+   * the QuestKit port, passes its own check instead, and the world's refusal
+   * is recorded as the parse error it is.
+   */
+  parseCheck?: (candidate: string) => boolean;
 }
 
 export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
@@ -47,6 +55,7 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
   private readonly renderer: ObservationRenderer;
   private readonly temperature: number | undefined;
   private readonly maxOutputTokens: number | undefined;
+  private readonly parseCheck: ((candidate: string) => boolean) | undefined;
 
   /** The commands this policy has issued, in order. */
   private readonly commands: string[] = [];
@@ -69,6 +78,7 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
     this.renderer = options.renderer ?? 'text';
     this.temperature = options.temperature;
     this.maxOutputTokens = options.maxOutputTokens;
+    this.parseCheck = options.parseCheck;
     this.id = `llm:${options.provider.id}/${options.provider.model}`;
   }
 
@@ -155,6 +165,7 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
    * stray line of prose is never mistaken for a command.
    */
   private canParse(candidate: string, context: PolicyContext): boolean {
+    if (this.parseCheck !== undefined) return this.parseCheck(candidate);
     return parseCommand(this.adventure, context.state, candidate).ok;
   }
 }
