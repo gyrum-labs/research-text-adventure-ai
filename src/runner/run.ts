@@ -13,12 +13,11 @@
 
 import type { Adventure, Event, GameState, Observation, RunOutcome } from '../kernel/types.js';
 import { buildObservation, messagesFromEvents } from '../kernel/observation.js';
-import { hashInitial, hashNext } from '../kernel/hash.js';
+import { canonicalJson, hashInitial, hashNext } from '../kernel/hash.js';
 import { parseCommand } from '../kernel/parser.js';
 import { reduce } from '../kernel/reduce.js';
 import { metricsOf, type AgentPolicy, type PolicyContext } from '../agents/policy.js';
 import { legalCommands } from '../agents/legal-actions.js';
-import { stateKey } from './oracle.js';
 import type { Transcript } from './transcript.js';
 
 export const DEFAULT_MAX_TURNS = 30;
@@ -124,8 +123,9 @@ export interface RunResult {
  *
  * It is the situation, not the hash chain: the chain is path dependent, so
  * the same room reached by two different routes has two different hashes. The
- * hint count is part of the key, because spending a hint is progress even
- * though the room did not change.
+ * Every gameplay field counts, including object string state and hints.
+ * The turn counter alone never means progress. The search oracle's smaller
+ * key omits examination state and cannot detect progress faithfully here.
  *
  * Only consecutive repeats count. An agent that is stuck in one place is in a
  * loop; an agent that wanders between two places is making a mess, and the
@@ -133,7 +133,7 @@ export interface RunResult {
  * a three-room adventure out of reach of its own turn budget.
  */
 function situationKey(state: GameState): string {
-  return `${stateKey(state)}|h${state.hintsLeft}`;
+  return canonicalJson({ ...state, turn: 0 });
 }
 
 export async function run(options: RunOptions): Promise<RunResult> {

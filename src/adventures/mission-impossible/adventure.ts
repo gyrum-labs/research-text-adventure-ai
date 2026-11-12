@@ -41,7 +41,7 @@ function objectState(at: string | null, flags: Record<string, boolean> = {}): Ga
 export const adventure: Adventure = {
   id: 'mission-impossible',
   title: 'Operation Nightingale',
-  version: '1.0.0',
+  version: '1.0.1',
 
   brief:
     'Mission brief. A booby-trapped case is locked in the server vault. Two objectives: ' +
@@ -273,7 +273,7 @@ export const adventure: Adventure = {
       requires: [{ op: 'arg_in_room', arg: 'target' }],
       effects: [{ op: 'set_arg_state', arg: 'target', key: 'examined', value: 'true' }],
       text: {
-        success: 'You take a good look at the {target}.',
+        success: 'You take a good look at the {target}.\n{target.description}',
         failure: 'You take a good look at the {target}.',
       },
     },

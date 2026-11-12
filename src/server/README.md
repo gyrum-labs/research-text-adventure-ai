@@ -55,7 +55,8 @@ AI_DEMO_MODEL=deepseek/deepseek-chat npm run serve
 
 Choose **AI agent** in Policy, then **Start AI run**. Loading the page, checking health,
 and running free demos never call the model. Credentials stay on the server. The model
-receives the public observation, rules and history through the existing LLM policy.
+receives the public observation as JSON, rules and history through the existing LLM policy.
+This retains public object descriptions and readability flags; unread detail stays hidden.
 
 Each AI run allows at most 20 turns, 20,000 total tokens, 300 output tokens per request,
 16,000 prompt bytes and 120 seconds. Only one AI run can be active. Before each request,

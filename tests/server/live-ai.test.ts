@@ -55,7 +55,7 @@ describe('the real-model demo', () => {
 
   it('starts inference only when watched and records a replayable model run', async () => {
     const f = demo();
-    const requests: { max_tokens: number }[] = [];
+    const requests: { max_tokens: number; messages: { content: string }[] }[] = [];
     modelFetch(async init => {
       requests.push(JSON.parse(String(init.body)));
       expect(new Headers(init.headers).get('authorization')).toBe(`Bearer ${secret}`);
@@ -74,6 +74,10 @@ describe('the real-model demo', () => {
       const stream = await records(started.url, id);
       expect(requests).toHaveLength(GOLD_PATH.length);
       expect(requests.every(request => request['max_tokens'] <= 300)).toBe(true);
+      // regression: warp#22688 — prose dropped public descriptions and readable flags.
+      const firstContext = requests[0]!.messages.map(message => message.content).join('\n');
+      expect(firstContext).toContain(adventure.objects['bulletin']!.description);
+      expect(firstContext).toContain('"readable": true');
       expect(JSON.stringify(requests[0])).not.toContain('4821');
       expect(JSON.stringify(requests[0])).not.toContain('cut yellow wire');
       expect(stream.find(record => record['type'] === 'run_started')?.['data']?.['provider']).toBe('OpenRouter');

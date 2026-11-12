@@ -169,17 +169,19 @@ function makeContext(
  *
  * An argument that resolved to an object is shown by its name, so the player
  * reads "You pocket the key" rather than "You pocket the key_id". A
- * text argument is shown as it was typed.
+ * text argument is shown as it was typed. `{arg.description}` exposes only
+ * an object's public description; private detail fields are not supported.
  */
 export function interpolate(
   template: string,
   adventure: Adventure,
   args: Record<string, string>,
 ): string {
-  return template.replace(/\{(\w+)\}/g, (match, name: string) => {
+  return template.replace(/\{(\w+)(\.description)?\}/g, (match, name: string, description: string | undefined) => {
     const value = args[name];
     if (value === undefined) return match;
     const object = adventure.objects[value];
+    if (description !== undefined) return object?.description ?? match;
     if (object !== undefined) return object.name;
     const room = adventure.rooms[value];
     if (room !== undefined) return room.name;

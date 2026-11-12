@@ -151,6 +151,11 @@ for configuration, request limits and replay. The key stays on the server.
 
 ## Common workflows
 
+Use `examine <object>` to see an accessible object's public description. Use `read`
+for written details; examining a manual does not reveal its unread contents. First-time
+inspections count as progress. Repeating actions without changing gameplay state can
+still stop an agent run as a loop; advancing the turn counter alone does not count.
+
 | Flow | Command | What you get |
 |---|---|---|
 | Play the adventure | `npm run play` | The game at the terminal |
