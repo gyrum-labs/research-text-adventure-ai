@@ -39,13 +39,15 @@ before any key was available. Four models were reachable through two vendors: `c
 sweep is the same grid, four models across five conditions with ten seeds each: two hundred runs
 per sweep, four hundred live runs in all.
 
-A third sweep pointed the same grid at the organisation world. It produced **103 valid runs and
-zero solves**, and it stopped where the money did: both vendors' accounts ran out mid-sweep
-(OpenRouter answers `402 insufficient credits` for a full-sized request, Z.ai answers `429` with
-`Insufficient balance or no resource package`), and the 97 runs that ended in a provider payment
-failure were **deleted rather than counted**, because a run the model never played says nothing
-about the model. What the valid subset shows is reported under RQ5; what it cannot show is a
-complete organisation matrix, and that waits on credit, not on code.
+A third sweep pointed the same grid at the organisation world. The first attempt stopped where
+the money did: both vendors' accounts ran out mid-sweep (OpenRouter answers `402 insufficient
+credits` for a full-sized request, Z.ai answers `429` with `Insufficient balance or no resource
+package`), and the 97 runs that ended in a provider payment failure were **deleted rather than
+counted**, because a run the model never played says nothing about the model. Once OpenRouter
+was funded again the three OpenRouter-served models ran the grid to completion: **150 valid
+runs, zero solves, 150 of 150 transcripts replaying exactly.** Z.ai stayed dead, so glm 5.3's
+fifty valid runs from the first attempt survive only in that attempt's summary, preserved in
+the repository's history at the merge that carried Experiment 06.
 
 The two live sweeps differ in one number: which budget binds. The first holds the budgets the
 harness ships with. The second lets the turn budget bind instead of the token ceiling and the
@@ -234,8 +236,8 @@ project.
 
 ### The live sweep against the organisation world
 
-**On the 103 valid runs, no model solved the organisation's mission: 0/103, Wilson interval
-0 to 3.6%.**
+**On the 150 completed-grid runs, no model solved the organisation's mission: 0/150, Wilson
+interval 0 to 2.0%. Add glm 5.3's fifty runs from the first attempt and the evidence is 0/200.**
 
 The same turn-bound grid as the second sweep, `configs/matrix.live-org-turnbound.json`, was
 pointed at `hotfix-2-4-1` with `npm run exp:05 -- --matrix configs/matrix.live-org-turnbound.json
@@ -243,37 +245,37 @@ pointed at `hotfix-2-4-1` with `npm run exp:05 -- --matrix configs/matrix.live-o
 
 | Model | Cells | Median turns | What killed the runs |
 |---|---|---|---|
-| claude sonnet 4.5 | A, B, C, D (40 runs) | 20.5 to 30 | F7 budget exhaustion and F3 planning, spread evenly |
-| glm 5.3 | A, B, C, D, E (50 runs) | 10 to 25 | A: ten hallucinations; C: ten planning loops |
-| gpt-4.1-mini | A (10), B (3/10) | 21.5 to 23 | almost entirely hallucination (F2) |
+| claude sonnet 4.5 | A to E (50 runs) | 18 to 29 | hallucination first, then planning and budget |
+| gpt-4.1-mini | A to E (50 runs) | 23 to 27 | hallucination dominates in every cell |
+| glm 4.5 air | A to E (50 runs) | 26 to 29 | hallucination and budget exhaustion |
 
-Three observations that survive the small sample:
+And glm 5.3's fifty runs from the first attempt, preserved in that summary: it spends its turns
+at gold-path speed and loses them to hallucinated objects, ten of ten in its prose cell.
 
-- **glm 5.3 takes the gold path's ten turns and loses anyway.** Its median is exactly the gold
-  path length in three of five cells: it acts at the right speed for a world it has not
-  understood, and in condition A every one of its ten runs referenced objects that were not in
-  the room. The mission-impossible matrix scored this model 40% in its best cell; the same model
-  on the same harness scores 0% here. The world got harder faster than the model got weaker.
-- **The failure mix moved with the world, not the taxonomy.** Mission-impossible's turn-bound
-  failures leaned on hallucination (F2 80); here planning (F3 40) and budget exhaustion (F7 26)
-  dominate, which is what a ten-command dependency chain with two credentials and a numeric code
-  should produce. The nine categories absorbed both worlds without a new rule.
-- **The control condition is not the problem.** Condition D, the no-history control, scores 0%
-  on both models that have the cell, exactly as the memorylessness argument predicts; but so do
-  the full-history conditions, so on this world the 0% floor is the whole story so far and the
-  condition contrast has nothing to sit above it with.
+Three observations the completed grid makes solid:
 
-**Why the matrix is incomplete, and what that costs.** The sweep is 103 valid runs of a planned
-200. The other 97 ended when the providers did: OpenRouter rejected full-sized requests with
-`402 Insufficient credits` (a 20-token probe still passed, which is why the account looked alive
-until a real turn was asked for), and both stored Z.ai keys answered `429` code `1113`,
-`Insufficient balance or no resource package`. Those 97 transcripts were deleted, not counted,
-and the committed summary marks their cells `incomplete` rather than averaging over them; the
-`--summarise-only` mode added to Experiment 05 regenerates that summary from disk without
-spending anything. The incomplete cells are frontier E and mid B through E, and all of
-glm 4.5 air, whose re-route through OpenRouter never ran. The sweep resumes where it stopped
-once the accounts have credit, and the honest reading of the present data is the interval, not
-the point: 0 of 103, which bounds the pooled rate below 3.6%.
+- **On this world, the agents lose to furniture that is not there.** 88 of the 150 failures are
+  F2, the category for referencing objects that are not in the room: 59%, against 33 planning,
+  23 budget exhaustions, and 9 spread over ordering and looping. The models act for rooms they
+  imagine rather than the one they were shown.
+- **H4 flipped, and the flip is a finding about the world.** On mission-impossible the
+  reasoning failures outnumbered the output failures and H4 was supported; here the verdict
+  falsifies, because the output-shaped category dominates. The taxonomy absorbed both worlds
+  with no new rule, and the histogram is where the difference between the worlds lives.
+- **The models grind longer and still lose.** The completed cells' medians sit between 18 and
+  29 turns on a ten-command mission, against the first attempt's cells where some models gave
+  up in two. A funded grid bought longer attempts, and longer attempts did not buy a solve: the
+  bottleneck is knowing which objects exist, and more turns of imagining cannot fix that.
+
+**What the completion cost, and what it could not buy.** After the first attempt's 97
+payment-failed runs were deleted, the accounts were funded and the three OpenRouter models ran
+every one of their cells: 150 runs, complete, each replaying exactly. Z.ai never came back, so
+glm 5.3 could not be re-run; its fifty valid runs from the first attempt have no transcripts on
+disk, and the committed summary marks that model's cells `incomplete` rather than averaging
+over them. Those numbers are quoted above, and the attempt's own summary is preserved in the
+repository's history at the merge that carried Experiment 06, so the claim rests on a committed
+artefact either way. The honest reading is unchanged by the completion: 0 of 150 fresh runs
+bounds the pooled rate below 2.0%, and 0 of 200 across both attempts.
 
 ## Threats to validity
 
@@ -294,11 +296,12 @@ the point: 0 of 103, which bounds the pooled rate below 3.6%.
   hallucinates, misreads and loops, and the weights between the nine categories would change.
 - **One adventure, then two.** Two worlds is enough to show the vocabulary transfers and not
   enough to say it transfers in general.
-- **The organisation matrix is half-funded.** Its live sweep is 103 valid runs of a planned 200,
-  and the missing cells are missing because the providers ran out of credit, not because the
-  models refused to play. The runs the provider never served were deleted rather than counted,
-  so the histogram and the intervals describe agent behaviour only. With 0 solves on 103 runs,
-  the pooled rate is bounded below 3.6% and nothing finer than that is claimable.
+- **The organisation matrix needed two attempts.** The first was cut short by provider credit,
+  and its payment-failed runs were deleted rather than counted; the second completed every
+  OpenRouter cell after funding. glm 5.3's fifty valid runs from the first attempt have no
+  transcripts on disk, so the committed summary marks that model incomplete and its numbers are
+  quoted from the preserved first-attempt summary instead. With 0 solves on 150 completed-grid
+  runs, the pooled rate is bounded below 2.0% and nothing finer than that is claimable.
 - **The sample is small.** Ten seeds per cell, with Wilson intervals, and no claim of
   significance below that.
 - **The engine is deterministic; the agent is not.** Every transcript replays exactly, and no
@@ -325,9 +328,9 @@ memoryless, so the context strategy is the only place a discovered fact can surv
 
 **What it does not tell you.** Nothing here says an LLM can run an organisation. It says the
 harness can hold an organisation still enough to be measured, and it says where the agent
-fails. The live matrix ran the first world twice; against the organisation world it has 103
-valid live runs, none of them a solve, and the rest of that grid waits on provider credit
-rather than on anything the code can fix.
+fails. The live matrix ran the first world twice; against the organisation world it has 150
+valid live runs on the completed grid, none of them a solve, and glm 5.3's fifty runs from the
+first attempt agree from the preserved summary.
 
 > **Key takeaways**
 >
@@ -342,9 +345,11 @@ rather than on anything the code can fix.
 >   rate by 35 percentage points. The JSON observation is read better and costs more.
 > - The vocabulary transfers. A second world was written with no change to the kernel, and the
 >   only thing it cost was one rule about argument shapes that a single world never reveals.
-> - The organisation world is where the live agents stop: 0 solves on the 103 valid runs, every
->   model, every condition, with glm 5.3 burning its ten turns at gold-path speed on objects
->   that were not in the room. The grid is half-run and resumes when the providers are funded.
+> - The organisation world is where the live agents stop: 0 solves on 150 completed-grid runs
+>   and 0 on glm 5.3's fifty from the first attempt. The failure is hallucination, not
+>   hesitancy: 88 of 150 runs acted on objects that were not in the room, and longer budgets
+>   bought longer defeats. The taxonomy needed no new category to say so, and H4 flipped in
+>   the saying.
 
 ## Reproducing this
 

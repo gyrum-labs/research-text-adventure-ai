@@ -81,8 +81,10 @@ hotfix-2-4-1         success     10      0/20 solved
 - [x] Its gold path wins; BFS confirms it is shortest; the random policy fails
 - [x] The same agent harness runs it with no code change
 - [x] `RESULTS.md` compares the two worlds: success rate, failure histogram, cost
-- [x] The live turn-bound grid ran against this world: 103 valid runs, 0 solves, the unfunded
-      cells marked `incomplete` and the payment-failed runs deleted rather than counted
+- [x] The live turn-bound grid ran against this world to completion after a funding gap: 150
+      valid runs on the OpenRouter cells, 0 solves, the payment-failed first-attempt runs
+      deleted rather than counted, and glm 5.3's fifty first-attempt runs quoted from their
+      preserved summary
 - [x] A one-page "what this means for running an organisation" section is written
 
 ## What we found
@@ -122,18 +124,18 @@ what it wants, and a random agent mostly fails by never finding the runbook at a
 ### The live models played it too, and none of them won
 
 The matrix's turn-bound grid was pointed at this world
-(`configs/matrix.live-org-turnbound.json`). Of the planned 200 runs, **103 are valid and none is
-a solve: 0/103, Wilson interval 0 to 3.6%**. glm 5.3 spends its turns at gold-path speed, ten,
-and loses them to hallucinated objects; claude sonnet 4.5 and gpt-4.1-mini grind into budget
-exhaustion and planning loops. The failure mix moved from the game's hallucination-heavy
-histogram to planning (`F3` 40) and budget exhaustion (`F7` 26), inside the same nine
-categories.
+(`configs/matrix.live-org-turnbound.json`). The planned 200 runs needed two attempts: the first
+was cut short by provider credit, its 97 payment-failed runs were deleted rather than counted,
+and the second completed every OpenRouter cell. On the completed grid, **150 valid runs and
+none is a solve: 0/150, Wilson interval 0 to 2.0%**, with 88 of the 150 failures being
+hallucination, the category for acting on objects that are not in the room. glm 5.3's fifty
+valid runs from the first attempt, preserved in that attempt's summary, agree: 0 solves, its
+turns spent at gold-path speed on rooms it imagined.
 
-The other 97 runs never reached a model: both vendors' accounts ran out of credit mid-sweep,
-and those transcripts were deleted rather than counted. A run the provider was paid for and did
-not serve is a fact about the account, not about the agent. The committed summary marks the
-unplayed cells `incomplete`, and `--summarise-only` regenerates it from disk without spending
-anything. The sweep resumes where it stopped once the accounts are funded.
+The one part of the grid with no transcript on disk is glm 5.3's, because Z.ai stayed
+unfunded; the committed summary marks its cells `incomplete` rather than averaging over them,
+and the first attempt's own summary lives in the repository's history at the merge that
+carried Experiment 06.
 
 ## The honest reading
 
