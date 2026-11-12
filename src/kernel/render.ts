@@ -55,7 +55,7 @@ export function renderObservation(observation: Observation): string {
   lines.push(observation.room.description);
 
   if (observation.visible.length > 0) {
-    lines.push(`You can see: ${observation.visible.map((object) => object.name).join(', ')}.`);
+    lines.push(`You can see: ${observation.visible.map(objectLabel).join(', ')}.`);
   }
   lines.push(renderExits(observation));
   lines.push(
@@ -79,6 +79,14 @@ function renderExits(observation: Observation): string {
   return `Exits: ${parts.join(', ')}.`;
 }
 
+function objectLabel(object: Observation['visible'][number]): string {
+  const labels: string[] = [];
+  if (object.container !== undefined) labels.push(object.container.open ? 'open' : object.container.locked ? 'locked' : 'closed');
+  if (object.readable === true) labels.push('readable');
+  if (object.takeable === true) labels.push('takeable');
+  return `${object.name}${labels.length === 0 ? '' : ` (${labels.join(', ')})`}`;
+}
+
 /**
  * The machine rendering.
  *
@@ -100,6 +108,8 @@ export function renderObservationJson(observation: Observation): string {
         name: object.name,
         description: object.description,
         ...(object.readable === true ? { readable: true } : {}),
+        ...(object.takeable === undefined ? {} : { takeable: object.takeable }),
+        ...(object.container === undefined ? {} : { container: object.container }),
       })),
       inventory: observation.inventory.map((object) => ({
         id: object.id,

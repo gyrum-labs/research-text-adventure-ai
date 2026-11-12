@@ -41,7 +41,7 @@ function objectState(at: string | null, flags: Record<string, boolean> = {}): Ga
 export const adventure: Adventure = {
   id: 'mission-impossible',
   title: 'Operation Nightingale',
-  version: '1.0.1',
+  version: '1.0.3',
 
   brief:
     'Mission brief. A booby-trapped case is locked in the server vault. Two objectives: ' +
@@ -248,7 +248,7 @@ export const adventure: Adventure = {
       args: [],
       requires: [],
       effects: [],
-      text: { success: 'These are the commands you know.', failure: 'These are the commands you know.' },
+      text: { success: 'Commands:\n{commands}', failure: 'Commands:\n{commands}' },
     },
     {
       verb: 'wait',
@@ -353,6 +353,8 @@ export const adventure: Adventure = {
       ],
       requires: [
         { op: 'arg_in_room', arg: 'target' },
+        { op: 'arg_equals', arg: 'target', value: 'vault_door' },
+        { op: 'arg_flag', arg: 'target', key: 'unlocked', value: false },
         { op: 'arg_equals', arg: 'with', value: 'keycard' },
         { op: 'carrying', object: 'keycard' },
       ],
@@ -371,6 +373,8 @@ export const adventure: Adventure = {
       ],
       requires: [
         { op: 'arg_in_room', arg: 'target' },
+        { op: 'arg_equals', arg: 'target', value: 'safe' },
+        { op: 'arg_flag', arg: 'target', key: 'locked', value: true },
         { op: 'arg_equals', arg: 'with', value: '4821' },
       ],
       effects: [
@@ -422,7 +426,7 @@ export const adventure: Adventure = {
       text: {
         success:
           'The red wire parts with a snap. The display flashes once. Then the vault is gone.',
-        failure: 'The wiring is a tangle of identical cables.',
+        failure: 'The wiring is a tangle of identical cables. You cannot tell which is safe without the defusal manual.',
       },
     },
     {
@@ -443,7 +447,7 @@ export const adventure: Adventure = {
       text: {
         success:
           'The blue wire parts with a snap. The display flashes once. Then the vault is gone.',
-        failure: 'The wiring is a tangle of identical cables.',
+        failure: 'The wiring is a tangle of identical cables. You cannot tell which is safe without the defusal manual.',
       },
     },
     {

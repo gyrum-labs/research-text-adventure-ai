@@ -55,6 +55,11 @@ export function buildObservation(
       name: object.name,
       description: object.description,
       ...(object.readable === true ? { readable: true } : {}),
+      takeable: state.objects[object.id]?.flags['takeable'] ?? object.takeable ?? false,
+      ...(object.container === undefined ? {} : { container: {
+        open: !(state.objects[object.id]?.flags['closed'] ?? object.container.closed),
+        locked: state.objects[object.id]?.flags['locked'] ?? false,
+      } }),
     }));
 
   const inventory = state.inventory
