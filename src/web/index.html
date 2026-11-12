@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Operation Nightingale</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 15px;
+    }
+    body {
+      margin: 0;
+      background: #101418;
+      color: #d7dee6;
+      min-height: 100vh;
+    }
+    .shell {
+      width: min(72rem, 100vw);
+      margin: 0 auto;
+    }
+    .toolbar, .watch-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem;
+    }
+    .watch-controls { padding: 0; }
+    button, select {
+      font: inherit;
+      color: inherit;
+      background: #1b222b;
+      border: 1px solid #4d5f70;
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+    }
+    button { cursor: pointer; }
+    button[aria-pressed="true"] { background: #334657; }
+    button:disabled, select:disabled { opacity: 0.5; cursor: default; }
+    button:focus-visible, select:focus-visible { outline: 2px solid #8ea2b8; }
+    [hidden] { display: none !important; }
+    #terminal, #watch {
+      display: grid;
+      grid-template-rows: 1fr auto auto auto;
+      gap: 0.5rem;
+      padding: 1rem;
+      box-sizing: border-box;
+      height: calc(100vh - 5rem);
+    }
+    #watch { grid-template-rows: auto minmax(0, 1fr) auto auto; }
+    .demo-note { color: #8ea2b8; font-size: 0.85rem; }
+    .status { overflow-wrap: anywhere; }
+    .output {
+      margin: 0;
+      white-space: pre-wrap;
+      overflow-y: auto;
+      background: #171d24;
+      border: 1px solid #2a333d;
+      padding: 1rem;
+      border-radius: 6px;
+    }
+    .log {
+      margin: 0;
+      white-space: pre-wrap;
+      overflow-y: auto;
+      max-height: 8rem;
+      color: #7f8fa0;
+      background: #131920;
+      border: 1px solid #232c35;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+    .command {
+      font: inherit;
+      color: inherit;
+      background: #1b222b;
+      border: 1px solid #2f3a46;
+      border-radius: 6px;
+      padding: 0.6rem 1rem;
+      outline: none;
+    }
+    .command:focus {
+      border-color: #4d5f70;
+    }
+    .status {
+      color: #8ea2b8;
+      font-size: 0.85rem;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <nav class="toolbar" aria-label="Interface">
+      <button id="play-mode" type="button" aria-pressed="true">Play</button>
+      <button id="watch-mode" type="button" aria-pressed="false">Watch an agent</button>
+      <span class="demo-note">Agent watching needs the optional demo server.</span>
+    </nav>
+    <section id="terminal" aria-label="Play the adventure"></section>
+    <section id="watch" aria-label="Watch an agent" hidden>
+      <div class="watch-controls">
+        <label>Policy <select class="watch-policy">
+          <option value="scripted">Scripted reference run</option>
+          <option value="random">Random agent</option>
+        </select></label>
+        <button class="watch-start" type="button">Start demo</button>
+        <button class="watch-stop" type="button" disabled>Stop watching</button>
+        <span class="demo-note">Local demo · no model calls</span>
+      </div>
+      <pre class="output watch-output" aria-live="polite"></pre>
+      <pre class="log watch-log" aria-label="Agent event log"></pre>
+      <div class="status watch-status" role="status">Ready to start.</div>
+    </section>
+  </main>
+  <script src="./index.js"></script>
+</body>
+</html>
