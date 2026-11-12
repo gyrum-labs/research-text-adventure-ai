@@ -759,6 +759,7 @@ version bumps. To refresh without a full setup run:
 | `gyrum-goal-drift-scan` | re-verify every DELIVERED canvas goal under the | — |
 | `gyrum-heal-checkout` | exposed on PATH as `gyrum-heal-checkout` and as the | — |
 | `gyrum-help` | quick cheatsheet for all devtools commands | — |
+| `gyrum-hetzner-firewall` | firewall ops via the pkg/outbound/hetzner adapter (warp#7172) | — |
 | `gyrum-image-gen` | Rate-limited Nano Banana (Gemini) image gen + Replicate SVG vectorisation | — |
 | `gyrum-implement` | AI-driven development with requirements gathering. | — |
 | `gyrum-infra` | infrastructure-domain CLI (warp#4047, ADR-189). Guideline: cli@v2. | — |
