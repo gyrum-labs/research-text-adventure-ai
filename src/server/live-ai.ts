@@ -126,14 +126,14 @@ export function createLiveAiDemo(options: LiveAiOptions): LiveAiDemo {
       const controller = new AbortController();
       const guarded = guardedProvider(configuration, controller.signal, { maxPromptBytes, budgets });
       const policy = new LlmPolicy({ adventure, provider: guarded.provider, strategy: 'structured',
-        renderer: 'text', thinking: false, temperature: 0, maxOutputTokens: budgets.maxOutputTokensPerTurn });
+        renderer: 'json', thinking: false, temperature: 0, maxOutputTokens: budgets.maxOutputTokensPerTurn });
       const transcript = new Transcript(join(options.transcriptRoot ?? 'runs/browser', `${runId}.jsonl`), {
         type: 'header', runId, adventure: adventure.id, adventureVersion: adventure.version,
         adventureHash: `sha256:${createHash('sha256').update(canonicalJson(adventure)).digest('hex')}`,
         policy: policy.id, provider: guarded.provider.id, model: configuration.model, seed,
         maxTurns: budgets.maxTurns, startedAt: new Date().toISOString(), engineVersion: '0.1.0',
       });
-      transcript.write({ type: 'demo_config', strategy: 'structured', thinking: false, budgets, maxPromptBytes });
+      transcript.write({ type: 'demo_config', strategy: 'structured', renderer: 'json', thinking: false, budgets, maxPromptBytes });
       const timer = setTimeout(() => controller.abort(new DOMException('AI run time limit.', 'TimeoutError')), budgets.maxWallClockMs);
       timer.unref();
       return { policy, budgets: { ...budgets }, signal: controller.signal, transcript,
