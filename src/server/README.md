@@ -7,13 +7,18 @@ Serve the browser bundle, hold human sessions, and stream bounded scripted or ra
 From the repository root:
 
 ```sh
+npm run build:web
 npm run serve
 ```
 
-Check `http://127.0.0.1:8787/api/health` for available worlds. Open a human session with `POST /api/session` and `{ "adventureId": "mission-impossible" }`, then send a command to its command route. For an agent demo, use `POST /api/runs` with `{ "adventureId": "mission-impossible", "policy": "scripted" }`, then read the returned run's stream route. The demo makes no model calls. Browser controls follow in the browser integration slice.
+Open `http://127.0.0.1:8787/`. Choose **Watch an agent**, select a policy, and select **Start demo**.
+The demo makes no model calls. A scripted reference run demonstrates the known solution;
+the random agent demonstrates the same runner without that script.
 
 For a different port, use `PORT=8788 npm run serve`. `HOST` defaults to `127.0.0.1` and
 `STATIC_ROOT` defaults to `dist/web`. Sessions and run records live in process memory.
+
+Command records carry `{ type: 'command', turn, raw }` before parsing and feedback, so invalid attempts remain visible. Only public actions are streamed.
 
 ## API
 
@@ -32,7 +37,8 @@ its default port is ephemeral, which keeps tests independent of existing servers
 | `POST /api/runs` | Open a demo with `{ adventureId, policy, seed }` |
 | `GET /api/runs/:id/stream` | Observations, messages, final outcome and end marker as SSE |
 
-Late subscribers receive recorded events before the live tail. Disconnecting a watcher leaves the bounded run
+The stream includes the final observation, so completed goals remain visible. Late subscribers
+receive recorded events before the live tail. Disconnecting a watcher leaves the bounded run
 running on the server. A missing world or session returns a JSON error; a world without a
 scripted path returns 422, so use its random policy or inject `scriptedPathFor` when creating the server.
 

@@ -77,6 +77,8 @@ export interface RunOptions {
   transcript?: Transcript | undefined;
   /** Called with every observation, for a live view. */
   onObservation?: (observation: Observation) => void;
+  /** Called with each public action before parsing, including invalid attempts. */
+  onCommand?: (command: { turn: number; raw: string }) => void;
   /** Called with the outcome of every action. */
   onMessage?: (message: string) => void;
   /** Injected so the wall-clock budget is testable without waiting for it. */
@@ -308,6 +310,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
     }
 
     commands.push(raw);
+    options.onCommand?.({ turn, raw });
     const parsed = parseCommand(adventure, state, raw);
     if (!parsed.ok) {
       parseErrors += 1;

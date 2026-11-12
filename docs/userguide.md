@@ -121,6 +121,27 @@ and compares the hash chain:
 npm run replay -- runs/<file>.jsonl
 ```
 
+## Play and watch in the browser
+
+Build the page and start the optional demo server:
+
+```sh
+npm run build:web
+npm run serve
+```
+
+Open `http://127.0.0.1:8787/`. **Play** starts the game in browser memory. Type commands,
+use the arrow keys for history, and type `reset` to start over. The status bar shows the
+turn, goals and state hash.
+
+Choose **Watch an agent**, select **Scripted reference run** or **Random agent**, then choose
+**Start demo**. Observations and action messages appear as the server streams them. The final
+status includes completed goals, outcome and hash. These demo policies make no model calls.
+
+**Stop watching** disconnects the view; the bounded run may finish on the server. Switching back
+to **Play** preserves your human game. If the server is unavailable, the page displays the error
+and enables retry. See [`src/web/README.md`](../src/web/README.md) for the HTTP session configuration.
+
 ## Common workflows
 
 | Flow | Command | What you get |
@@ -171,3 +192,5 @@ fell into; look for `F5` (exploration failure) or `F7` (budget exhaustion).
 
 **The docs viewer shows an old version of a document.**
 Readers cache the index at startup. Restart the reader after adding or removing documents.
+
+The watcher prints each selected action as `> command` before the game response. This includes invalid attempts. The scripted and random demos make no model calls.

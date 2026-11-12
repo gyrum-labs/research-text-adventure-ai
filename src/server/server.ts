@@ -16,6 +16,7 @@ import { createReadStream, existsSync, statSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { Adventure } from '../kernel/types.js';
+import { buildObservation } from '../kernel/observation.js';
 import { ADVENTURES } from '../adventures/index.js';
 import { GOLD_PATH } from '../adventures/mission-impossible/gold-path.js';
 import { InMemorySession } from '../session/in-memory.js';
@@ -206,7 +207,11 @@ async function driveRun(
       onMessage: (message) => {
         push({ type: 'message', text: message });
       },
+      onCommand: (command) => {
+        push({ type: 'command', ...command });
+      },
     });
+    push({ type: 'observation', turn: result.turns, data: buildObservation(adventure, result.state) });
     push({
       type: 'run_ended',
       data: { outcome: result.outcome, reason: result.reason, turns: result.turns, hash: result.hash },
