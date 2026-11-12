@@ -3,6 +3,8 @@ import type { FetchLike } from '../session/http.js';
 
 /** The public records emitted by the optional demo server. */
 export type RunRecord =
+  | { type: 'run_started'; data: { provider: string; model: string; budgets: { maxTurns: number; maxTotalTokens: number; maxWallClockMs: number } } }
+  | { type: 'usage'; data: { inputTokens: number; outputTokens: number; tokensUsed: number; estimatedCostUsd: number | null; estimated?: boolean } }
   | { type: 'observation'; turn: number; data: Observation }
   | { type: 'command'; turn: number; raw: string }
   | { type: 'message'; text: string }
@@ -13,7 +15,7 @@ export type RunRecord =
 export interface WatchOptions {
   baseUrl: string;
   adventureId: string;
-  policy: 'scripted' | 'random';
+  policy: 'scripted' | 'random' | 'llm';
   seed?: number;
   signal?: AbortSignal;
   fetch?: FetchLike;
@@ -31,11 +33,23 @@ export async function watchAgent(options: WatchOptions): Promise<void> {
   }));
   const body = await opened.json() as { id?: unknown };
   if (typeof body.id !== 'string' || body.id.length === 0) throw new Error('The demo server returned no run id.');
-  const stream = await checkedResponse(await fetchLike(`${base}/api/runs/${encodeURIComponent(body.id)}/stream`, {
-    signal: options.signal,
-  }));
-  if (stream.body === null) throw new Error('The demo server returned no event stream.');
-  await readRun(stream.body.getReader(), options.onRecord);
+  const runUrl = `${base}/api/runs/${encodeURIComponent(body.id)}`;
+  let cancellation: Promise<void> | undefined;
+  const stop = (): void => {
+    if (options.policy !== 'llm' || cancellation !== undefined) return;
+    cancellation = fetchLike(runUrl, { method: 'DELETE', signal: AbortSignal.timeout(2_000) })
+      .then(async response => { await response.body?.cancel(); }).catch(() => {});
+  };
+  options.signal?.addEventListener('abort', stop, { once: true });
+  try {
+    if (options.signal?.aborted) { stop(); options.signal.throwIfAborted(); }
+    const stream = await checkedResponse(await fetchLike(`${runUrl}/stream`, { signal: options.signal }));
+    if (stream.body === null) throw new Error('The demo server returned no event stream.');
+    await readRun(stream.body.getReader(), options.onRecord);
+  } finally {
+    options.signal?.removeEventListener('abort', stop);
+    await cancellation;
+  }
 }
 
 async function checkedResponse(response: Response): Promise<Response> {
@@ -52,7 +66,7 @@ function recordFrom(block: string): RunRecord | undefined {
   if (data.length === 0) return undefined;
   const record: unknown = JSON.parse(data);
   if (record === null || typeof record !== 'object' || !('type' in record) ||
-      !['observation', 'command', 'message', 'run_ended', 'end'].includes(String(record.type))) {
+      !['run_started', 'usage', 'observation', 'command', 'message', 'run_ended', 'end'].includes(String(record.type))) {
     throw new Error('The demo server sent an invalid event.');
   }
   return record as RunRecord;

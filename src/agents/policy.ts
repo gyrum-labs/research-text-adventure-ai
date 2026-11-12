@@ -13,6 +13,8 @@
 import type { GameState, Observation } from '../kernel/types.js';
 
 export interface PolicyContext {
+  /** Cancellation shared with the provider request, when the caller supplies it. */
+  signal?: AbortSignal;
   /** Everything the policy has seen so far, oldest first. */
   history: Observation[];
   /** The current observation. */

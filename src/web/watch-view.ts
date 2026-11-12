@@ -7,6 +7,17 @@ export interface WatchViewOptions {
   adventureId: string;
 }
 
+interface ModelDescription {
+  provider: string;
+  model: string;
+  budgets: { maxTurns: number; maxTotalTokens: number; maxWallClockMs: number };
+}
+
+function describeModel(model: ModelDescription): string {
+  const limits = model.budgets;
+  return `${model.provider} · ${model.model} · model calls use the server account · up to ${limits.maxTurns} turns / ${limits.maxTotalTokens} tokens / ${limits.maxWallClockMs / 1000} seconds`;
+}
+
 function element<T extends HTMLElement>(root: HTMLElement, selector: string): T {
   const found = root.querySelector<T>(selector);
   if (found === null) throw new Error(`The demo view is missing ${selector}.`);
@@ -18,7 +29,13 @@ function renderRecord(root: HTMLElement, record: RunRecord): void {
   const log = element(root, '.watch-log');
   const status = element(root, '.watch-status');
   log.textContent += `${record.type}\n`;
-  if (record.type === 'observation') {
+  if (record.type === 'run_started') {
+    element(root, '.watch-note').textContent = describeModel(record.data);
+  } else if (record.type === 'usage') {
+    const usage = record.data;
+    const cost = usage.estimatedCostUsd === null ? 'cost estimate unavailable' : `est. $${usage.estimatedCostUsd.toFixed(4)}`;
+    element(root, '.watch-usage').textContent = `${usage.estimated ? 'Estimated ' : ''}${usage.tokensUsed} tokens · ${cost}`;
+  } else if (record.type === 'observation') {
     output.textContent += `${renderObservation({ ...record.data, messages: [] })}\n\n`;
     const complete = record.data.goals.filter(goal => goal.status === 'complete').length;
     status.textContent = `Turn ${record.turn} · goals ${complete}/${record.data.goals.length}`;
@@ -35,13 +52,39 @@ function renderRecord(root: HTMLElement, record: RunRecord): void {
   log.scrollTop = log.scrollHeight;
 }
 
-/** Wire the optional demo controls; stopping disconnects the view, not the bounded run. */
+/** Wire free demonstrations and an explicitly started, cancellable model run. */
 export function mountWatchView(root: HTMLElement, options: WatchViewOptions): { stop(): void } {
   const start = element<HTMLButtonElement>(root, '.watch-start');
   const stop = element<HTMLButtonElement>(root, '.watch-stop');
   const policy = element<HTMLSelectElement>(root, '.watch-policy');
   const status = element(root, '.watch-status');
   let active: AbortController | undefined;
+  let model: ModelDescription | undefined;
+
+  const updatePolicy = (): void => {
+    const ai = policy.value === 'llm';
+    start.textContent = ai ? 'Start AI run' : 'Start demo';
+    stop.textContent = ai ? 'Stop AI run' : 'Stop watching';
+    element(root, '.watch-note').textContent = ai
+      ? model === undefined ? 'AI is unavailable on this server.' : describeModel(model)
+      : `Local demo · no model calls. ${model === undefined ? 'AI is unavailable on this server.' : 'AI is available in Policy.'}`;
+  };
+  policy.addEventListener('change', updatePolicy);
+  void discoverAi();
+
+  async function discoverAi(): Promise<void> {
+    try {
+      const response = await fetch(`${options.baseUrl.replace(/\/+$/, '')}/api/health`);
+      if (!response.ok) return;
+      const body = await response.json() as { ai?: ModelDescription | null };
+      if (typeof body.ai?.model !== 'string') return;
+      model = body.ai;
+      const choice = element<HTMLOptionElement>(root, 'option[value="llm"]');
+      choice.disabled = false;
+      choice.textContent = `AI agent · ${model.model}`;
+      updatePolicy();
+    } catch { /* Static hosts keep free play and display AI as unavailable. */ }
+  }
 
   const setRunning = (running: boolean): void => {
     start.disabled = running;
@@ -52,7 +95,7 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): { 
     if (active === undefined) return;
     active.abort();
     active = undefined;
-    status.textContent = 'Stopped watching. The bounded demo may finish on the server.';
+    status.textContent = policy.value === 'llm' ? 'Stopped the AI run.' : 'Stopped watching. The bounded demo may finish on the server.';
     setRunning(false);
   };
 
@@ -66,10 +109,11 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): { 
     setRunning(true);
     element(root, '.watch-output').textContent = '';
     element(root, '.watch-log').textContent = '';
+    element(root, '.watch-usage').textContent = '';
     status.textContent = 'Starting demo…';
     try {
       await watchAgent({ ...options, signal: controller.signal,
-        policy: policy.value === 'random' ? 'random' : 'scripted',
+        policy: policy.value === 'llm' ? 'llm' : policy.value === 'random' ? 'random' : 'scripted',
         onRecord: record => { if (active === controller) renderRecord(root, record); },
       });
     } catch (error) {
