@@ -12,6 +12,7 @@ import { describe, expect, it } from 'vitest';
 import { startSessionServer } from '../../src/server/server.js';
 import { adventure } from '../../src/adventures/mission-impossible/adventure.js';
 import { GOLD_PATH } from '../../src/adventures/mission-impossible/gold-path.js';
+import { adventure as hotfix } from '../../src/adventures/hotfix-2-4-1/adventure.js';
 import type { SessionSnapshot, SessionTurn } from '../../src/session/types.js';
 
 async function openSession(url: string): Promise<string> {
@@ -162,6 +163,35 @@ describe('the session server', () => {
       const stream = await fetch(`${started.url}/api/runs/${id}/stream`);
       const text = await stream.text();
       expect(text).toContain('run_ended');
+    } finally {
+      await started.close();
+    }
+  });
+
+  it('runs the reference path of every world it holds', async () => {
+    const started = await startSessionServer();
+    try {
+      for (const world of [adventure, hotfix]) {
+        const opened = await fetch(`${started.url}/api/runs`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ adventureId: world.id, policy: 'scripted' }),
+        });
+        expect(opened.status).toBe(201);
+
+        const { id } = (await opened.json()) as { id: string };
+        const text = await (await fetch(`${started.url}/api/runs/${id}/stream`)).text();
+        const records = text
+          .split('\n\n')
+          .filter((block) => block.startsWith('data: '))
+          .map((block) => JSON.parse(block.slice('data: '.length)) as Record<string, unknown>);
+        const outcome = records.find((record) => record['type'] === 'run_ended');
+        const final = records.filter((record) => record['type'] === 'observation').at(-1)!;
+
+        expect((outcome?.['data'] as { outcome: string }).outcome).toBe('success');
+        expect((final['data'] as { goals: Array<{ status: string }> }).goals
+          .every((goal) => goal.status === 'complete')).toBe(true);
+      }
     } finally {
       await started.close();
     }
