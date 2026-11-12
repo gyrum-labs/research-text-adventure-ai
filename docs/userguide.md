@@ -145,7 +145,7 @@ and enables retry. See [`src/web/README.md`](../src/web/README.md) for the HTTP 
 For a real model, set `OPENROUTER_API_KEY` and `AI_DEMO_MODEL` in the server environment.
 Choose **AI agent** in Policy, then **Start AI run**. The view shows the model's actual
 commands, feedback, token usage and final outcome. **Stop AI run** or switching to Play
-cancels inference. Runs allow at most 20 turns, 20,000 tokens and 120 seconds; transcripts
+cancels inference. Runs allow at most 20 turns, 30,000 tokens and 120 seconds; transcripts
 are saved under `runs/browser/`. See the [AI server setup](../src/server/README.md#real-ai-demo)
 for configuration, request limits and replay. The key stays on the server.
 

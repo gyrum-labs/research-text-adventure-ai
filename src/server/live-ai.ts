@@ -11,7 +11,7 @@ import { Transcript } from '../runner/transcript.js';
 
 /** Server-owned maxima for an explicitly started model demo. */
 export const LIVE_AI_BUDGETS: Readonly<RunBudgets> = Object.freeze({
-  ...DEFAULT_BUDGETS, maxTurns: 20, maxOutputTokensPerTurn: 300,
+  ...DEFAULT_BUDGETS, maxTurns: 20, maxTotalTokens: 30_000, maxOutputTokensPerTurn: 300,
   maxWallClockMs: 120_000, maxTransientProviderErrors: 2, maxParseErrors: 3,
 });
 
