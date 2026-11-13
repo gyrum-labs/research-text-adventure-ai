@@ -58,7 +58,7 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
   private readonly parseCheck: ((candidate: string) => boolean) | undefined;
 
   /** The commands this policy has issued, in order. */
-  private readonly commands: string[] = [];
+  private readonly commands: Array<{ raw: string; observationIndex: number }> = [];
 
   private lastTurn: PolicyTurnOutcome = 'stopped';
   private unparsableResponses = 0;
@@ -121,7 +121,7 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
       return null;
     }
 
-    this.commands.push(extraction.command);
+    this.commands.push({ raw: extraction.command, observationIndex: context.history.length - 1 });
     this.lastTurn = 'command';
     return extraction.command;
   }
@@ -152,10 +152,11 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
    * observation, so the last entry is the present and the rest is the past.
    */
   private turnsFrom(context: PolicyContext): ContextTurn[] {
-    return context.history.slice(0, -1).map((observation, index) => ({
-      command: this.commands[index] ?? '',
-      observation,
-    }));
+    return this.commands.flatMap(({ raw, observationIndex }) => {
+      const before = context.history[observationIndex];
+      const observation = context.history[observationIndex + 1];
+      return before === undefined || observation === undefined ? [] : [{ command: raw, before, observation }];
+    });
   }
 
   /**

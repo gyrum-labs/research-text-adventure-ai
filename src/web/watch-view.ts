@@ -1,10 +1,22 @@
 import { renderObservation } from '../kernel/render.js';
+import type { FetchLike } from '../session/http.js';
+import { titleOf } from './scenario.js';
 import { watchAgent, type RunRecord } from './watch.js';
 
 /** The optional server and adventure selected by the page. */
 export interface WatchViewOptions {
   baseUrl: string;
   adventureId: string;
+  /** The fetch to use, overridable for the tests. */
+  fetch?: FetchLike;
+}
+
+/** The watched-run panel, once wired. */
+export interface WatchView {
+  /** Cancel the run being watched and say why. */
+  stop(reason?: string): void;
+  /** Move the panel to a world, cancelling whatever it was running. */
+  setScenario(adventureId: string): void;
 }
 
 interface ModelDescription {
@@ -53,12 +65,14 @@ function renderRecord(root: HTMLElement, record: RunRecord): void {
 }
 
 /** Wire free demonstrations and an explicitly started, cancellable model run. */
-export function mountWatchView(root: HTMLElement, options: WatchViewOptions): { stop(): void } {
+export function mountWatchView(root: HTMLElement, options: WatchViewOptions): WatchView {
   const start = element<HTMLButtonElement>(root, '.watch-start');
   const stop = element<HTMLButtonElement>(root, '.watch-stop');
   const policy = element<HTMLSelectElement>(root, '.watch-policy');
   const status = element(root, '.watch-status');
-  let active: AbortController | undefined;
+  const fetchLike = options.fetch ?? ((url: string, init?: RequestInit) => fetch(url, init));
+  let adventureId = options.adventureId;
+  let active: { controller: AbortController } | undefined;
   let model: ModelDescription | undefined;
 
   const updatePolicy = (): void => {
@@ -67,14 +81,15 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): { 
     stop.textContent = ai ? 'Stop AI run' : 'Stop watching';
     element(root, '.watch-note').textContent = ai
       ? model === undefined ? 'AI is unavailable on this server.' : describeModel(model)
-      : `Local demo · no model calls. ${model === undefined ? 'AI is unavailable on this server.' : 'AI is available in Policy.'}`;
+      : `${policy.value === 'random' ? 'Random baseline · choices can fail or loop' : 'Scripted reference · known solution'} · no model calls. ${model === undefined ? 'AI is unavailable on this server.' : 'Choose AI agent in Policy for real model play.'}`;
   };
   policy.addEventListener('change', updatePolicy);
+  updatePolicy();
   void discoverAi();
 
   async function discoverAi(): Promise<void> {
     try {
-      const response = await fetch(`${options.baseUrl.replace(/\/+$/, '')}/api/health`);
+      const response = await fetchLike(`${options.baseUrl.replace(/\/+$/, '')}/api/health`);
       if (!response.ok) return;
       const body = await response.json() as { ai?: ModelDescription | null };
       if (typeof body.ai?.model !== 'string') return;
@@ -91,38 +106,80 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): { 
     policy.disabled = running;
     stop.disabled = !running;
   };
-  const stopWatching = (): void => {
-    if (active === undefined) return;
-    active.abort();
+
+  /**
+   * End the run in flight.
+   *
+   * The request is aborted, so a model call in flight stops, and the panel
+   * forgets the run. Anything the provider says afterwards belongs to a run
+   * that is over, so it is dropped rather than shown.
+   */
+  const cancelRun = (): boolean => {
+    if (active === undefined) return false;
+    active.controller.abort();
     active = undefined;
-    status.textContent = policy.value === 'llm' ? 'Stopped the AI run.' : 'Stopped watching. The bounded demo may finish on the server.';
+    return true;
+  };
+
+  const stopWatching = (reason?: string): void => {
+    const stopped = cancelRun();
+    if (stopped && reason !== undefined) status.textContent = reason;
     setRunning(false);
   };
 
+  /**
+   * Move the panel to another world.
+   *
+   * The run in flight belongs to the world it started in, so it stops here.
+   * The transcript is cleared with it, because a transcript of the old world
+   * read in the new one would be a lie about what the reader is watching.
+   */
+  const setScenario = (next: string): void => {
+    const wasRunning = cancelRun();
+    element(root, '.watch-output').textContent = '';
+    element(root, '.watch-log').textContent = '';
+    element(root, '.watch-usage').textContent = '';
+    adventureId = next;
+    setRunning(false);
+    const named = `${titleOf(next)} (${next})`;
+    status.textContent = wasRunning
+      ? `The scenario is now ${named}, so the run was stopped.`
+      : `The scenario is now ${named}.`;
+  };
+
   start.addEventListener('click', () => { void startWatching(); });
-  stop.addEventListener('click', stopWatching);
+  stop.addEventListener('click', () => {
+    stopWatching(policy.value === 'llm'
+      ? 'Stopped the AI run.'
+      : 'Stopped watching. The bounded demo may finish on the server.');
+  });
 
   async function startWatching(): Promise<void> {
     if (active !== undefined) return;
     const controller = new AbortController();
-    active = controller;
+    active = { controller };
     setRunning(true);
     element(root, '.watch-output').textContent = '';
     element(root, '.watch-log').textContent = '';
     element(root, '.watch-usage').textContent = '';
     status.textContent = 'Starting demo…';
     try {
-      await watchAgent({ ...options, signal: controller.signal,
+      await watchAgent({
+        baseUrl: options.baseUrl,
+        adventureId,
+        fetch: fetchLike,
+        signal: controller.signal,
         policy: policy.value === 'llm' ? 'llm' : policy.value === 'random' ? 'random' : 'scripted',
-        onRecord: record => { if (active === controller) renderRecord(root, record); },
+        onRecord: record => { if (active?.controller === controller) renderRecord(root, record); },
       });
     } catch (error) {
-      if (active === controller) {
+      if (active?.controller === controller) {
         status.textContent = `Could not watch the demo: ${error instanceof Error ? error.message : String(error)}. Check that the optional demo server is running, then try again.`;
       }
     } finally {
-      if (active === controller) { active = undefined; setRunning(false); }
+      if (active?.controller === controller) { active = undefined; setRunning(false); }
     }
   }
-  return { stop: stopWatching };
+
+  return { stop: stopWatching, setScenario };
 }

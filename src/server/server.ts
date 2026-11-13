@@ -17,8 +17,7 @@ import { extname, join, normalize } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { Adventure } from '../kernel/types.js';
 import { buildObservation } from '../kernel/observation.js';
-import { ADVENTURES } from '../adventures/index.js';
-import { GOLD_PATH } from '../adventures/mission-impossible/gold-path.js';
+import { ADVENTURES, findGoldPath } from '../adventures/index.js';
 import { InMemorySession } from '../session/in-memory.js';
 import type { SessionTurn } from '../session/types.js';
 import { ScriptedPolicy } from '../agents/scripted.js';
@@ -423,8 +422,7 @@ export function createSessionServer(options: SessionServerOptions = {}): Server 
     sessions: options.sessions ?? new Map(),
     runs: new Map(),
     staticRoot: options.staticRoot,
-    scriptedPathFor:
-      options.scriptedPathFor ?? ((id) => (id === 'mission-impossible' ? GOLD_PATH : undefined)),
+    scriptedPathFor: options.scriptedPathFor ?? findGoldPath,
   };
 
   return createServer((request, response) => {

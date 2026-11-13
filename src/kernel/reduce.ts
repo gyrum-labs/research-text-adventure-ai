@@ -24,6 +24,7 @@ import type {
 import { evaluatePredicate, type EvalContext } from './predicates.js';
 import { achievedGoalIds } from './goals.js';
 import { applyEffect } from './effects.js';
+import { commandHelp, commandSyntax } from './parser.js';
 
 interface Candidate {
   spec: ActionSpec;
@@ -55,10 +56,11 @@ export function reduce(adventure: Adventure, state: GameState, command: Command)
     return { state: { ...state, turn: turn + 1 }, events, changed: false };
   }
 
-  const best = selectCandidate(adventure, state, command, candidates);
+  const context = makeContext(adventure, state, command);
+  const best = selectCandidate(candidates, context);
 
-  if (best.satisfied !== best.total) {
-    const message = interpolate(best.spec.text.failure, adventure, command.args);
+  if (best === undefined || best.satisfied !== best.total) {
+    const message = failureMessage(best?.spec, command, context);
     events.push({ type: 'action_failed', verb: command.verb, message, turn });
     return { state: { ...state, turn: turn + 1 }, events, changed: false };
   }
@@ -114,17 +116,16 @@ export function reduce(adventure: Adventure, state: GameState, command: Command)
  * so the spec is picked by how well the command fits it:
  *
  *   1. an action whose preconditions all hold wins outright;
- *   2. otherwise the action that comes closest wins, so the failure message
- *      comes from the action the player most likely meant.
+ *   2. otherwise the closest matching action supplies its failure message.
+ * Object/room identity selectors must match first; private text values are
+ * prerequisites, never public selectors or recommendations.
  */
-function selectCandidate(
-  adventure: Adventure,
-  state: GameState,
-  command: Command,
-  candidates: ActionSpec[],
-): Candidate {
-  const context = makeContext(adventure, state, command);
-  const scored: Candidate[] = candidates.map((spec, order) => {
+function selectCandidate(candidates: ActionSpec[], context: EvalContext): Candidate | undefined {
+  const applicable = candidates.filter(spec => spec.requires.every(predicate =>
+    predicate.op !== 'arg_equals' ||
+    spec.args.find(arg => arg.name === predicate.arg)?.role === 'text' ||
+    evaluatePredicate(predicate, context)));
+  const scored: Candidate[] = applicable.map((spec, order) => {
     const satisfied = spec.requires.filter((predicate) => evaluatePredicate(predicate, context)).length;
     return { spec, satisfied, total: spec.requires.length, order };
   });
@@ -142,7 +143,36 @@ function selectCandidate(
     return a.order - b.order;
   });
 
-  return scored[0]!;
+  return scored[0];
+}
+
+function failureMessage(spec: ActionSpec | undefined, command: Command, context: EvalContext): string {
+  if (spec === undefined) {
+    const shape = context.adventure.actions.find(action => action.verb === command.verb)!;
+    const attempted = commandSyntax(shape).replace(/<(\w+)>/g,
+      (_match, name: string) => interpolate(`{${name}}`, context.adventure, command.args));
+    return `You cannot ${attempted}.`;
+  }
+  for (const predicate of spec.requires) {
+    if (predicate.op !== 'arg_flag') continue;
+    const message = stateRefusal(predicate, context);
+    if (message !== undefined) return message;
+  }
+  return interpolate(spec.text.failure, context.adventure, command.args);
+}
+
+function stateRefusal(predicate: Extract<Predicate, { op: 'arg_flag' }>, context: EvalContext): string | undefined {
+  const id = context.bindings[predicate.arg];
+  if (id === undefined) return undefined;
+  const object = context.state.objects[id];
+  const definition = context.adventure.objects[id];
+  if (object === undefined || definition === undefined) return undefined;
+  const actual = object.flags[predicate.key];
+  if (actual === undefined || actual === predicate.value) return undefined;
+  if (predicate.key === 'locked') return `The ${definition.name} is ${predicate.value ? 'already unlocked' : 'locked'}.`;
+  if (predicate.key === 'unlocked' && !predicate.value) return `The ${definition.name} is already unlocked.`;
+  if (predicate.key === 'closed' && predicate.value && definition.container !== undefined) return `The ${definition.name} is already open.`;
+  return undefined;
 }
 
 function makeContext(
@@ -171,6 +201,7 @@ function makeContext(
  * reads "You pocket the key" rather than "You pocket the key_id". A
  * text argument is shown as it was typed. `{arg.description}` exposes only
  * an object's public description; private detail fields are not supported.
+ * `{commands}` inserts the same public syntax used by parser errors and models.
  */
 export function interpolate(
   template: string,
@@ -178,6 +209,7 @@ export function interpolate(
   args: Record<string, string>,
 ): string {
   return template.replace(/\{(\w+)(\.description)?\}/g, (match, name: string, description: string | undefined) => {
+    if (name === 'commands' && description === undefined) return commandHelp(adventure);
     const value = args[name];
     if (value === undefined) return match;
     const object = adventure.objects[value];

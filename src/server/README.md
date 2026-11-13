@@ -41,7 +41,8 @@ its default port is ephemeral, which keeps tests independent of existing servers
 The stream includes the final observation, so completed goals remain visible. Late subscribers
 receive recorded events before the live tail. Disconnecting a watcher leaves a free demo
 running; disconnecting the last AI watcher cancels its model request. A missing world or session returns a JSON error; a world without a
-scripted path returns 422, so use its random policy or inject `scriptedPathFor` when creating the server.
+scripted path returns 422, so use its random policy or inject `scriptedPathFor` when creating the server. Every shipped world has a reference
+path, so the scripted policy completes each of them.
 
 Run `npm test -- tests/server/routes.test.ts` for the route and stream contracts.
 
@@ -58,7 +59,7 @@ and running free demos never call the model. Credentials stay on the server. The
 receives the public observation as JSON, rules and history through the existing LLM policy.
 This retains public object descriptions and readability flags; unread detail stays hidden.
 
-Each AI run allows at most 20 turns, 20,000 total tokens, 300 output tokens per request,
+Each AI run allows at most 20 turns, 30,000 total tokens, 300 output tokens per request,
 16,000 prompt bytes and 120 seconds. Only one AI run can be active. Before each request,
 the server reserves a conservative input allowance and limits output to the remaining
 token budget. Missing provider counts use conservative estimates. The browser shows

@@ -8,7 +8,7 @@
  * The parser resolves arguments to ids. It never rewrites intent.
  */
 
-import type { Adventure, ArgSpec, Command, GameState, Id } from './types.js';
+import type { ActionSpec, Adventure, ArgSpec, Command, GameState, Id } from './types.js';
 
 export type ParseResult =
   | { ok: true; command: Command }
@@ -28,6 +28,22 @@ export const NOT_VISIBLE_PREFIX = "You can't see anything called";
 export const NOT_CARRYING_PREFIX = "You aren't carrying anything called";
 
 const CONNECTIVES = [' with ', ' on ', ' to '];
+
+/** The parser's canonical public syntax, without private argument values. */
+export function commandSyntax(spec: Pick<ActionSpec, 'verb' | 'args'>): string {
+  const args = spec.args.map(arg => `<${arg.name}>`).join(CONNECTIVES[0]);
+  return args.length === 0 ? spec.verb : `${spec.verb} ${args}`;
+}
+
+/** Public help for each verb, using the first shape the parser accepts. */
+export function commandHelp(adventure: Adventure): string {
+  const seen = new Set<string>();
+  return adventure.actions.filter(spec => {
+    if (seen.has(spec.verb)) return false;
+    seen.add(spec.verb);
+    return true;
+  }).map(commandSyntax).join('\n');
+}
 
 export function parseCommand(
   adventure: Adventure,
@@ -57,7 +73,7 @@ export function parseCommand(
   if (parts === null) {
     return {
       ok: false,
-      message: `"${verb}" needs ${describeArgs(first.args)}.`,
+      message: `"${verb}" needs ${describeArgs(first.args)}. Use: ${commandSyntax(first)}.`,
     };
   }
 
@@ -67,7 +83,7 @@ export function parseCommand(
   if (first.args.length === 0 && rest.trim().length > 0) {
     return {
       ok: false,
-      message: `"${verb}" takes no arguments.`,
+      message: `"${verb}" takes no arguments. Use: ${commandSyntax(first)}.`,
     };
   }
 
@@ -81,7 +97,7 @@ export function parseCommand(
     }
     const resolved = resolveArgument(adventure, state, spec, value);
     if ('error' in resolved) {
-      return { ok: false, message: resolved.error };
+      return { ok: false, message: `${resolved.error}\nUse: ${commandSyntax(first)}.` };
     }
     args[spec.name] = resolved.id;
   }

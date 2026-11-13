@@ -49,7 +49,7 @@ function objectState(at: string | null, flags: Record<string, boolean> = {}): Ga
 export const adventure: Adventure = {
   id: 'hotfix-2-4-1',
   title: 'The 2.4.1 Hotfix',
-  version: '1.0.1',
+  version: '1.0.3',
 
   brief:
     'The customer SLA expires at 17:00 and the 2.4.1 hotfix is not shipped. Two objectives: ' +
@@ -141,6 +141,7 @@ export const adventure: Adventure = {
       name: 'incident ticket',
       aliases: ['incident-ticket', 'INC-4471', 'ticket'],
       description: 'INC-4471, printed on a single sheet of paper.',
+      takeable: true,
       readable: true,
       detail:
         'INC-4471. The customer SLA expires at 17:00. The release gate will not open without ' +
@@ -178,6 +179,7 @@ export const adventure: Adventure = {
       name: 'deploy credential',
       aliases: ['credential'],
       description: 'A short-lived credential on a card, with a timestamp on it.',
+      takeable: true,
     },
     release_2_3_9: {
       id: 'release_2_3_9',
@@ -215,6 +217,7 @@ export const adventure: Adventure = {
       name: 'customer notification',
       aliases: ['notification'],
       description: 'A drafted notification, signed but unsent.',
+      takeable: true,
     },
   },
 
@@ -248,7 +251,7 @@ export const adventure: Adventure = {
       args: [],
       requires: [],
       effects: [],
-      text: { success: 'These are the commands you know.', failure: 'These are the commands you know.' },
+      text: { success: 'Commands:\n{commands}', failure: 'Commands:\n{commands}' },
     },
     {
       verb: 'wait',
@@ -355,6 +358,7 @@ export const adventure: Adventure = {
       requires: [
         { op: 'arg_in_room', arg: 'target' },
         { op: 'arg_equals', arg: 'target', value: 'release_gate' },
+        { op: 'arg_flag', arg: 'target', key: 'unlocked', value: false },
         { op: 'arg_equals', arg: 'with', value: 'incident-ticket' },
         { op: 'carrying', object: 'incident_ticket' },
       ],
@@ -374,6 +378,7 @@ export const adventure: Adventure = {
       requires: [
         { op: 'arg_in_room', arg: 'target' },
         { op: 'arg_equals', arg: 'target', value: 'customer_handover' },
+        { op: 'arg_flag', arg: 'target', key: 'locked', value: true },
         { op: 'arg_equals', arg: 'with', value: '7311' },
       ],
       effects: [

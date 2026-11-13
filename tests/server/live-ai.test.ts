@@ -77,7 +77,7 @@ describe('the real-model demo', () => {
       // regression: warp#22688 — prose dropped public descriptions and readable flags.
       const firstContext = requests[0]!.messages.map(message => message.content).join('\n');
       expect(firstContext).toContain(adventure.objects['bulletin']!.description);
-      expect(firstContext).toContain('"readable": true');
+      expect(firstContext).toMatch(/"readable"\s*:\s*true/);
       expect(JSON.stringify(requests[0])).not.toContain('4821');
       expect(JSON.stringify(requests[0])).not.toContain('cut yellow wire');
       expect(stream.find(record => record['type'] === 'run_started')?.['data']?.['provider']).toBe('OpenRouter');
@@ -92,6 +92,27 @@ describe('the real-model demo', () => {
       expect(readFileSync(path, 'utf8')).not.toContain(secret);
       expect(replayTranscript(path, adventure)).toMatchObject({ ok: true, steps: 10 });
     } finally { await started.close(); }
+  });
+
+  it('keeps the old 20k guard and gives the new live default headroom for the final actions', async () => {
+    // regression: warp#22695 — a full next-request reservation could strand a nearly won run.
+    let calls = 0;
+    modelFetch(async () => Response.json({ choices: [{ message: { content: `COMMAND: ${GOLD_PATH[calls++]}` } }],
+      usage: { prompt_tokens: 1900, completion_tokens: 5 } }));
+    for (const ceiling of [20_000, undefined]) {
+      calls = 0;
+      const configuration = ceiling === undefined ? {} : { budgets: { maxTotalTokens: ceiling, providerRetryDelayMs: 0 } };
+      const started = await startSessionServer({ liveAi: demo(configuration).liveAi });
+      try {
+        const health = await (await fetch(`${started.url}/api/health`)).json();
+        expect(health.ai.budgets.maxTotalTokens).toBe(ceiling ?? 30_000);
+        const { id } = await (await open(started.url)).json();
+        const stream = await records(started.url, id);
+        expect(stream.find(record => record.type === 'run_ended')?.data?.['outcome'])
+          .toBe(ceiling === undefined ? 'success' : 'budget_exhausted');
+        expect(calls).toBeLessThanOrEqual(10);
+      } finally { await started.close(); }
+    }
   });
 
   it('makes no model call for health, offline demos or a cancelled pending start', async () => {
