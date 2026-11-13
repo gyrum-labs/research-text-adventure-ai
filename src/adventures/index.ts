@@ -35,6 +35,17 @@ export function goldPathFor(id: string): string[] {
   return GOLD_PATHS[id]!;
 }
 
+/**
+ * The shortest winning route through a world, when it has one.
+ *
+ * A caller that holds worlds of its own needs the answer without the
+ * refusal, so this is the same lookup without the demand that the world be
+ * one of the shipped ones.
+ */
+export function findGoldPath(id: string): string[] | undefined {
+  return GOLD_PATHS[id];
+}
+
 export function adventureById(id: string): Adventure {
   const found = ADVENTURES[id];
   if (found === undefined) {

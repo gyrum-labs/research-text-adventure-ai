@@ -41,7 +41,8 @@ its default port is ephemeral, which keeps tests independent of existing servers
 The stream includes the final observation, so completed goals remain visible. Late subscribers
 receive recorded events before the live tail. Disconnecting a watcher leaves a free demo
 running; disconnecting the last AI watcher cancels its model request. A missing world or session returns a JSON error; a world without a
-scripted path returns 422, so use its random policy or inject `scriptedPathFor` when creating the server.
+scripted path returns 422, so use its random policy or inject `scriptedPathFor` when creating the server. Every shipped world has a reference
+path, so the scripted policy completes each of them.
 
 Run `npm test -- tests/server/routes.test.ts` for the route and stream contracts.
 
