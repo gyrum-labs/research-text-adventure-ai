@@ -60,8 +60,13 @@ export async function boot(
     playButton?.setAttribute('aria-pressed', String(!watching));
     watchButton?.setAttribute('aria-pressed', String(watching));
   };
-  playButton?.addEventListener('click', () => show(false));
-  watchButton?.addEventListener('click', () => show(true));
+  // The toggle needs somewhere to go. A page without the watched panel has no
+  // second view to switch to, so the buttons stay inert rather than blanking
+  // the game the reader was playing.
+  if (watchRoot !== null) {
+    playButton?.addEventListener('click', () => show(false));
+    watchButton?.addEventListener('click', () => show(true));
+  }
 
   const note = documentImpl.querySelector<HTMLElement>('.scenario-note');
   const select = documentImpl.querySelector<HTMLSelectElement>('.scenario-select');
