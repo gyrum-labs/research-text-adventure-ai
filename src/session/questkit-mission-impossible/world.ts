@@ -161,7 +161,7 @@ export const WORLD: Section[] = [
     attributes: {
       name: 'extinguisher',
       alias: 'fire extinguisher',
-      alt: ['extinguisher'],
+      alt: ['extinguisher', 'extinguisher red'],
       description: 'A red fire extinguisher, its inspection tag long expired.',
       parent: 'corridor',
     },

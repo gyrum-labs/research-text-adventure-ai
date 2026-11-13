@@ -44,9 +44,11 @@ export const QUESTKIT_ADVENTURE = {
     failure: 'The blast takes the vault with it. There is nothing left to recover.',
   },
   actions: VERBS.map((verb) => ({ ...verb, synonyms: [], requires: [], effects: [], text: { success: '', failure: '' } })),
+  // The same two objectives, under the same identifiers, so the agent is
+  // told the same mission on both engines.
   goals: [
-    { id: 'defuse_bomb', text: 'Disarm the bomb' },
-    { id: 'recover_case', text: 'Recover the case' },
+    { id: 'disarm', text: 'Disarm the bomb' },
+    { id: 'recover', text: 'Recover the case' },
   ],
   hints: [],
 } as unknown as Adventure;
@@ -126,8 +128,8 @@ export class QuestKitSession {
       })),
       messages: said.length === 0 ? [] : [said],
       goals: [
-        { id: 'defuse_bomb', text: 'Disarm the bomb', status: this.done('bomb.defused') ? 'complete' : 'incomplete' },
-        { id: 'recover_case', text: 'Recover the case', status: this.done('case.carried') ? 'complete' : 'incomplete' },
+        { id: 'disarm', text: 'Disarm the bomb', status: this.done('bomb.defused') ? 'complete' : 'incomplete' },
+        { id: 'recover', text: 'Recover the case', status: this.done('case.carried') ? 'complete' : 'incomplete' },
       ],
     };
   }
