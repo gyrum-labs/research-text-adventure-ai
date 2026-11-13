@@ -22,6 +22,8 @@ function page(options: { withWatch?: boolean } = {}): {
   terminal: StubElement;
   select: StubElement;
   note: StubElement;
+  play: StubElement;
+  watch: StubElement;
 } {
   const doc = new StubDocument();
   const terminal = stub('terminal', 'section');
@@ -29,6 +31,9 @@ function page(options: { withWatch?: boolean } = {}): {
   const note = classed('scenario-note', 'span');
   const play = stub('play-mode', 'button');
   const watch = stub('watch-mode', 'button');
+  // The markup opens in Play mode, and the buttons say so.
+  play.setAttribute('aria-pressed', 'true');
+  watch.setAttribute('aria-pressed', 'false');
   doc.body.appendChild(terminal);
   doc.body.appendChild(select);
   doc.body.appendChild(note);
@@ -50,7 +55,7 @@ function page(options: { withWatch?: boolean } = {}): {
     panel.appendChild(policy);
     doc.body.appendChild(panel);
   }
-  return { doc, terminal, select, note };
+  return { doc, terminal, select, note, play, watch };
 }
 
 /** The terminal's output, as the reader sees it. */
@@ -114,6 +119,19 @@ describe('the page', () => {
     await settle();
 
     expect(outputOf(terminal)).toContain(hotfix.brief);
+  });
+
+  it('leaves the game on show when there is no watched panel to switch to', async () => {
+    const { doc, terminal, play, watch } = page({ withWatch: false });
+    await boot(terminal as unknown as HTMLElement, { mode: 'memory' }, asDocument(doc));
+
+    watch.fire('click');
+    await settle();
+
+    expect(terminal.hidden).toBe(false);
+    expect(outputOf(terminal)).toContain(mission.brief);
+    expect(watch.getAttribute('aria-pressed')).toBe('false');
+    expect(play.getAttribute('aria-pressed')).toBe('true');
   });
 
   it('refuses a world that does not exist before it opens anything', async () => {
