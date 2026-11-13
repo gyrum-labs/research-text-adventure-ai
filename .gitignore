@@ -184,6 +184,7 @@ bin/gyrum-substrate-run
 # trips complete-pr's merge_base_lag_check clean-tree gate (three agents hit
 # it in one day). Listing it here lets the auto-stash bucket treat it as
 # runtime noise instead of operator WIP, and syncs the ignore rule fleet-wide.
+gyrum-review-findings.json
 gyrum-review-findings.json.prior-keys
 .gyrum/pr-body-finalization-required
 # warp#14847: local deterministic review-gate receipts.
