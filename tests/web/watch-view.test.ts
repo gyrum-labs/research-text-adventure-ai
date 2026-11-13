@@ -45,16 +45,28 @@ function panel(root: StubElement): HTMLElement {
   return root as unknown as HTMLElement;
 }
 
-/** A stream of one record, delivered when the test says so. */
-function lateStream(record: unknown): { response: Response; deliver: () => void } {
-  let deliver!: () => void;
+/**
+ * A stream the reader can feed after the fact.
+ *
+ * The fetch that returns it ignores the abort signal, as it does when the
+ * response has already begun arriving. That is the shape of the real race: the
+ * reader is still alive after the view has moved on, so whatever is pushed
+ * next arrives too late, and must be dropped.
+ */
+function lateStream(): { response: Response; push: (record: unknown) => void; end: () => void } {
+  let pushChunk!: (chunk: string) => void;
+  let endStream!: () => void;
   const body = new ReadableStream<Uint8Array>({
     start(controller) {
-      controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(record)}\n\n`));
-      deliver = () => { controller.close(); };
+      pushChunk = chunk => controller.enqueue(new TextEncoder().encode(chunk));
+      endStream = () => controller.close();
     },
   });
-  return { response: new Response(body, { headers: { 'content-type': 'text/event-stream' } }), deliver: () => deliver() };
+  return {
+    response: new Response(body, { headers: { 'content-type': 'text/event-stream' } }),
+    push: record => pushChunk(`data: ${JSON.stringify(record)}\n\n`),
+    end: () => endStream(),
+  };
 }
 
 describe('the watched-run panel', () => {
@@ -74,7 +86,7 @@ describe('the watched-run panel', () => {
   it('cancels a running model watch and keeps its late results out of the new world', async () => {
     const root = watchPanel();
     part(root, 'watch-policy').value = 'llm';
-    const late = lateStream({ type: 'command', turn: 0, raw: 'take keycard' });
+    const late = lateStream();
     const fetch = vi.fn((url: string, init?: RequestInit) => {
       const target = String(url);
       if (target.endsWith('/api/health')) return Promise.resolve(Response.json({ ok: true, ai: null }));
@@ -90,14 +102,18 @@ describe('the watched-run panel', () => {
     part(root, 'watch-start').fire('click');
     await new Promise((resolve) => setTimeout(resolve, 0));
 
+    // The reader is still holding the stream when the world changes, so the
+    // record pushed next arrives after the view has moved on.
     view.setScenario('hotfix-2-4-1');
-    late.deliver();
+    late.push({ type: 'command', turn: 0, raw: 'take keycard' });
+    late.end();
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     const deleted = fetch.mock.calls.filter(call => call[1]?.method === 'DELETE');
     expect(deleted).toHaveLength(1);
     expect(String(deleted[0]![0])).toBe('http://demo.test/api/runs/run%2Fone');
     expect(part(root, 'watch-output').textContent).toBe('');
+    expect(part(root, 'watch-output').textContent).not.toContain('take keycard');
     expect(part(root, 'watch-status').textContent).toContain('hotfix');
   });
 
