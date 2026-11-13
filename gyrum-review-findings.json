@@ -1,0 +1,74 @@
+{
+  "schema_version": "1",
+  "review_run_id": "5bd42d3e-2a19-4e3d-911e-3f6f7db82b51",
+  "ts": "2026-11-13T17:48:22Z",
+  "ticket": "warp#22761",
+  "agent_label": "unknown",
+  "review_pr_version": "v61.2.587",
+  "exit_code": 1,
+  "findings": [
+    {
+      "gate": "persona-review (formal 1/3, curator 1)",
+      "rule_ref": "gates/persona-review@v1",
+      "severity": "error"
+    }
+  ],
+  "gate_timings": [
+    {
+      "gate": "no conflict markers/ws",
+      "status": "pass",
+      "duration_ms": 12,
+      "mode": "executed",
+      "saved_ms": 0,
+      "reason": "ineligible"
+    },
+    {
+      "gate": "npm run build",
+      "status": "pass",
+      "duration_ms": 0,
+      "mode": "reused",
+      "saved_ms": 3300,
+      "reason": "review-receipt-match"
+    },
+    {
+      "gate": "npm test",
+      "status": "pass",
+      "duration_ms": 0,
+      "mode": "reused",
+      "saved_ms": 22224,
+      "reason": "review-receipt-match"
+    },
+    {
+      "gate": "npm run lint",
+      "status": "pass",
+      "duration_ms": 0,
+      "mode": "reused",
+      "saved_ms": 2610,
+      "reason": "review-receipt-match"
+    },
+    {
+      "gate": "tsc --noEmit",
+      "status": "pass",
+      "duration_ms": 0,
+      "mode": "reused",
+      "saved_ms": 3477,
+      "reason": "review-receipt-match"
+    },
+    {
+      "gate": "shellcheck (changed)",
+      "status": "pass",
+      "duration_ms": 0,
+      "mode": "reused",
+      "saved_ms": 215,
+      "reason": "exact-input-match"
+    },
+    {
+      "gate": "first-use smoke",
+      "status": "pass",
+      "duration_ms": 2747,
+      "mode": "executed",
+      "saved_ms": 0,
+      "reason": "not-reused"
+    }
+  ]
+}

@@ -11,8 +11,8 @@
  * the gates can be exercised as often as they need without spending anything.
  */
 
-import { describe, expect, it } from 'vitest';
-import { mkdtempSync, existsSync } from 'node:fs';
+import { describe, expect, it, vi } from 'vitest';
+import { mkdtempSync, existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -308,5 +308,39 @@ describe('the books survive a restart', () => {
     expect(reopened.cells[0]!.chargeState).toBe('unsettled');
     expect(reopened.reservedUsd).toBeCloseTo(worstCaseCost(BUDGETS, PRICES), 10);
     expect(reopened.plan).toEqual(plan);
+  });
+});
+
+describe('when the evidence cannot be recorded', () => {
+  it('keeps the hold and still writes the books', async () => {
+    const replay = await import('../../src/runner/replay.js');
+    const spy = vi.spyOn(replay, 'replayTranscript').mockImplementation(() => {
+      throw new Error('the transcript is unreadable');
+    });
+    try {
+      const root = tmpRoot();
+      const plan = buildPlan(planInput());
+      persistPlan(plan, root);
+      const ledger = openLedger(plan);
+      const calls = { count: 0 };
+
+      await runBatch(plan, ledger, {
+        root, providerFor: () => answeringProvider(calls),
+        adventureFor: id => (id === hotfix.id ? hotfix : mission), now: () => Date.now(),
+      });
+
+      // Every cell ran and none of them could be measured, so none of them is
+      // settled: the holds stay, and the books say so.
+      expect(ledger.cells.every(cell => cell.status === 'attempted')).toBe(true);
+      expect(ledger.cells.every(cell => cell.chargeState === 'unsettled')).toBe(true);
+      expect(ledger.cells.every(cell => (cell.reason ?? '').includes('transcript is unreadable'))).toBe(true);
+      expect(ledger.spentUsd).toBe(0);
+      expect(ledger.reservedUsd).toBeCloseTo(worstCaseCost(BUDGETS, PRICES) * 20, 6);
+      // The books were written, so a resume can see exactly where things stand.
+      expect(JSON.parse(readFileSync(join(root, 'ledger.json'), 'utf8')) as BatchLedger)
+        .toEqual(ledger);
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

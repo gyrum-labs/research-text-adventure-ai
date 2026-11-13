@@ -323,20 +323,25 @@ export async function runBatch(
     record.outcome = outcome;
     record.reason = reason;
     record.turns = turns;
-    // The price table is keyed on adapter and model together, as the matrix does.
-    const metrics = computeMetrics(readTranscript(transcriptPath), adventure,
-      { model: `${provider.id}/${provider.model}`, goldPathLength: goldPathFor(adventure.id).length });
-    record.tokensUsed = metrics.tokensUsed;
-    record.inputTokens = metrics.inputTokens;
-    record.outputTokens = metrics.outputTokens;
-    record.replayOk = replayTranscript(transcriptPath, adventure).ok;
-    // The cost is computed from the prices the plan recorded and dated, not
-    // from the adapter's name, because a price table keyed by adapter and
-    // model will silently price an unknown combination at zero.
-    const costUsd =
-      (metrics.inputTokens * plan.prices.inputPerMillion +
-        metrics.outputTokens * plan.prices.outputPerMillion) / 1_000_000;
-    settleCell(ledger, record, costUsd);
+    // Measuring and replaying happen after the run and can fail on their own.
+    // If they do, the hold stays as an unresolved charge rather than being
+    // silently dropped, because the provider may still bill for what the run
+    // sent, and the books are written either way.
+    try {
+      const metrics = computeMetrics(readTranscript(transcriptPath), adventure,
+        { model: `${provider.id}/${provider.model}`, goldPathLength: goldPathFor(adventure.id).length });
+      record.tokensUsed = metrics.tokensUsed;
+      record.inputTokens = metrics.inputTokens;
+      record.outputTokens = metrics.outputTokens;
+      record.replayOk = replayTranscript(transcriptPath, adventure).ok;
+      const costUsd =
+        (metrics.inputTokens * plan.prices.inputPerMillion +
+          metrics.outputTokens * plan.prices.outputPerMillion) / 1_000_000;
+      settleCell(ledger, record, costUsd);
+    } catch (error) {
+      record.chargeState = 'unsettled';
+      record.reason = `the run finished but its evidence could not be recorded: ${error instanceof Error ? error.message : String(error)}`;
+    }
     saveLedger(ledger, options.root);
   }
   return ledger;
