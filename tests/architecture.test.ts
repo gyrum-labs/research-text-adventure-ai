@@ -28,8 +28,12 @@ const ALLOWED: Record<string, string[]> = {
   kernel: [],
   adventures: ['kernel'],
   agents: ['kernel', 'adventures'],
-  runner: ['kernel', 'agents', 'adventures'],
-  cli: ['kernel', 'adventures', 'agents', 'runner'],
+  // The session layer holds a game and the ports that drive it, so it may
+  // look down at the kernel and at itself, and the runner and the command
+  // line may reach it to open one.
+  session: ['kernel', 'session'],
+  runner: ['kernel', 'agents', 'adventures', 'session'],
+  cli: ['kernel', 'adventures', 'agents', 'runner', 'session'],
 };
 
 /** The layer a source file belongs to. */

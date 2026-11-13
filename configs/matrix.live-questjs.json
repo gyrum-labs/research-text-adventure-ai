@@ -1,0 +1,31 @@
+{
+  "models": [
+    {
+      "id": "live-frontier",
+      "label": "claude sonnet 4.5 (openrouter)",
+      "provider": "openai",
+      "model": "anthropic/claude-sonnet-4.5",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "apiKeyEnv": "OPENROUTER_API_KEY"
+    },
+    {
+      "id": "live-mid",
+      "label": "gpt-4.1-mini (openrouter)",
+      "provider": "openai",
+      "model": "openai/gpt-4.1-mini",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "apiKeyEnv": "OPENROUTER_API_KEY"
+    },
+    {
+      "id": "live-open",
+      "label": "glm 4.5 air (openrouter)",
+      "provider": "openai",
+      "model": "z-ai/glm-4.5-air",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "apiKeyEnv": "OPENROUTER_API_KEY"
+    }
+  ],
+  "conditions": ["A"],
+  "seeds": 10,
+  "maxTurns": 30
+}

@@ -505,10 +505,11 @@ interfaces, asserting the final hash chain matches.
 - `kernel` → nothing (except `node:crypto` for hashing). No clock, no randomness, no I/O.
 - `adventures` → `kernel` types only. The adventure files are data; the search tools that
   explore an adventure live in `runner`.
-- `session` → `kernel`.
+- `session` → `kernel`, and itself. It holds a game and the ports that drive it, so the
+  QuestJS port of Experiment 08 lives here rather than in `adventures`, which is data only.
 - `agents` → `kernel` types, `adventures` data.
-- `runner` → `kernel`, `agents`, `adventures`.
-- `cli` / `server` / `web` → `runner`, `kernel`, `agents`, `adventures`.
+- `runner` → `kernel`, `agents`, `adventures`, `session`.
+- `cli` / `server` / `web` → `runner`, `kernel`, `agents`, `adventures`, `session`.
 
 Every layer may look down and never up. The command line is the composition root, so it is
 the one layer that reaches the adventure data directly, and it is the layer that picks the
