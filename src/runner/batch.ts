@@ -330,7 +330,13 @@ export async function runBatch(
     record.inputTokens = metrics.inputTokens;
     record.outputTokens = metrics.outputTokens;
     record.replayOk = replayTranscript(transcriptPath, adventure).ok;
-    settleCell(ledger, record, metrics.estimatedCostUsd);
+    // The cost is computed from the prices the plan recorded and dated, not
+    // from the adapter's name, because a price table keyed by adapter and
+    // model will silently price an unknown combination at zero.
+    const costUsd =
+      (metrics.inputTokens * plan.prices.inputPerMillion +
+        metrics.outputTokens * plan.prices.outputPerMillion) / 1_000_000;
+    settleCell(ledger, record, costUsd);
     saveLedger(ledger, options.root);
   }
   return ledger;

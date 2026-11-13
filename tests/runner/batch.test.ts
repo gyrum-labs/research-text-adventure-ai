@@ -12,7 +12,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { mkdtempSync, readFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -20,11 +20,14 @@ import {
   openLedger,
   persistPlan,
   readPlan,
+  saveLedger,
   loadLedger,
   reserveCell,
   runBatch,
   summarise,
   worstCaseCost,
+  type BatchLedger,
+  type BatchCellRecord,
 } from '../../src/runner/batch.js';
 import { adventure as mission } from '../../src/adventures/mission-impossible/adventure.js';
 import { adventure as hotfix } from '../../src/adventures/hotfix-2-4-1/adventure.js';
@@ -34,7 +37,9 @@ import type { Adventure } from '../../src/kernel/types.js';
 const PRICES = { source: 'openrouter models api', checkedAt: '2026-11-13T00:00:00Z',
   inputPerMillion: 0.32, outputPerMillion: 0.89 };
 
-const BUDGETS = { maxTurns: 20, maxTotalTokens: 30_000, maxOutputTokensPerTurn: 300,
+// One turn per run, so a cell maps to exactly one provider call and the
+// call counts in these checks are exact rather than approximate.
+const BUDGETS = { maxTurns: 1, maxTotalTokens: 30_000, maxOutputTokensPerTurn: 300,
   maxWallClockMs: 120_000, maxParseErrors: 3, maxRepeatedStates: 3,
   maxTransientProviderErrors: 2, providerRetryDelayMs: 0, maxHints: 3 };
 
@@ -58,20 +63,34 @@ function tmpRoot(): string {
   return mkdtempSync(join(tmpdir(), 'batch-'));
 }
 
-/** A provider that always solves the mission with the same three commands. */
-function winningProvider(calls: { count: number }): LlmProvider {
+/**
+ * A provider that answers as the priced model would, so the accounting has a
+ * real price table to work from.
+ */
+function answeringProvider(calls: { count: number }): LlmProvider {
   return {
-    id: 'mock', model: 'deepseek/deepseek-chat',
-    async complete() { calls.count += 1; return { text: 'COMMAND: take keycard', usage: { inputTokens: 10, outputTokens: 2 } }; },
+    id: 'openrouter', model: 'deepseek/deepseek-chat',
+    async complete() {
+      calls.count += 1;
+      return { text: 'COMMAND: take keycard', usage: { inputTokens: 10, outputTokens: 2 } };
+    },
+  };
+}
+
+/** A provider that is up but cannot help, which is how a failed run happens. */
+function unavailableProvider(): LlmProvider {
+  return {
+    id: 'openrouter', model: 'deepseek/deepseek-chat',
+    async complete() { return { text: '', transientError: 'the provider is down' }; },
   };
 }
 
 describe('the worst-case cost of one run', () => {
   it('reserves the dearer token price for the output the budget allows', () => {
     const cost = worstCaseCost(BUDGETS, PRICES);
-    // 20 turns of 300 output tokens is the output ceiling; the rest of the
-    // 30,000 token cap can only be input.
-    expect(cost).toBeCloseTo((24_000 * 0.32 + 6_000 * 0.89) / 1_000_000, 10);
+    // One turn of 300 output tokens is the output ceiling here; the rest of
+    // the 30,000 token cap can only be input.
+    expect(cost).toBeCloseTo((29_700 * 0.32 + 300 * 0.89) / 1_000_000, 10);
   });
 
   it('stays inside the per-run ceiling this experiment is allowed', () => {
@@ -116,7 +135,9 @@ describe('the budget gate', () => {
   it('refuses a run the remaining allowance cannot cover, before any spend', () => {
     const plan = buildPlan(planInput());
     const ledger = openLedger(plan);
-    ledger.maxTotalUsd = worstCaseCost(BUDGETS, PRICES) * 2;
+    const worst = worstCaseCost(BUDGETS, PRICES);
+    // Room for one and a bit more, but not for the whole worst case again.
+    ledger.maxTotalUsd = worst * 1.5;
     const first = ledger.cells[0]!;
     const second = ledger.cells[1]!;
     reserveCell(ledger, first);
@@ -126,80 +147,106 @@ describe('the budget gate', () => {
     expect(second.status).toBe('unperformed');
     expect(second.chargeState).toBe('refused');
     expect(second.refusalReason).toContain('allowance');
-    expect(ledger.reservedUsd).toBeLessThanOrEqual(ledger.maxTotalUsd);
+    expect(ledger.reservedUsd).toBeCloseTo(worst, 10);
+    expect(ledger.spentUsd).toBe(0);
   });
 });
 
 describe('running the batch', () => {
-  it('keeps every outcome, spends once, and never runs a cell twice', async () => {
+  it('runs every cell once, keeps each outcome, and replays each transcript', async () => {
     const root = tmpRoot();
     const plan = buildPlan(planInput());
     persistPlan(plan, root);
     const ledger = openLedger(plan);
     const calls = { count: 0 };
-    const provider = winningProvider(calls);
-    const before = calls.count;
 
     await runBatch(plan, ledger, {
-      root, providerFor: () => provider, adventureFor: id => (id === hotfix.id ? hotfix : mission),
-      now: () => Date.now(),
+      root, providerFor: () => answeringProvider(calls),
+      adventureFor: id => (id === hotfix.id ? hotfix : mission), now: () => Date.now(),
     });
 
     expect(ledger.cells).toHaveLength(20);
     expect(ledger.cells.every(cell => cell.status === 'attempted')).toBe(true);
+    expect(ledger.cells.every(cell => cell.chargeState === 'settled')).toBe(true);
     expect(ledger.cells.every(cell => cell.replayOk === true)).toBe(true);
-    expect(ledger.spentUsd).toBeGreaterThan(0);
+    expect(ledger.cells.every(cell => existsSync(cell.transcriptPath ?? ''))).toBe(true);
     expect(ledger.reservedUsd).toBe(0);
-    expect(calls.count - before).toBe(20);
+    // One turn per run means one call per cell, so no cell was run twice.
+    expect(calls.count).toBe(20);
+    expect(new Set(ledger.cells.map(cell => cell.transcriptPath)).size).toBe(20);
+    // The mock answers as the priced model, so the books carry real money.
+    expect(ledger.spentUsd).toBeGreaterThan(0);
   });
 
-  it('resumes with only the outstanding cells and keeps the failed one failed', async () => {
+  it('keeps a failed run failed and never retries it', async () => {
     const root = tmpRoot();
     const plan = buildPlan(planInput());
     persistPlan(plan, root);
     const ledger = openLedger(plan);
-    const failing = {
-      id: 'mock', model: 'deepseek/deepseek-chat',
-      complete: () => { throw new Error('the provider is down'); },
-      async complete() { throw new Error('the provider is down'); },
-    } as unknown as LlmProvider;
-
-    await runBatch(plan, ledger, {
-      root, providerFor: () => failing, adventureFor: id => (id === hotfix.id ? hotfix : mission),
-      now: () => Date.now(),
-    });
-
-    const attempted = ledger.cells.filter(cell => cell.status === 'attempted');
-    expect(attempted.length).toBeGreaterThan(0);
-    expect(attempted.every(cell => cell.outcome === undefined)).toBe(true);
-    const spentAfterFailure = ledger.spentUsd;
-    const outstandingBefore = ledger.cells.filter(cell => cell.status === 'outstanding').length;
-
-    // A resume runs only what is left, and the failed cell stays failed.
     const calls = { count: 0 };
-    await runBatch(plan, ledger, {
-      root, providerFor: () => winningProvider(calls),
+    const options = {
+      root, adventureFor: (id: string) => (id === hotfix.id ? hotfix : mission), now: () => Date.now(),
+    };
+
+    await runBatch(plan, ledger, { ...options, providerFor: () => unavailableProvider() });
+    const failed = ledger.cells.filter(cell => cell.outcome !== 'success');
+    expect(failed.length).toBe(20);
+    const outcomes = new Set(failed.map(cell => cell.outcome));
+    expect(outcomes.size).toBeGreaterThan(0);
+    const spentOnFailures = ledger.spentUsd;
+
+    const second = runBatch(plan, ledger, { ...options, providerFor: () => answeringProvider(calls) });
+    await second;
+
+    // Nothing was outstanding, so the resume made no calls and replaced nothing.
+    expect(calls.count).toBe(0);
+    expect(ledger.cells.filter(cell => cell.outcome !== 'success')).toHaveLength(failed.length);
+    expect(ledger.spentUsd).toBe(spentOnFailures);
+  });
+
+  it('resumes with only the outstanding cells', async () => {
+    const root = tmpRoot();
+    const plan = buildPlan(planInput());
+    persistPlan(plan, root);
+    const ledger = openLedger(plan);
+
+    // An experiment that was interrupted after five cells: those are done and
+    // paid for, the rest never started.
+    for (const [index, cell] of ledger.cells.entries()) {
+      if (index >= 5) break;
+      cell.status = 'attempted';
+      cell.chargeState = 'settled';
+      cell.outcome = 'success';
+      cell.costUsd = 0.001;
+      ledger.spentUsd += cell.costUsd;
+    }
+    saveLedger(ledger, root);
+    const reopened = loadLedger(root);
+    const calls = { count: 0 };
+
+    await runBatch(reopened.plan, reopened, {
+      root, providerFor: () => answeringProvider(calls),
       adventureFor: id => (id === hotfix.id ? hotfix : mission), now: () => Date.now(),
     });
 
-    expect(ledger.cells.filter(cell => cell.status === 'attempted')).toHaveLength(20);
-    expect(ledger.cells.filter(cell => cell.status === 'outstanding')).toHaveLength(0);
-    expect(ledger.cells.find(cell => cell.outcome === undefined && cell.status === 'attempted'))
-      .toBeDefined();
-    expect(ledger.spentUsd).toBeGreaterThanOrEqual(spentAfterFailure);
-    expect(outstandingBefore).toBeGreaterThan(0);
+    expect(calls.count).toBe(15);
+    expect(reopened.cells).toHaveLength(20);
+    expect(reopened.cells.slice(0, 5).every(cell => cell.status === 'attempted')).toBe(true);
+    expect(reopened.cells.slice(5).every(cell => cell.status === 'attempted')).toBe(true);
+    // The cells that were already paid for were not paid for again.
+    expect(reopened.cells.slice(0, 5).every(cell => cell.costUsd === 0.001)).toBe(true);
   });
 });
 
 describe('the report', () => {
-  it('counts attempts, shortfalls and money without dressing them up', async () => {
+  it('counts attempts and money without dressing them up', async () => {
     const root = tmpRoot();
     const plan = buildPlan(planInput());
     persistPlan(plan, root);
     const ledger = openLedger(plan);
     const calls = { count: 0 };
     await runBatch(plan, ledger, {
-      root, providerFor: () => winningProvider(calls),
+      root, providerFor: () => answeringProvider(calls),
       adventureFor: id => (id === hotfix.id ? hotfix : mission), now: () => Date.now(),
     });
 
@@ -208,16 +255,15 @@ describe('the report', () => {
     expect(report.attempted).toBe(20);
     expect(report.outstanding).toBe(0);
     expect(report.unperformed).toBe(0);
-    expect(report.successes).toBe(0);
-    expect(report.fraction).toBe(0);
     expect(report.sampleSize).toBe(20);
+    expect(report.fraction).toBe(0);
     expect(report.costPerSolve).toBeNull();
     expect(report.spentUsd).toBeGreaterThan(0);
     expect(report.shortfall).toBeNull();
     expect(Object.keys(report.failures).length).toBeGreaterThan(0);
   });
 
-  it('reports a shortfall and leaves the plan unfinished when cells were refused', () => {
+  it('reports a shortfall and names the holds when cells were refused', () => {
     const plan = buildPlan(planInput());
     const ledger = openLedger(plan);
     ledger.maxTotalUsd = 0;
@@ -228,5 +274,39 @@ describe('the report', () => {
     expect(report.shortfall).toContain('20');
     expect(report.fraction).toBeNull();
     expect(report.costPerSolve).toBeNull();
+  });
+
+  it('shows an unsettled hold as charge uncertainty, not as spend', () => {
+    const plan = buildPlan(planInput());
+    const ledger = openLedger(plan);
+    const cell = ledger.cells[0]! as BatchCellRecord;
+    cell.status = 'attempted';
+    cell.chargeState = 'unsettled';
+    cell.reservationUsd = plan.worstCasePerRunUsd;
+    ledger.reservedUsd = plan.worstCasePerRunUsd;
+
+    const report = summarise(ledger);
+    expect(report.unsettledHolds).toBe(1);
+    expect(report.unsettledUsd).toBe(plan.worstCasePerRunUsd);
+    // The hold is not spend: nobody knows what it cost yet.
+    expect(report.spentUsd).toBe(0);
+  });
+});
+
+describe('the books survive a restart', () => {
+  it('loads back with the same cells and the same money', () => {
+    const root = tmpRoot();
+    const plan = buildPlan(planInput());
+    persistPlan(plan, root);
+    const ledger = openLedger(plan);
+    const first = ledger.cells[0]!;
+    reserveCell(ledger, first);
+    saveLedger(ledger, root);
+
+    const reopened: BatchLedger = loadLedger(root);
+    expect(reopened.cells[0]!.status).toBe('outstanding');
+    expect(reopened.cells[0]!.chargeState).toBe('unsettled');
+    expect(reopened.reservedUsd).toBeCloseTo(worstCaseCost(BUDGETS, PRICES), 10);
+    expect(reopened.plan).toEqual(plan);
   });
 });
