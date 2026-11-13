@@ -214,10 +214,9 @@ program
     try {
       switch (verb) {
         case 'plan': {
-          const plan = writePlan(parsed);
+          writePlan(parsed);
           console.log(describeBatch(parsed));
           console.log(`plan written to ${parsed.root}/plan.json`);
-          void plan;
           return;
         }
         case 'dry-run':
