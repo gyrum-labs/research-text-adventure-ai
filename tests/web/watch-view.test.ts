@@ -115,6 +115,11 @@ describe('the watched-run panel', () => {
     expect(part(root, 'watch-output').textContent).toBe('');
     expect(part(root, 'watch-output').textContent).not.toContain('take keycard');
     expect(part(root, 'watch-status').textContent).toContain('hotfix');
+
+    // The panel is usable again in the new world: another run can be started.
+    expect(part(root, 'watch-start').disabled).toBe(false);
+    expect(part(root, 'watch-policy').disabled).toBe(false);
+    expect(part(root, 'watch-stop').disabled).toBe(true);
   });
 
   it('clears the previous world\'s transcript when the world changes', async () => {
