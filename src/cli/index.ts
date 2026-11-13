@@ -17,9 +17,14 @@ import { runExp04 } from './exp-04.js';
 import { runExp05 } from './exp-05.js';
 import { runExp06 } from './exp-06.js';
 import { runComparison, renderComparison, providersFor } from './exp-08.js';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { MatrixConfig } from '../runner/matrix.js';
 import { createProvider, type ProviderName } from './provider.js';
+import {
+  writePlan, describeBatch, describeLedger, startBatch, publishReport, booksFor,
+  type BatchOptions,
+} from './batch.js';
 import { replayTranscript } from '../runner/replay.js';
 
 const program = new Command();
@@ -186,6 +191,65 @@ program
   .action(() => {
     for (const adventure of Object.values(ADVENTURES)) {
       console.log(`${adventure.id}  ${adventure.title}  (${adventure.version})`);
+    }
+  });
+
+program
+  .command('batch')
+  .description('The repeatability experiment: ten runs per world. Only `start` calls a model.')
+  .option('--root <dir>', 'where the plan, books and runs live', 'runs/batch')
+  .option('--runs <n>', 'runs per world', '10')
+  .option('--model <name>', 'the model to ask for', 'deepseek/deepseek-chat')
+  .option('--max-total-usd <usd>', 'the most this experiment may spend', '0.40')
+  .option('--max-per-run-usd <usd>', 'the most one run may be reserved for', '0.02')
+  .action(async (options: Record<string, string>, command: { args: string[] }) => {
+    const parsed: BatchOptions = {
+      root: options.root!,
+      runs: Number(options.runs),
+      model: options.model!,
+      maxTotalUsd: Number(options.maxTotalUsd),
+      maxPerRunUsd: Number(options.maxPerRunUsd),
+    };
+    const verb = command.args[0] ?? 'help';
+    try {
+      switch (verb) {
+        case 'plan': {
+          const plan = writePlan(parsed);
+          console.log(describeBatch(parsed));
+          console.log(`plan written to ${parsed.root}/plan.json`);
+          void plan;
+          return;
+        }
+        case 'dry-run':
+          console.log(describeBatch(parsed));
+          console.log('dry run: no model was called.');
+          return;
+        case 'status': {
+          if (!existsSync(join(parsed.root, 'plan.json'))) {
+            console.log('no plan on disk. Run `batch plan` first.');
+            return;
+          }
+          const { ledger } = booksFor(parsed);
+          console.log(describeLedger(ledger));
+          return;
+        }
+        case 'start': {
+          console.log(await startBatch(parsed));
+          return;
+        }
+        case 'report': {
+          console.log(`findings written to ${publishReport(parsed)}`);
+          const { ledger } = booksFor(parsed);
+          console.log(describeLedger(ledger));
+          return;
+        }
+        default:
+          console.log('usage: batch <plan|dry-run|status|start|report> [--root dir] [--runs n]');
+          return;
+      }
+    } catch (error) {
+      console.log(`batch ${verb} failed: ${error instanceof Error ? error.message : String(error)}`);
+      process.exitCode = 1;
     }
   });
 
