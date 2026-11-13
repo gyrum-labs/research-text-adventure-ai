@@ -102,6 +102,34 @@ describe('switching worlds', () => {
     expect(switcher.scenarioId).toBe(defaultScenarioId());
   });
 
+  it('puts the old world back and reports it when the new one cannot be shown', async () => {
+    const original = new InMemorySession('web-original', missionImpossible);
+    const log: SwitchLog = { opened: [], shown: [], watched: [], errors: [] };
+    let shown = 0;
+    const switcher = createScenarioSwitcher(defaultScenarioId(), {
+      initial: original,
+      openSession: async (id) => {
+        log.opened.push(id);
+        return new InMemorySession(`web-${id}`, id === hotfix.id ? hotfix : missionImpossible);
+      },
+      showSession: async (session) => {
+        shown += 1;
+        log.shown.push(session);
+        if (shown === 1) throw new Error('the terminal could not be built');
+      },
+      watchScenario: (id) => { log.watched.push(id); },
+      reportError: (message) => { log.errors.push(message); },
+    });
+
+    await switcher.select(hotfix.id);
+
+    expect(log.errors).toHaveLength(1);
+    expect(log.errors[0]).toContain('terminal could not be built');
+    expect(switcher.scenarioId).toBe(defaultScenarioId());
+    // The world that was on show is put back, so the reader has a game to play.
+    expect(log.shown.map(session => session.adventure.id)).toEqual([hotfix.id, missionImpossible.id]);
+  });
+
   it('stops the watched run before it shows the new world', async () => {
     const order: string[] = [];
     const switcher = createScenarioSwitcher(defaultScenarioId(), {

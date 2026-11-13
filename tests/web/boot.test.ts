@@ -10,7 +10,7 @@
  * the code under test is the code the page runs.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { boot } from '../../src/web/index.js';
 import { adventure as mission } from '../../src/adventures/mission-impossible/adventure.js';
 import { adventure as hotfix } from '../../src/adventures/hotfix-2-4-1/adventure.js';
@@ -24,6 +24,7 @@ function page(options: { withWatch?: boolean } = {}): {
   note: StubElement;
   play: StubElement;
   watch: StubElement;
+  panel: StubElement;
 } {
   const doc = new StubDocument();
   const terminal = stub('terminal', 'section');
@@ -39,8 +40,9 @@ function page(options: { withWatch?: boolean } = {}): {
   doc.body.appendChild(note);
   doc.body.appendChild(play);
   doc.body.appendChild(watch);
+  let panel: StubElement | undefined;
   if (options.withWatch !== false) {
-    const panel = stub('watch', 'section');
+    panel = stub('watch', 'section');
     for (const className of ['watch-start', 'watch-stop', 'watch-note', 'watch-output', 'watch-log', 'watch-status', 'watch-usage']) {
       panel.appendChild(classed(className));
     }
@@ -55,7 +57,7 @@ function page(options: { withWatch?: boolean } = {}): {
     panel.appendChild(policy);
     doc.body.appendChild(panel);
   }
-  return { doc, terminal, select, note, play, watch };
+  return { doc, terminal, select, note, play, watch, panel: panel! };
 }
 
 /** The terminal's output, as the reader sees it. */
@@ -132,6 +134,51 @@ describe('the page', () => {
     expect(outputOf(terminal)).toContain(mission.brief);
     expect(watch.getAttribute('aria-pressed')).toBe('false');
     expect(play.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('stops the watched run when the tab is hidden', async () => {
+    const { doc, terminal, panel } = page();
+    const status = panel.children.find(child => child.className === 'watch-status');
+    const policy = panel.children.find(child => child.className === 'watch-policy');
+    if (status === undefined || policy === undefined) throw new Error('the panel is missing parts');
+    const requests: Array<{ url: string; method?: string }> = [];
+    const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(((url: string, init?: RequestInit) => {
+      const target = String(url);
+      requests.push({ url: target, method: init?.method });
+      if (target.endsWith('/api/health')) return Promise.resolve(Response.json({ ok: true, ai: null }));
+      if (target.endsWith('/api/runs') && init?.method === 'POST') {
+        return Promise.resolve(Response.json({ id: 'run/one' }, { status: 201 }));
+      }
+      if (target.includes('/stream')) {
+        return new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new DOMException('stopped', 'AbortError')), { once: true });
+        });
+      }
+      if (init?.method === 'DELETE') return Promise.resolve(Response.json({ stopped: true }));
+      return Promise.resolve(new Response('', { status: 404 }));
+    }) as typeof fetch);
+
+    try {
+      await boot(terminal as unknown as HTMLElement, { mode: 'memory' }, asDocument(doc));
+      policy.value = 'llm';
+      const start = panel.children.find(child => child.className === 'watch-start')!;
+      start.fire('click');
+      await settle();
+      expect(requests.some(request => request.url.endsWith('/api/runs'))).toBe(true);
+
+      doc.hidden = true;
+      doc.fire('visibilitychange');
+      await settle();
+
+      expect(status.textContent).toContain('hidden');
+      expect(requests.some(request => request.method === 'DELETE')).toBe(true);
+
+      doc.fire('pagehide');
+      await settle();
+      expect(status.textContent).toContain('hidden');
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it('refuses a world that does not exist before it opens anything', async () => {

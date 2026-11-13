@@ -42,6 +42,8 @@ export interface ScenarioSwitchOptions {
   watchScenario(adventureId: string): void;
   /** Report a refusal. The reader stays where they were. */
   reportError(message: string): void;
+  /** The world already on show, so a switch that fails late can put it back. */
+  initial?: Session;
 }
 
 /** A client that can move between worlds. */
@@ -56,6 +58,7 @@ export interface ScenarioSwitcher {
 export function createScenarioSwitcher(start: string, options: ScenarioSwitchOptions): ScenarioSwitcher {
   let current = start;
   let attempt = 0;
+  let shown = options.initial;
   return {
     get scenarioId(): string {
       return current;
@@ -77,8 +80,21 @@ export function createScenarioSwitcher(start: string, options: ScenarioSwitchOpt
       // A later request has moved on; this one no longer decides anything.
       if (mine !== attempt) return;
       options.watchScenario(adventureId);
-      await options.showSession(session);
+      try {
+        await options.showSession(session);
+      } catch (error) {
+        // The old world is still the one the switcher owns, so put it back
+        // rather than leave the reader a blank game and no explanation.
+        if (mine !== attempt) return;
+        try {
+          if (shown !== undefined) await options.showSession(shown);
+        } catch { /* the reader keeps the error below either way */ }
+        if (mine !== attempt) return;
+        options.reportError(`Could not open ${titleOf(adventureId)}: ${reasonOf(error)}`);
+        return;
+      }
       if (mine !== attempt) return;
+      shown = session;
       current = adventureId;
     },
   };

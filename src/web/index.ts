@@ -71,6 +71,7 @@ export async function boot(
   const note = documentImpl.querySelector<HTMLElement>('.scenario-note');
   const select = documentImpl.querySelector<HTMLSelectElement>('.scenario-select');
   const switcher = createScenarioSwitcher(requested, {
+    initial: session,
     openSession: adventureId => openSession({ mode, baseUrl: config.baseUrl, adventureId }),
     showSession: async next => {
       root.textContent = '';
