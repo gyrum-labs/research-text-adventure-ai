@@ -158,6 +158,7 @@ The experiments, in the order the plan builds them:
 - `exp-04-why-it-failed`
 - `exp-05-the-matrix`
 - `exp-06-an-organisation`
+- `exp-08-the-engine-comparison`
 
 The artefacts the series has produced:
 
