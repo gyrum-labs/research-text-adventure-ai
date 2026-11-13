@@ -43,19 +43,20 @@ export async function boot(
   const mode = config.mode ?? 'memory';
   const session = await openSession({ mode, baseUrl: config.baseUrl, adventureId: requested });
   await createTerminal({ document: documentImpl, root, session });
-  const watchRoot = documentImpl.querySelector<HTMLElement>('#watch');
-  if (watchRoot === null) return;
 
-  const watch = mountWatchView(watchRoot, {
-    baseUrl: config.baseUrl ?? window.location.origin,
+  // The watched panel is optional. A static host serves the game without the
+  // demo server, so the choice of world cannot depend on it.
+  const watchRoot = documentImpl.querySelector<HTMLElement>('#watch');
+  const watch = watchRoot === null ? undefined : mountWatchView(watchRoot, {
+    baseUrl: config.baseUrl ?? globalThis.location?.origin ?? '',
     adventureId: session.adventure.id,
   });
   const playButton = documentImpl.querySelector<HTMLButtonElement>('#play-mode');
   const watchButton = documentImpl.querySelector<HTMLButtonElement>('#watch-mode');
   const show = (watching: boolean): void => {
-    if (!watching) watch.stop('Stopped the run.');
+    if (!watching) watch?.stop('Stopped the run.');
     root.hidden = watching;
-    watchRoot.hidden = !watching;
+    if (watchRoot !== null) watchRoot.hidden = !watching;
     playButton?.setAttribute('aria-pressed', String(!watching));
     watchButton?.setAttribute('aria-pressed', String(watching));
   };
@@ -70,7 +71,7 @@ export async function boot(
       root.textContent = '';
       await createTerminal({ document: documentImpl, root, session: next });
     },
-    watchScenario: adventureId => watch.setScenario(adventureId),
+    watchScenario: adventureId => watch?.setScenario(adventureId),
     reportError: message => {
       if (note !== null) note.textContent = message;
       if (select !== null) select.value = switcher.scenarioId;
@@ -89,9 +90,9 @@ export async function boot(
 
   // A tab nobody is looking at should not hold a model request open.
   documentImpl.addEventListener('visibilitychange', () => {
-    if (documentImpl.hidden) watch.stop('Stopped the run because the tab was hidden.');
+    if (documentImpl.hidden) watch?.stop('Stopped the run because the tab was hidden.');
   });
-  documentImpl.addEventListener('pagehide', () => { watch.stop(); });
+  documentImpl.addEventListener('pagehide', () => { watch?.stop(); });
 }
 
 if (typeof document !== 'undefined' && typeof window !== 'undefined') {
