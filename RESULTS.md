@@ -279,9 +279,10 @@ bounds the pooled rate below 2.0%, and 0 of 200 across both attempts.
 
 ## Phase 8: is our engine the reason it works?
 
-**On the other engine the agent does no better, and on the one model our engine
-can solve it does worse. The instrument is carrying weight, and the series
-should say so.**
+**The control refused to give a simple answer, and that refusal is the result.
+Across two sweeps the agent has been 0/10, 3/10, 10/10 and 0/10 on the other
+engine in the same cell, while scoring 4/10 on ours. No engine wins on a single
+sweep; what survives every sweep and both engines is the no-history control.**
 
 Phase 8 is the control on everything above. The same agent, the same prompt,
 the same budgets, the same transcript format and the same taxonomy were run
@@ -296,27 +297,49 @@ prose observations and the full history.
 | gpt-4.1-mini | **4/10** | **0/10** | 5 hallucination, 1 loop | 10 x planning |
 | glm 4.5 air | 0/10 | 0/10 | 10 x hallucination | 10 x planning |
 
-Two readings, and the second is the one to keep.
+**Then the full grid ran, and the first sweep's story broke.** The same
+comparison was repeated over all five conditions, three models, ten seeds:
+150 runs. The frontier model, which had scored 0/10 on QuestKit in the first
+sweep, scored 10/10 in condition A of the second: the same cells, the same
+seeds, the same port. A reading built on one sweep would have said the agent
+cannot solve the game on the other engine, and the second sweep says it wins
+every time it tries.
 
-**The agent does not transfer.** The model that solves our world 40% of the
-time solves the other one none of the time, and the two models that score
-zero on ours stay at zero. Whatever makes the mission solvable here is not
-the model's general ability with text adventures; it is something about how
-this engine presents the world.
+| Model | Ours A | Ours B | Ours C | Ours D | Ours E | QuestKit A | QuestKit B | QuestKit C | QuestKit D | QuestKit E |
+|---|---|---|---|---|---|---|---|---|---|---|
+| claude sonnet 4.5 | 0 | 9 | 7 | 0 | 8 | 10 | 0 | 9 | 0 | 0 |
+| gpt-4.1-mini | 4 | 5 | 0 | 0 | 2 | 3 | 0 | 0 | 0 | 0 |
+| glm 4.5 air | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | not run |
 
-**But the difference is not significant, and the honest claim is "no better",
-not "worse".** With ten seeds a cell of 4/10 and a cell of 0/10 overlap: the
-Wilson intervals are 20 to 70% and 0 to 28%. What the comparison settles is
-that the other engine does not give the agent an advantage; what it does not
-settle is that it takes one away.
+(Counts of ten. The QuestKit grid for glm 4.5 air stopped in condition E, when
+the OpenRouter key's fifty-dollar limit ran out: nine runs died as provider
+errors and the tenth is ambiguous, so the cell is excluded rather than
+averaged. That is the same funding failure that cut the organisation grid,
+on the same key.)
+
+What the full grid says, and does not:
+
+- **The memorylessness finding survives the engine.** Condition D, the
+  no-history control, is 0 for every model on both engines: 0 of 30 on ours,
+  0 of 30 on the port. Of everything in this series, that is the result that
+  reproduces furthest from home.
+- **The frontier model can win on the other engine.** 10/10 in condition A,
+  9/10 in condition C: the mission is solvable through QuestKit's surface,
+  by a model that cannot solve it through ours in the same condition. So our
+  engine was carrying weight for that model, and the direction of the load
+  depends on the sweep.
+- **The condition pattern does not transfer cleanly.** On ours the frontier
+  model needs a structured or JSON view (B 9, C 7, E 8 against A 0); on
+  QuestKit prose is its best condition (A 10) and every JSON rendering scores
+  0 or nothing. A finding about renderers measured in one engine does not
+  transfer to the other, which is a warning about every renderer claim above.
+- **gpt-4.1-mini solves less everywhere.** 11 of 50 on ours, 3 of 50 on
+  QuestKit, with no condition above 3.
 
 **The failure mode moves, and it moves the informative way.** On our engine
-the models fail by hallucination: 88 of 100 runs in these cells named objects
-that were not in the room. On QuestKit every one of the 30 runs is a planning
-loop, the model repeating an action that had already failed. Two engines, one
-agent, two different mistakes, and the second one is the engine talking: the
-toolkit's surface is a wall of prose that lists everything in the room and
-every exit, and a model that tries to move through it circles.
+the frontier model fails these cells by hallucination; on QuestKit the same
+model's failures are planning loops, repeats of an action that had already
+failed. Two engines, one agent, two different mistakes.
 
 **What is being compared, exactly.** The observation surfaces differ by
 construction, and that difference cannot be separated from the engine in this
@@ -348,14 +371,16 @@ they are the kind of thing only a comparison finds: a command pattern with two
 first; and the engine's `set` only takes three arguments when the value is
 truthy, so `set(exit, 'locked', false)` sets the wrong thing entirely.
 
-**What this does not settle.** One condition, three models, ten seeds, and a
-port written by the same hand as the engine it is compared against. The port
-is tested (its gold path wins under the toolkit, and its lock, its code, its
-case and its bomb each have a test), but a port is not the original game, and
-a difference between the two could be a difference between the port and the
-original rather than between the engines. The claim this supports is the
-narrow one: **the numbers in this document are not a fact about the agent
-alone.**
+**What this does not settle.** A port written by the same hand as the engine
+it is compared against can only be checked for sameness, not for innocence:
+a differential test now compares the two worlds room by room, object by
+object, door by door, verb by verb and command by command, and fails when
+they stop matching, but a port is not the original game. Ten seeds per cell
+cannot make a 4/10 and a 0/10 significant, and the two sweeps disagree by ten
+solved runs in the same cell, which is more than any engine difference
+explains. The claim this supports is the narrow one: **the numbers in this
+document are not a fact about the agent alone, and they are not yet a fact
+about the engine alone either.**
 
 ## Threats to validity
 
@@ -376,6 +401,11 @@ alone.**
   hallucinates, misreads and loops, and the weights between the nine categories would change.
 - **One adventure, then two.** Two worlds is enough to show the vocabulary transfers and not
   enough to say it transfers in general.
+- **The engine comparison is one condition deep where it counts, and sweep-fragile.** The
+  full grid ran once, its first sweep disagreed with it by ten solved runs in one cell, and
+  the frontier model's prose cell swung from 0/10 to 10/10. Ten seeds a cell cannot settle an
+  engine difference of that size; a reader should treat every engine claim here as one sweep's
+  evidence, not a verdict.
 - **The organisation matrix needed two attempts.** The first was cut short by provider credit,
   and its payment-failed runs were deleted rather than counted; the second completed every
   OpenRouter cell after funding. glm 5.3's fifty valid runs from the first attempt have no
@@ -425,10 +455,11 @@ first attempt agree from the preserved summary.
 >   rate by 35 percentage points. The JSON observation is read better and costs more.
 > - The vocabulary transfers. A second world was written with no change to the kernel, and the
 >   only thing it cost was one rule about argument shapes that a single world never reveals.
-> - The engine is part of the result. The same agent, prompt and budgets score 4/10 on our
->   engine and 0/10 on QuestKit's for the one model that can solve the game at all, and the
->   failure changes from hallucination to looping. The numbers here are not a fact about the
->   agent alone, and the comparison that shows it is now part of the series.
+> - The engine is part of the result, and so is the sweep. The frontier model scored 0/10 on
+>   QuestKit in one sweep and 10/10 in the next, in the same cells; on our engine it is 0/10
+>   in prose and 9/10 in JSON. What survives every engine and every sweep is the no-history
+>   control, 0 everywhere. Single-sweep claims about engines do not survive contact with a
+>   second sweep.
 > - The organisation world is where the live agents stop: 0 solves on 150 completed-grid runs
 >   and 0 on glm 5.3's fifty from the first attempt. The failure is hallucination, not
 >   hesitancy: 88 of 150 runs acted on objects that were not in the room, and longer budgets

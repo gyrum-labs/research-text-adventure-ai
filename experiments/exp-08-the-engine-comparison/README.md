@@ -64,19 +64,23 @@ kind of thing a comparison only finds by trying:
 
 ## What was measured
 
-Thirty live runs: three models, ten seeds each, the same condition the matrix uses
-(prose observations, the full history), the same prompt, the same budgets.
+Sweep one covered condition A only: thirty runs, three models, ten seeds. The agent did no
+better on the other engine, and worse for the one model our engine solves (4/10 to 0/10),
+with the failure moving from hallucination to looping.
 
-| Model | Our engine | QuestKit | Our failures | QuestKit failures |
-|---|---|---|---|---|
-| claude sonnet 4.5 | 0/10 | 0/10 | 10 x hallucination | 10 x planning |
-| gpt-4.1-mini | 4/10 | 0/10 | 5 hallucination, 1 loop | 10 x planning |
-| glm 4.5 air | 0/10 | 0/10 | 10 x hallucination | 10 x planning |
+Sweep two ran the full five-condition grid, three models, ten seeds: 150 runs, of which 140
+count. The frontier model's condition A swung from 0/10 in sweep one to 10/10 here, so the
+table below is one sweep's evidence, not a verdict.
 
-The agent does no better on the other engine, and worse for the one model our engine can
-solve. The failure moves from naming objects that are not there to repeating an action that
-has already failed, which is the other engine's surface talking: QuestKit lists everything
-in the room and every exit, and a model moving through that wall circles.
+| Model | Ours A | Ours B | Ours C | Ours D | Ours E | QuestKit A | QuestKit B | QuestKit C | QuestKit D | QuestKit E |
+|---|---|---|---|---|---|---|---|---|---|---|
+| claude sonnet 4.5 | 0 | 9 | 7 | 0 | 8 | 10 | 0 | 9 | 0 | 0 |
+| gpt-4.1-mini | 4 | 5 | 0 | 0 | 2 | 3 | 0 | 0 | 0 | 0 |
+| glm 4.5 air | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | not run |
+
+What reproduces across both engines and both sweeps is the no-history control: 0 solves
+everywhere. What does not is the renderer effect: on our engine the frontier model needs a
+JSON or structured view, and on QuestKit prose is its best condition.
 
 The authoring cost runs the other way: the port's world definition is 431 lines and 11,323
 bytes against our 569 lines and 18,578 bytes, because the toolkit hands over six verbs that
