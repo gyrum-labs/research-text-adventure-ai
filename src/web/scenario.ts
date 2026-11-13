@@ -17,7 +17,15 @@ export interface ScenarioChoice {
   title: string;
 }
 
-/** The worlds on offer, in the order they are listed. */
+/**
+ * The worlds on offer, in the order they are listed.
+ *
+ * The order is the order the worlds ship in, and the first of them is the
+ * world the page opens. That is a decision worth keeping: the ticket pins the
+ * existing default world, and tests/web/scenario.test.ts pins both the list
+ * and the default, so a refactor that reorders them fails loudly instead of
+ * quietly changing which mission a reader lands in.
+ */
 export function scenarioChoices(): ScenarioChoice[] {
   return Object.entries(ADVENTURES).map(([id, adventure]) => ({ id, title: adventure.title }));
 }
