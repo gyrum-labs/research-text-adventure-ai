@@ -170,11 +170,19 @@ still stop an agent run as a loop; advancing the turn counter alone does not cou
 | Run with no network or cost | `npm run agent -- --provider mock` | The same pipeline, deterministic |
 | Check a recorded run | `npm run replay -- runs/<file>.jsonl` | Exit 0 if the engine reproduced the run exactly |
 | Sweep the experiment matrix | `npm run sweep` | `results/summary.json` and `results/summary.md` |
+| Plan the repeatability batch | `npx tsx src/cli/index.ts batch plan` | `runs/batch/plan.json`, with prices checked and dated |
+| See what a batch would do | `npx tsx src/cli/index.ts batch dry-run` | The cells and their reservations. No model is called |
+| Run the repeatability batch | `npx tsx src/cli/index.ts batch start` | Twenty runs, ten per world, every outcome kept |
+| Report a finished batch | `npx tsx src/cli/index.ts batch report` | Dated findings with the fractions, costs and shortfalls |
 | Read the docs in a browser | `pydocs .` | This repository's Markdown, with search and Mermaid |
 
 For the full walkthrough of the experiment series, start at
 [`experiments/README.md`](../experiments/README.md). Each experiment has its own README with the
 idea, the tests and the acceptance criteria.
+
+The 2026-11-13 batch ran twenty times across both worlds and is written up in
+[`docs/batch-findings-2026-11-13.md`](batch-findings-2026-11-13.md). Only `batch start` calls a
+model; `plan`, `dry-run`, `status` and `report` read and write files.
 
 > **Key takeaways**
 >
