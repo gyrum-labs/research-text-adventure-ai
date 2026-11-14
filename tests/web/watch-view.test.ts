@@ -26,6 +26,12 @@ function watchPanel(): StubElement {
   add('div', 'watch-status');
   add('div', 'watch-usage');
   add('div', 'watch-limits');
+  const savedControls = classed('watch-saved-controls', 'div');
+  savedControls.appendChild(classed('saved-runs', 'select'));
+  savedControls.appendChild(classed('saved-open', 'button'));
+  savedControls.appendChild(classed('saved-replay', 'button'));
+  root.appendChild(savedControls);
+  add('pre', 'watch-saved');
   return root;
 }
 

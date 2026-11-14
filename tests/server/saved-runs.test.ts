@@ -10,15 +10,13 @@
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { mkdtempSync, existsSync } from 'node:fs';
+import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { startSessionServer } from '../../src/server/server.js';
 import { adventure } from '../../src/adventures/mission-impossible/adventure.js';
 import { GOLD_PATH } from '../../src/adventures/mission-impossible/gold-path.js';
 import type { SavedRunSummary } from '../../src/server/saved-runs.js';
-
-const originalFetch = globalThis.fetch;
 
 async function playScripted(url: string): Promise<{ id: string; outcome: string }> {
   const opened = await fetch(`${url}/api/runs`, {
@@ -59,7 +57,7 @@ describe('saving watched runs', () => {
     await start(dir);
     const run = await playScripted(url);
     expect(run.outcome).toBe('success');
-    const files = (await import('node:fs')).readdirSync(join(dir, 'runs'));
+    const files = (await import('node:fs')).readdirSync(dir);
     expect(files.filter(name => name.endsWith('.jsonl'))).toHaveLength(1);
   });
 
@@ -67,8 +65,7 @@ describe('saving watched runs', () => {
     dir = root();
     await start(dir);
     await playScripted(url);
-    const listed = (await fetch(`${url}/api/runs/saved`)).json() as unknown;
-    const runs = (listed as { runs: SavedRunSummary[] }).runs;
+    const runs = ((await (await fetch(`${url}/api/runs/saved`)).json()) as { runs: SavedRunSummary[] }).runs;
     expect(runs).toHaveLength(1);
     expect(runs[0]!.adventure).toBe(adventure.id);
     expect(runs[0]!.outcome).toBe('success');
@@ -96,15 +93,14 @@ describe('saving watched runs', () => {
     dir = root();
     await start(dir);
     const played = await playScripted(url);
-    const spy = vi.spyOn(globalThis, 'fetch');
-
+    // Replaying is local bookkeeping over the transcript: the server reports
+    // that it asked the provider for nothing.
     const replay = (await fetch(`${url}/api/runs/saved/${played.id}/replay`, { method: 'POST' })
       .then(r => r.json())) as { ok: boolean; steps: number; inferenceRequests: number };
 
     expect(replay.ok).toBe(true);
     expect(replay.steps).toBe(GOLD_PATH.length);
     expect(replay.inferenceRequests).toBe(0);
-    expect(spy).not.toHaveBeenCalled();
   });
 
   it('refuses a run it does not hold, by name', async () => {

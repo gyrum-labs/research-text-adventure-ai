@@ -25,11 +25,15 @@ function page(options: { withWatch?: boolean } = {}): {
   play: StubElement;
   watch: StubElement;
   panel: StubElement;
+  savedSelect: StubElement;
 } {
   const doc = new StubDocument();
   const terminal = stub('terminal', 'section');
   const select = classed('scenario-select', 'select');
   const note = classed('scenario-note', 'span');
+  const savedSelect = classed('saved-runs', 'select');
+  const savedOpen = classed('saved-open', 'button');
+  const savedReplay = classed('saved-replay', 'button');
   const play = stub('play-mode', 'button');
   const watch = stub('watch-mode', 'button');
   // The markup opens in Play mode, and the buttons say so.
@@ -38,12 +42,15 @@ function page(options: { withWatch?: boolean } = {}): {
   doc.body.appendChild(terminal);
   doc.body.appendChild(select);
   doc.body.appendChild(note);
+  doc.body.appendChild(savedSelect);
+  doc.body.appendChild(savedOpen);
+  doc.body.appendChild(savedReplay);
   doc.body.appendChild(play);
   doc.body.appendChild(watch);
   let panel: StubElement | undefined;
   if (options.withWatch !== false) {
     panel = stub('watch', 'section');
-    for (const className of ['watch-start', 'watch-stop', 'watch-note', 'watch-output', 'watch-log', 'watch-status', 'watch-usage', 'watch-limits']) {
+    for (const className of ['watch-start', 'watch-stop', 'watch-note', 'watch-output', 'watch-log', 'watch-status', 'watch-usage', 'watch-limits', 'saved-runs', 'saved-open', 'saved-replay', 'watch-saved']) {
       panel.appendChild(classed(className));
     }
     const policy = classed('watch-policy', 'select');
@@ -57,7 +64,7 @@ function page(options: { withWatch?: boolean } = {}): {
     panel.appendChild(policy);
     doc.body.appendChild(panel);
   }
-  return { doc, terminal, select, note, play, watch, panel: panel! };
+  return { doc, terminal, select, note, play, watch, panel: panel!, savedSelect };
 }
 
 /** The terminal's output, as the reader sees it. */
