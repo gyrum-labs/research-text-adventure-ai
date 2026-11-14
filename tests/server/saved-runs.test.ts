@@ -183,7 +183,7 @@ describe('saving watched runs', () => {
 
       // The store holds the paid run, prompt evidence and all, and replays it.
       const saved = ((await (await fetch(`${url}/api/runs/saved/${id}`)).json()) as {
-        commands: unknown[]; outcome: string;
+        commands: Array<{ raw: string }>; outcome: string;
       });
       expect(saved.commands.map(command => command.raw)).toEqual(GOLD_PATH);
       expect(saved.outcome).toBe('success');
