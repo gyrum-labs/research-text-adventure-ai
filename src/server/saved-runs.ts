@@ -122,6 +122,7 @@ export class SavedRunStore {
 
   /** Where a run's transcript lives. */
   transcriptPath(id: string): string {
+    if (!isSavedRunId(id)) throw new Error(`a run id must be a simple name, not "${id}"`);
     return pathFor(this.root, id);
   }
 
