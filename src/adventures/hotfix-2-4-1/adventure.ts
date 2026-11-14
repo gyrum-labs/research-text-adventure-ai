@@ -49,7 +49,7 @@ function objectState(at: string | null, flags: Record<string, boolean> = {}): Ga
 export const adventure: Adventure = {
   id: 'hotfix-2-4-1',
   title: 'The 2.4.1 Hotfix',
-  version: '1.0.4',
+  version: '1.0.5',
 
   brief:
     'The customer SLA expires at 17:00 and the 2.4.1 hotfix is not shipped. Two objectives: ' +
@@ -355,7 +355,7 @@ export const adventure: Adventure = {
         { op: 'arg_in_room', arg: 'target' },
         { op: 'arg_equals', arg: 'target', value: 'release_gate' },
         { op: 'arg_flag', arg: 'target', key: 'unlocked', value: false },
-        { op: 'arg_equals', arg: 'with', value: 'incident-ticket' },
+        { op: 'arg_equals', arg: 'with', value: 'incident ticket' },
         { op: 'carrying', object: 'incident_ticket' },
       ],
       effects: [{ op: 'set_arg_flag', arg: 'target', key: 'unlocked', value: true }],

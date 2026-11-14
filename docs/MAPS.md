@@ -278,7 +278,7 @@ graph LR
   s3["open shared inbox"]--> s4
   s4["claim deploy credential"]--> s5
   s5["read release runbook"]--> s6
-  s6["unlock release gate with incident-ticket"]--> s7
+  s6["unlock release gate with incident ticket"]--> s7
   s7["deploy release-2.4.1 with deploy credential"]--> s8
   s8["go customer success"]--> s9
   s9["unlock customer handover with 7311"]--> s10
@@ -292,7 +292,7 @@ graph LR
 | 3 | `open shared inbox` |
 | 4 | `claim deploy credential` |
 | 5 | `read release runbook` |
-| 6 | `unlock release gate with incident-ticket` |
+| 6 | `unlock release gate with incident ticket` |
 | 7 | `deploy release-2.4.1 with deploy credential` |
 | 8 | `go customer success` |
 | 9 | `unlock customer handover with 7311` |
