@@ -257,6 +257,10 @@ const ROUTES: Route[] = [
         json(response, 404, { error: `unknown saved run: ${params['id']}` });
         return;
       }
+      if (replay.error !== undefined) {
+        json(response, 422, { error: replay.error });
+        return;
+      }
       json(response, 200, replay);
     },
   },

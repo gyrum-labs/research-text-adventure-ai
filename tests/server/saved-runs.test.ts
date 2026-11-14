@@ -123,4 +123,18 @@ describe('saving watched runs', () => {
     const replay = await fetch(`${url}/api/runs/saved/${played.id}/replay`, { method: 'POST' });
     expect(((await replay.json()) as { ok: boolean }).ok).toBe(true);
   });
+
+  it('refuses a tampered transcript by name instead of crashing', async () => {
+    dir = root();
+    await start(dir);
+    const played = await playScripted(url);
+    const path = join(dir, `${played.id}.jsonl`);
+    (await import('node:fs')).writeFileSync(path, '{ not json');
+
+    const opened = await fetch(`${url}/api/runs/saved/${played.id}`);
+    expect(opened.status).toBe(404);
+    const replay = await fetch(`${url}/api/runs/saved/${played.id}/replay`, { method: 'POST' });
+    expect(replay.status).toBe(404);
+    expect(((await replay.json()) as { error: string }).error).toContain(played.id);
+  });
 });

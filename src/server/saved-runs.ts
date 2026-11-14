@@ -30,6 +30,15 @@ export interface SavedRunSummary {
   hash: string;
 }
 
+/** What replaying produced. An unreadable transcript reports an error, not a mismatch. */
+export interface SavedReplay {
+  ok: boolean;
+  steps: number;
+  inferenceRequests: 0;
+  mismatch: unknown;
+  error?: string;
+}
+
 /** A saved run opened for inspection. */
 export interface SavedRun {
   id: string;
@@ -157,12 +166,19 @@ export class SavedRunStore {
    * chain. Nothing is asked of any provider, and the world's current
    * definition is what the commands are re-applied to.
    */
-  replay(id: string): { ok: boolean; steps: number; inferenceRequests: 0; mismatch: unknown } | null {
+  replay(id: string): SavedReplay | null {
     const opened = this.open(id);
     if (opened === null) return null;
     const adventure: Adventure | undefined = ADVENTURES[opened.adventure] ?? undefined;
     if (adventure === undefined) return null;
-    const result = replayTranscript(pathFor(this.root, id), adventure);
-    return { ok: result.ok, steps: result.steps, inferenceRequests: 0, mismatch: result.mismatch };
+    try {
+      const result = replayTranscript(pathFor(this.root, id), adventure);
+      return { ok: result.ok, steps: result.steps, inferenceRequests: 0, mismatch: result.mismatch };
+    } catch (error) {
+      // A transcript this store wrote is readable; one a caller tampered with
+      // is not a reason to hand an internal error to the reader.
+      return { ok: false, steps: 0, inferenceRequests: 0, mismatch: null,
+        error: `the saved run could not be replayed: ${error instanceof Error ? error.message : String(error)}` };
+    }
   }
 }
