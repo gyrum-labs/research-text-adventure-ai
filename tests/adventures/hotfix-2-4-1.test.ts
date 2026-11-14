@@ -80,7 +80,7 @@ describe('the organisation adventure', () => {
       'open shared inbox',
       'claim deploy credential',
       'read release runbook',
-      'unlock release gate with incident-ticket',
+      'unlock release gate with incident ticket',
       'deploy release-2.3.9 with deploy credential',
     ]);
 
@@ -93,7 +93,7 @@ describe('the organisation adventure', () => {
       'go release engineering',
       'open shared inbox',
       'claim deploy credential',
-      'unlock release gate with incident-ticket',
+      'unlock release gate with incident ticket',
       'deploy release-2.4.1 with deploy credential',
     ]);
 
@@ -149,7 +149,7 @@ describe('the harness on the second world', () => {
         'open shared inbox',
         'claim deploy credential',
         'read release runbook',
-        'unlock release gate with incident-ticket',
+        'unlock release gate with incident ticket',
         'deploy release-2.3.9 with deploy credential',
       ]),
       transcript,

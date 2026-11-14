@@ -12,7 +12,7 @@ export const GOLD_PATH: string[] = [
   'open shared inbox',
   'claim deploy credential',
   'read release runbook',
-  'unlock release gate with incident-ticket',
+  'unlock release gate with incident ticket',
   'deploy release-2.4.1 with deploy credential',
   'go customer success',
   'unlock customer handover with 7311',

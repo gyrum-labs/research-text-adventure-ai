@@ -7,7 +7,7 @@ import type { Adventure, GameState } from '../../src/kernel/types.js';
 
 const worlds = [
   { adventure: mission, key: 'keycard', keyText: 'keycard', lock: 'vault_door', room: 'corridor', container: 'safe', code: '4821' },
-  { adventure: hotfix, key: 'incident_ticket', keyText: 'incident-ticket', lock: 'release_gate', room: 'release_engineering', container: 'customer_handover', code: '7311' },
+  { adventure: hotfix, key: 'incident_ticket', keyText: 'incident ticket', lock: 'release_gate', room: 'release_engineering', container: 'customer_handover', code: '7311' },
 ];
 
 function sessionAt(adventure: Adventure, room: string, inventory: string[] = [], flags = {}) {
