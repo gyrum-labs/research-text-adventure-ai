@@ -181,7 +181,9 @@ For the full walkthrough of the experiment series, start at
 idea, the tests and the acceptance criteria.
 
 The 2026-11-13 batch ran twenty times across both worlds and is written up in
-[`docs/batch-findings-2026-11-13.md`](batch-findings-2026-11-13.md). Only `batch start` calls a
+[`docs/batch-findings-2026-11-13.md`](batch-findings-2026-11-13.md); the same experiment was run
+again on 2026-11-14 after the hotfix world's disclosure was corrected, and that comparison is in
+[`docs/batch-findings-2026-11-14.md`](batch-findings-2026-11-14.md). Only `batch start` calls a
 model; `plan`, `dry-run`, `status` and `report` read and write files.
 
 > **Key takeaways**
