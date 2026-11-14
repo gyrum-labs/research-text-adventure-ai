@@ -155,4 +155,45 @@ describe('saving watched runs', () => {
     expect(spy.mock.calls.filter(call => String(call[0]).includes('openrouter'))).toHaveLength(0);
     spy.mockRestore();
   });
+
+  it('keeps a paid run in the store with its prompt evidence and replays it', async () => {
+    const { createLiveAiDemo } = await import('../../src/server/live-ai.js');
+    const { readTranscript } = await import('../../src/runner/transcript.js');
+    const secret = 'demo-key-keep-on-server';
+    dir = root();
+    const calls = { count: 0 };
+    const liveAi = createLiveAiDemo({ apiKey: secret, model: 'deepseek/deepseek-chat',
+      transcriptRoot: join(dir, 'live'), budgets: { providerRetryDelayMs: 0 } });
+    const original = globalThis.fetch;
+    globalThis.fetch = (async (url: string, init?: RequestInit) =>
+      String(url).startsWith('https://openrouter.ai/')
+        ? Response.json({ choices: [{ message: { content: `COMMAND: ${GOLD_PATH[calls.count++]}` } }],
+            usage: { prompt_tokens: 80, completion_tokens: 5 } })
+        : original(url, init)) as typeof fetch;
+
+    const started = await startSessionServer({ savedRunsRoot: dir, liveAi });
+    url = started.url;
+    close = started.close;
+    try {
+      const opened = await fetch(`${url}/api/runs`, { method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ adventureId: adventure.id, policy: 'llm' }) });
+      const { id } = (await opened.json()) as { id: string };
+      await (await fetch(`${url}/api/runs/${id}/stream`)).text();
+
+      // The store holds the paid run, prompt evidence and all, and replays it.
+      const saved = ((await (await fetch(`${url}/api/runs/saved/${id}`)).json()) as {
+        commands: unknown[]; outcome: string;
+      });
+      expect(saved.commands.map(command => command.raw)).toEqual(GOLD_PATH);
+      expect(saved.outcome).toBe('success');
+      const records = readTranscript(join(dir, `${id}.jsonl`));
+      expect(records.some(record => record.type === 'prompt')).toBe(true);
+      expect(JSON.stringify(records)).not.toContain(secret);
+      const replay = await fetch(`${url}/api/runs/saved/${id}/replay`, { method: 'POST' });
+      expect(((await replay.json()) as { ok: boolean; steps: number }).ok).toBe(true);
+    } finally {
+      globalThis.fetch = original;
+    }
+  });
 });
