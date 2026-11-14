@@ -8,12 +8,13 @@
  * model being asked for anything.
  */
 
+
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Adventure } from '../kernel/types.js';
 import { readTranscript, type TranscriptRecord } from '../runner/transcript.js';
 import { replayTranscript } from '../runner/replay.js';
-import { ADVENTURES, adventureById } from '../adventures/index.js';
+import { ADVENTURES } from '../adventures/index.js';
 
 /** The small description of a saved run a reader chooses from. */
 export interface SavedRunSummary {
@@ -166,8 +167,3 @@ export class SavedRunStore {
   }
 }
 
-/** The store over the given directory, with the worlds it can replay against. */
-export function savedRunStoreFor(root: string): SavedRunStore {
-  void adventureById;
-  return new SavedRunStore(root);
-}
