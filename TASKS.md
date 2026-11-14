@@ -7,8 +7,7 @@ own acceptance criteria. Work top to bottom; each card's "Done when" is the gate
 
 Status legend: `[ ]` not started · `[~]` in progress · `[x]` complete
 
-Phases 0 to 7 are built and green. Phase 8 (the QuestJS comparison) is not started, and the
-card says so.
+Phases 0 to 8 are built and green.
 
 Two cards were written as a sketch and describe a layout the build did not use. The adapters all
 live in `src/agents/llm/provider.ts` rather than in a file each, and the budgets, the metrics and
@@ -233,9 +232,12 @@ and every action spec of the adventure is proved executable by the reducer.
       `src/adventures/questkit-mission-impossible/`, run in Node, with the same ten-command
       gold path winning under it
 - [x] Compare agent success rate and authoring cost.
-      `results/exp-08` and `RESULTS.md`: 0/30 on the other engine against 4/10 on ours for
-      the one model that solves the game at all, and a world definition 24% shorter with the
-      toolkit's verbs inherited rather than declared
+      `results/exp-08` and `RESULTS.md`: the full five-condition grid ran twice on the other
+      engine (140 valid runs), the frontier model's condition A swung 0/10 then 10/10 across
+      sweeps, the no-history control stayed at 0 on both engines throughout, and the port's
+      world definition is 24% shorter with the toolkit's verbs inherited rather than declared.
+      A differential test holds the two worlds to the same rooms, objects, doors, verbs and
+      gold path
 - [x] **Done when:** P8.1–P8.2 pass
 
 ---
