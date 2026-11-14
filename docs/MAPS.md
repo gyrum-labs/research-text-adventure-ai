@@ -79,15 +79,16 @@ graph TD
   p7 --> p7c3
   p8["Generality probe (stretch)"]
   p9["Engine comparison (stretch)"]
-  a1[("results/failures.md")]
+  a1[("results/exp-08")]
   p1 --> a1
-  a2[("results/live")]
-  a3[("results/live-org-turnbound")]
-  a4[("results/live-turnbound")]
-  a5[("results/summary.json")]
-  a6[("results/summary.md")]
-  a7[("results/transfer.json")]
-  a8[("results/transfer.md")]
+  a2[("results/failures.md")]
+  a3[("results/live")]
+  a4[("results/live-org-turnbound")]
+  a5[("results/live-turnbound")]
+  a6[("results/summary.json")]
+  a7[("results/summary.md")]
+  a8[("results/transfer.json")]
+  a9[("results/transfer.md")]
 ```
 
 The phases and their cards, as the plan records them:
@@ -162,6 +163,7 @@ The experiments, in the order the plan builds them:
 
 The artefacts the series has produced:
 
+- `results/exp-08`
 - `results/failures.md`
 - `results/live`
 - `results/live-org-turnbound`

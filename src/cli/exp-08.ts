@@ -7,7 +7,7 @@
  * agent scores the same here, our engine was not the reason it worked.
  */
 
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { ContextStrategy } from '../agents/context.js';
 import type { ObservationRenderer } from '../agents/context.js';
@@ -50,11 +50,18 @@ export const CONDITIONS: Array<{ id: string; strategy: ContextStrategy; renderer
 ];
 
 export interface ComparisonOptions {
-  models: Array<{ id: string; provider: LlmProvider }>;
+  /**
+   * The models to compare, each as a factory: a provider is built per seed,
+   * because a provider carries the run's state and two seeds must not share
+   * one.
+   */
+  models: Array<{ id: string; make: (seed: number) => LlmProvider }>;
   conditions?: string[];
   seeds?: number;
   maxTurns?: number;
   root?: string;
+  /** Where the summary artefacts are written. No directory, no artefacts. */
+  resultsDir?: string;
   onCell?: (cell: ComparisonCell) => void;
 }
 
@@ -98,6 +105,7 @@ export async function runComparison(options: ComparisonOptions): Promise<Compari
           }
         }
 
+        const provider = model.make(seed);
         const transcript = new Transcript(path, {
           type: 'header',
           runId: `${model.id}/${condition.id}/${seed}`,
@@ -105,8 +113,8 @@ export async function runComparison(options: ComparisonOptions): Promise<Compari
           adventureVersion: '1.0.0',
           adventureHash: 'sha256:questkit',
           policy: 'llm',
-          provider: model.provider.id,
-          model: model.provider.model,
+          provider: provider.id,
+          model: provider.model,
           seed,
           maxTurns,
           startedAt: new Date().toISOString(),
@@ -116,7 +124,7 @@ export async function runComparison(options: ComparisonOptions): Promise<Compari
         const session = new QuestKitSession(`${model.id}/${condition.id}/${seed}`);
         const result = await runSession({
           session,
-          provider: model.provider,
+          provider: model.make(seed),
           strategy: condition.strategy,
           renderer: condition.renderer,
           budgets: { maxTurns },
@@ -146,6 +154,13 @@ export async function runComparison(options: ComparisonOptions): Promise<Compari
     }
   }
 
+  if (options.resultsDir !== undefined) {
+    mkdirSync(options.resultsDir, { recursive: true });
+    const artefacts = buildArtefacts(cells);
+    writeFileSync(join(options.resultsDir, 'summary.json'), artefacts.json);
+    writeFileSync(join(options.resultsDir, 'summary.md'), artefacts.md);
+  }
+
   return cells;
 }
 
@@ -169,15 +184,94 @@ export function renderComparison(cells: ComparisonCell[]): string {
   return lines.join('\n');
 }
 
+/** The solved counts of one model and condition, as the artefact stores them. */
+export interface ComparisonCellCount {
+  model: string;
+  condition: string;
+  runs: number;
+  solved: number;
+  medianTurns: number;
+  parseErrors: number;
+}
+
+/** Per model and condition, what happened. */
+export function cellCounts(cells: ComparisonCell[]): ComparisonCellCount[] {
+  const keys = [...new Set(cells.map((cell) => `${cell.model}/${cell.condition}`))];
+  const counts: ComparisonCellCount[] = [];
+
+  for (const key of keys) {
+    const [model, condition] = key.split('/');
+    const cell = cells.filter((entry) => entry.model === model && entry.condition === condition);
+    const turns = cell.map((entry) => entry.turns).sort((left, right) => left - right);
+    counts.push({
+      model: model!,
+      condition: condition!,
+      runs: cell.length,
+      solved: cell.filter((entry) => entry.outcome === 'success').length,
+      medianTurns: turns.length === 0 ? 0 : turns[Math.floor(turns.length / 2)]!,
+      parseErrors: cell.reduce((sum, entry) => sum + entry.parseErrors, 0),
+    });
+  }
+
+  return counts;
+}
+
+/** The artefacts the comparison writes: a machine summary and a table. */
+export function buildArtefacts(cells: ComparisonCell[]): { json: string; md: string } {
+  const counts = cellCounts(cells);
+  const solved = counts.reduce((sum, count) => sum + count.solved, 0);
+  const runs = counts.reduce((sum, count) => sum + count.runs, 0);
+  const failures: Record<string, number> = {};
+  for (const cell of cells) {
+    if (cell.failure === null) continue;
+    failures[cell.failure] = (failures[cell.failure] ?? 0) + 1;
+  }
+
+  const json = `${JSON.stringify(
+    {
+      engine: 'questkit',
+      cells,
+      counts,
+      totals: { runs, solved, failures },
+    },
+    null,
+    2,
+  )}\n`;
+
+  const md = [
+    '# The engine comparison',
+    '',
+    'The same agent, prompt, budgets and seeds, on a world whose rules live in QuestKit.',
+    '',
+    '```',
+    renderComparison(cells),
+    '```',
+    '',
+    `Solved ${solved} of ${runs} runs on the QuestKit engine.`,
+    '',
+    'Failure histogram:',
+    '',
+    ...Object.entries(failures)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([code, count]) => `- ${code}: ${count}`),
+    '',
+  ].join('\n');
+
+  return { json, md };
+}
+
 /** Build the providers the comparison names, from the environment. */
 export function providersFor(
   models: Array<{ id: string; provider: string; model: string; baseUrl?: string; apiKeyEnv?: string }>,
-): Array<{ id: string; provider: LlmProvider }> {
+): Array<{ id: string; make: (seed: number) => LlmProvider }> {
   return models.map((model) => ({
     id: model.id,
-    provider: createProvider(model.provider as never, model.model, {
-      ...(model.baseUrl === undefined ? {} : { baseUrl: model.baseUrl }),
-      ...(model.apiKeyEnv === undefined ? {} : { apiKeyEnv: model.apiKeyEnv }),
-    }),
+    // A live provider carries no per-seed state, so one instance serves the
+    // whole cell; the surrogate is the one that needed a seed.
+    make: () =>
+      createProvider(model.provider as never, model.model, {
+        ...(model.baseUrl === undefined ? {} : { baseUrl: model.baseUrl }),
+        ...(model.apiKeyEnv === undefined ? {} : { apiKeyEnv: model.apiKeyEnv }),
+      }),
   }));
 }
