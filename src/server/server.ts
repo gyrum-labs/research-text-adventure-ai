@@ -372,7 +372,9 @@ async function driveRun(
     });
   } finally {
     held.finished = true;
-    transcript.close();
+    // The live transcript is closed before it is copied, so the copy reads a
+    // finished file rather than depending on how the writer buffers.
+    held.live?.close();
     // A live run writes its own transcript, which carries the prompt evidence
     // the replay does not need; keep a copy of it in the store so a reader can
     // revisit the same evidence. An unreadable transcript is not a reason to
@@ -382,7 +384,7 @@ async function driveRun(
         state.saved.save(held.id, readTranscript(held.live.transcriptPath()));
       }
     } catch { /* keep the run; the store just holds less */ }
-    held.live?.close();
+    transcript.close();
     // The end marker is a record like the others, so a stream opened after
     // the run finished still terminates.
     push({ type: 'end' });
