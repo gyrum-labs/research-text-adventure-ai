@@ -383,7 +383,13 @@ async function driveRun(
       if (held.live !== undefined) {
         state.saved.save(held.id, readTranscript(held.live.transcriptPath()));
       }
-    } catch { /* keep the run; the store just holds less */ }
+    } catch (error) {
+      // A copy that fails leaves the store holding a run with no commands, so
+      // say so there rather than leaving a bare header to look like evidence.
+      const reason = error instanceof Error ? error.message : String(error);
+      transcript.write({ type: 'copy_failed', reason });
+      console.error(`saved run ${held.id}: the live transcript could not be copied: ${reason}`);
+    }
     transcript.close();
     // The end marker is a record like the others, so a stream opened after
     // the run finished still terminates.

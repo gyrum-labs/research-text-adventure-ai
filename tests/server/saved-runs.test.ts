@@ -140,4 +140,19 @@ describe('saving watched runs', () => {
     expect(replay.status).toBe(404);
     expect(((await replay.json()) as { error: string }).error).toContain(played.id);
   });
+
+  it('leaves a live run undisturbed while its evidence is listed and replayed', async () => {
+    dir = root();
+    await start(dir);
+    const played = await playScripted(url);
+    const spy = vi.spyOn(globalThis, 'fetch');
+
+    await fetch(`${url}/api/runs/saved`);
+    await fetch(`${url}/api/runs/saved/${played.id}`);
+    await fetch(`${url}/api/runs/saved/${played.id}/replay`, { method: 'POST' });
+
+    // Nothing in the store's answers reached the provider: a replay is inert.
+    expect(spy.mock.calls.filter(call => String(call[0]).includes('openrouter'))).toHaveLength(0);
+    spy.mockRestore();
+  });
 });

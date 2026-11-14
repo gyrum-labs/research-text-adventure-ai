@@ -147,7 +147,9 @@ export class SavedRunStore {
       if (records === null) continue;
       summaries.push({ id, ...describe(id, records) });
     }
-    return summaries.sort((a, b) => (a.startedAt < b.startedAt ? 1 : -1));
+    // Newest first, and equal timestamps compare equal: a comparator that
+    // never returns 0 would violate the ordering Array.sort relies on.
+    return summaries.sort((a, b) => (a.startedAt < b.startedAt ? -1 : a.startedAt > b.startedAt ? 1 : 0));
   }
 
   /** Open a saved run: header, commands and every record. */
