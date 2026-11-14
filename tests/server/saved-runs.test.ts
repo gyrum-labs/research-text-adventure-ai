@@ -93,14 +93,17 @@ describe('saving watched runs', () => {
     dir = root();
     await start(dir);
     const played = await playScripted(url);
-    // Replaying is local bookkeeping over the transcript: the server reports
-    // that it asked the provider for nothing.
+    // Replaying is local bookkeeping over the transcript. Watch every request
+    // the process makes while it happens: none of them may reach a provider.
+    const requests = vi.spyOn(globalThis, 'fetch');
     const replay = (await fetch(`${url}/api/runs/saved/${played.id}/replay`, { method: 'POST' })
       .then(r => r.json())) as { ok: boolean; steps: number; inferenceRequests: number };
 
     expect(replay.ok).toBe(true);
     expect(replay.steps).toBe(GOLD_PATH.length);
     expect(replay.inferenceRequests).toBe(0);
+    expect(requests.mock.calls.filter(call => String(call[0]).includes('openrouter'))).toHaveLength(0);
+    requests.mockRestore();
   });
 
   it('refuses a run it does not hold, by name', async () => {
