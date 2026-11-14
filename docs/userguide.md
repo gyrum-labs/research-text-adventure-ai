@@ -182,8 +182,10 @@ idea, the tests and the acceptance criteria.
 
 The 2026-11-13 batch ran twenty times across both worlds and is written up in
 [`docs/batch-findings-2026-11-13.md`](batch-findings-2026-11-13.md); the same experiment was run
-again on 2026-11-14 after the hotfix world's disclosure was corrected, and that comparison is in
-[`docs/batch-findings-2026-11-14.md`](batch-findings-2026-11-14.md). Only `batch start` calls a
+again on 2026-11-14 after the hotfix world's disclosure was corrected
+([`docs/batch-findings-2026-11-14.md`](batch-findings-2026-11-14.md)), and a third time after the
+gate accepted the ticket by its shown name
+([`docs/batch-findings-third-run.md`](batch-findings-third-run.md)). Only `batch start` calls a
 model; `plan`, `dry-run`, `status` and `report` read and write files.
 
 > **Key takeaways**
