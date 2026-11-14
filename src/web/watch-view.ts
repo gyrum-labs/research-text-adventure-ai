@@ -1,6 +1,7 @@
 import { renderObservation } from '../kernel/render.js';
-import type { FetchLike } from '../session/http.js';
+import { describeLimits, describeStop, type RunBudgetView, type RunProgress } from './limits.js';
 import { titleOf } from './scenario.js';
+import type { FetchLike } from '../session/http.js';
 import { watchAgent, type RunRecord } from './watch.js';
 
 /** The optional server and adventure selected by the page. */
@@ -36,33 +37,7 @@ function element<T extends HTMLElement>(root: HTMLElement, selector: string): T 
   return found;
 }
 
-function renderRecord(root: HTMLElement, record: RunRecord): void {
-  const output = element(root, '.watch-output');
-  const log = element(root, '.watch-log');
-  const status = element(root, '.watch-status');
-  log.textContent += `${record.type}\n`;
-  if (record.type === 'run_started') {
-    element(root, '.watch-note').textContent = describeModel(record.data);
-  } else if (record.type === 'usage') {
-    const usage = record.data;
-    const cost = usage.estimatedCostUsd === null ? 'cost estimate unavailable' : `est. $${usage.estimatedCostUsd.toFixed(4)}`;
-    element(root, '.watch-usage').textContent = `${usage.estimated ? 'Estimated ' : ''}${usage.tokensUsed} tokens · ${cost}`;
-  } else if (record.type === 'observation') {
-    output.textContent += `${renderObservation({ ...record.data, messages: [] })}\n\n`;
-    const complete = record.data.goals.filter(goal => goal.status === 'complete').length;
-    status.textContent = `Turn ${record.turn} · goals ${complete}/${record.data.goals.length}`;
-  } else if (record.type === 'command') {
-    output.textContent += `> ${record.raw}\n`;
-  } else if (record.type === 'message') {
-    output.textContent += `${record.text}\n`;
-  } else if (record.type === 'run_ended') {
-    const result = record.data;
-    status.textContent += ` · ${result.outcome} · ${result.hash ?? result.reason ?? ''}`;
-    output.textContent += `\n${result.outcome}: ${result.reason ?? 'Run complete.'}\n`;
-  }
-  output.scrollTop = output.scrollHeight;
-  log.scrollTop = log.scrollHeight;
-}
+
 
 /** Wire free demonstrations and an explicitly started, cancellable model run. */
 export function mountWatchView(root: HTMLElement, options: WatchViewOptions): WatchView {
@@ -74,6 +49,29 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): Wa
   let adventureId = options.adventureId;
   let active: { controller: AbortController } | undefined;
   let model: ModelDescription | undefined;
+  // The caps the run reported, and what has been seen of it so far. Both come
+  // from the records the server already streams; nothing here asks for more.
+  let budget: RunBudgetView | undefined;
+  let progress: RunProgress = {};
+  let ticker: ReturnType<typeof setInterval> | undefined;
+
+  const limits = element(root, '.watch-limits');
+  const renderLimits = (): void => {
+    limits.textContent = budget === undefined ? '' : describeLimits(budget, progress);
+  };
+  const tick = (): void => {
+    progress.elapsedMs = Date.now() - startedAt;
+    renderLimits();
+  };
+  let startedAt = 0;
+  const startClock = (): void => {
+    startedAt = Date.now();
+    if (ticker === undefined) ticker = setInterval(tick, 1_000);
+    tick();
+  };
+  const stopClock = (): void => {
+    if (ticker !== undefined) { clearInterval(ticker); ticker = undefined; }
+  };
 
   const updatePolicy = (): void => {
     const ai = policy.value === 'llm';
@@ -114,10 +112,52 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): Wa
    * forgets the run. Anything the provider says afterwards belongs to a run
    * that is over, so it is dropped rather than shown.
    */
+  /** Apply one streamed record to the panel, and keep the limits line true. */
+  const applyRecord = (record: RunRecord): void => {
+    const output = element(root, '.watch-output');
+    const log = element(root, '.watch-log');
+    const status = element(root, '.watch-status');
+    log.textContent += `${record.type}\n`;
+    if (record.type === 'run_started') {
+      element(root, '.watch-note').textContent = describeModel(record.data);
+      budget = { ...record.data.budgets };
+      progress = {};
+      limits.textContent = describeLimits(budget, progress);
+    } else if (record.type === 'usage') {
+      const usage = record.data;
+      const cost = usage.estimatedCostUsd === null ? 'cost estimate unavailable' : `est. $${usage.estimatedCostUsd.toFixed(4)}`;
+      element(root, '.watch-usage').textContent = `${usage.estimated ? 'Estimated ' : ''}${usage.tokensUsed} tokens · ${cost}`;
+      progress.tokensUsed = usage.tokensUsed;
+      progress.tokensEstimated = usage.estimated;
+      if (budget !== undefined) limits.textContent = describeLimits(budget, progress);
+    } else if (record.type === 'observation') {
+      output.textContent += `${renderObservation({ ...record.data, messages: [] })}\n\n`;
+      const complete = record.data.goals.filter(goal => goal.status === 'complete').length;
+      progress.turn = record.turn;
+      status.textContent = `Turn ${record.turn} · goals ${complete}/${record.data.goals.length}`;
+      if (budget !== undefined) limits.textContent = describeLimits(budget, progress);
+    } else if (record.type === 'command') {
+      output.textContent += `> ${record.raw}\n`;
+    } else if (record.type === 'message') {
+      output.textContent += `${record.text}\n`;
+    } else if (record.type === 'run_ended') {
+      const result = record.data;
+      status.textContent += ` · ${result.outcome} · ${result.hash ?? result.reason ?? ''}`;
+      output.textContent += `\n${result.outcome}: ${result.reason ?? 'Run complete.'}\n`;
+      progress.outcome = result.outcome;
+      progress.reason = result.reason;
+      if (budget !== undefined) limits.textContent = describeStop(budget, progress);
+      stopClock();
+    }
+    output.scrollTop = output.scrollHeight;
+    log.scrollTop = log.scrollHeight;
+  };
+
   const cancelRun = (): boolean => {
     if (active === undefined) return false;
     active.controller.abort();
     active = undefined;
+    stopClock();
     return true;
   };
 
@@ -139,6 +179,9 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): Wa
     element(root, '.watch-output').textContent = '';
     element(root, '.watch-log').textContent = '';
     element(root, '.watch-usage').textContent = '';
+    limits.textContent = '';
+    budget = undefined;
+    progress = {};
     adventureId = next;
     setRunning(false);
     const named = `${titleOf(next)} (${next})`;
@@ -162,6 +205,9 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): Wa
     element(root, '.watch-output').textContent = '';
     element(root, '.watch-log').textContent = '';
     element(root, '.watch-usage').textContent = '';
+    limits.textContent = '';
+    budget = undefined;
+    progress = {};
     status.textContent = 'Starting demo…';
     try {
       await watchAgent({
@@ -170,14 +216,18 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): Wa
         fetch: fetchLike,
         signal: controller.signal,
         policy: policy.value === 'llm' ? 'llm' : policy.value === 'random' ? 'random' : 'scripted',
-        onRecord: record => { if (active?.controller === controller) renderRecord(root, record); },
+        onRecord: record => {
+          if (active?.controller !== controller) return;
+          applyRecord(record);
+          if (record.type === 'run_started') startClock();
+        },
       });
     } catch (error) {
       if (active?.controller === controller) {
         status.textContent = `Could not watch the demo: ${error instanceof Error ? error.message : String(error)}. Check that the optional demo server is running, then try again.`;
       }
     } finally {
-      if (active?.controller === controller) { active = undefined; setRunning(false); }
+      if (active?.controller === controller) { active = undefined; setRunning(false); stopClock(); }
     }
   }
 

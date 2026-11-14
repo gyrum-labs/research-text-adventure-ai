@@ -9,7 +9,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { describeLimits, describeStop, type RunBudgetView, type RunProgress } from '../../src/web/limits.js';
+import { describeLimits, describeStop, type RunBudgetView } from '../../src/web/limits.js';
 
 const BUDGET: RunBudgetView = { maxTurns: 20, maxTotalTokens: 30_000, maxWallClockMs: 120_000 };
 
@@ -21,7 +21,7 @@ describe('the limits line', () => {
     expect(line).toContain('38s of 120s');
   });
 
-  it('says when the token count is the server's estimate', () => {
+  it('says when the token count is an estimate', () => {
     const line = describeLimits(BUDGET, { turn: 3, tokensUsed: 4_000, tokensEstimated: true, elapsedMs: 9_000 });
     expect(line).toContain('estimated');
   });
