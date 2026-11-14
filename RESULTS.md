@@ -311,11 +311,15 @@ every time it tries.
 | gpt-4.1-mini | 4 | 5 | 0 | 0 | 2 | 3 | 0 | 0 | 0 | 0 |
 | glm 4.5 air | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | not run |
 
-(Counts of ten. The QuestKit grid for glm 4.5 air stopped in condition E, when
-the OpenRouter key's fifty-dollar limit ran out: nine runs died as provider
-errors and the tenth is ambiguous, so the cell is excluded rather than
-averaged. That is the same funding failure that cut the organisation grid,
-on the same key.)
+(Counts of ten. The QuestKit grid for glm 4.5 air stopped in condition E of
+the first sweep, when the OpenRouter key's fifty-dollar limit ran out: nine
+runs died as provider errors and the tenth is ambiguous, so that cell is
+excluded rather than averaged. The second sweep measured it properly: 0/10.)
+
+The full grid ran twice, and the second reproduced the first cell for cell
+except two: the frontier model's condition C went 9 to 10 and gpt-4.1-mini's
+condition A went 3 to 0. The totals were 22 and 20 solved of 150, and the
+funded key carried the whole second sweep with no provider errors at all.
 
 What the full grid says, and does not:
 
@@ -328,11 +332,13 @@ What the full grid says, and does not:
   by a model that cannot solve it through ours in the same condition. So our
   engine was carrying weight for that model, and the direction of the load
   depends on the sweep.
-- **The condition pattern does not transfer cleanly.** On ours the frontier
-  model needs a structured or JSON view (B 9, C 7, E 8 against A 0); on
-  QuestKit prose is its best condition (A 10) and every JSON rendering scores
-  0 or nothing. A finding about renderers measured in one engine does not
-  transfer to the other, which is a warning about every renderer claim above.
+- **The condition pattern does not transfer cleanly, and it reproduces.** On
+  ours the frontier model needs a structured or JSON view (B 9, C 7, E 8
+  against A 0); on QuestKit prose and the structured view are its best
+  conditions (A 10 and 10 again, C 9 and 10) and every JSON full-history
+  rendering scores 0, across both grids. A renderer finding measured in one
+  engine does not transfer to the other, and the inversion is not a
+  one-sweep fluke: it held in every grid that was run.
 - **gpt-4.1-mini solves less everywhere.** 11 of 50 on ours, 3 of 50 on
   QuestKit, with no condition above 3.
 
@@ -401,11 +407,11 @@ about the engine alone either.**
   hallucinates, misreads and loops, and the weights between the nine categories would change.
 - **One adventure, then two.** Two worlds is enough to show the vocabulary transfers and not
   enough to say it transfers in general.
-- **The engine comparison is one condition deep where it counts, and sweep-fragile.** The
-  full grid ran once, its first sweep disagreed with it by ten solved runs in one cell, and
-  the frontier model's prose cell swung from 0/10 to 10/10. Ten seeds a cell cannot settle an
-  engine difference of that size; a reader should treat every engine claim here as one sweep's
-  evidence, not a verdict.
+- **The engine comparison is grid-stable but sweep-sensitive.** The two full grids agree
+  cell for cell except two, which is the reproducibility this document wants. The
+  single-condition sweep before them disagreed with both by ten solved runs in one cell, which
+  is the fragility it warns about. Ten seeds a cell still cannot settle a 4/10 against a 0/10;
+  the intervals overlap.
 - **The organisation matrix needed two attempts.** The first was cut short by provider credit,
   and its payment-failed runs were deleted rather than counted; the second completed every
   OpenRouter cell after funding. glm 5.3's fifty valid runs from the first attempt have no
@@ -456,10 +462,10 @@ first attempt agree from the preserved summary.
 > - The vocabulary transfers. A second world was written with no change to the kernel, and the
 >   only thing it cost was one rule about argument shapes that a single world never reveals.
 > - The engine is part of the result, and so is the sweep. The frontier model scored 0/10 on
->   QuestKit in one sweep and 10/10 in the next, in the same cells; on our engine it is 0/10
->   in prose and 9/10 in JSON. What survives every engine and every sweep is the no-history
->   control, 0 everywhere. Single-sweep claims about engines do not survive contact with a
->   second sweep.
+>   QuestKit in the single-condition sweep and 10/10 in both full grids, in the same cells; on
+>   our engine it is 0/10 in prose and 9/10 in JSON. What survives every engine and every
+>   sweep is the no-history control, 0 everywhere. The comparison's artefacts are committed:
+>   `results/exp-08`, written by the experiment itself.
 > - The organisation world is where the live agents stop: 0 solves on 150 completed-grid runs
 >   and 0 on glm 5.3's fifty from the first attempt. The failure is hallucination, not
 >   hesitancy: 88 of 150 runs acted on objects that were not in the room, and longer budgets

@@ -86,6 +86,13 @@ The authoring cost runs the other way: the port's world definition is 431 lines 
 bytes against our 569 lines and 18,578 bytes, because the toolkit hands over six verbs that
 our world has to declare, with their arguments and their rules.
 
+The grid ran twice. The second sweep reproduced the first cell for cell except two
+(frontier condition C 9 to 10, gpt-4.1-mini condition A 3 to 0): 20 solved of 150 against
+22 of 150. The funded key carried the whole second sweep, including glm 4.5 air's condition
+E, which the first sweep had lost to the same account's limit: 0/10, exactly like the first
+sweep's other cells. The experiment writes its own artefacts now
+(`results/exp-08/summary.json` and `summary.md`), so the numbers trace to a committed file.
+
 ## The acceptance criteria
 
 - [x] The adventure is ported to QuestJS's lineage, and the scripted gold

@@ -158,6 +158,7 @@ program
           seeds: config.seeds,
           maxTurns: config.maxTurns,
           root: 'runs/exp-08',
+          resultsDir: 'results/exp-08',
         });
         console.log('Experiment 08: the engine comparison.');
         console.log('');
