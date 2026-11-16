@@ -22,7 +22,7 @@ import { join } from "node:path";
 import type { MatrixConfig } from '../runner/matrix.js';
 import { createProvider, type ProviderName } from './provider.js';
 import {
-  writePlan, describeBatch, describeLedger, startBatch, publishReport, booksFor,
+  writePlan, describeBatch, describeLedger, startBatch, publishReport, booksFor, pricesFor,
   type BatchOptions,
 } from './batch.js';
 import { replayTranscript } from '../runner/replay.js';
@@ -215,15 +215,17 @@ program
     try {
       switch (verb) {
         case 'plan': {
-          writePlan(parsed);
-          console.log(describeBatch(parsed));
+          await writePlan(parsed, await pricesFor(parsed.model));
+          console.log(describeBatch(parsed, await pricesFor(parsed.model)));
           console.log(`plan written to ${parsed.root}/plan.json`);
           return;
         }
-        case 'dry-run':
-          console.log(describeBatch(parsed));
+        case 'dry-run': {
+          const prices = await pricesFor(parsed.model);
+          console.log(describeBatch(parsed, prices));
           console.log('dry run: no model was called.');
           return;
+        }
         case 'status': {
           if (!existsSync(join(parsed.root, 'plan.json'))) {
             console.log('no plan on disk. Run `batch plan` first.');

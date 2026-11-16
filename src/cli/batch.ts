@@ -14,7 +14,6 @@ import { PROMPT_VERSION } from '../agents/llm/prompt.js';
 import { createHash } from 'node:crypto';
 import { canonicalJson } from '../kernel/hash.js';
 import { BATCH_BUDGETS } from '../runner/batch.js';
-import { PRICES } from '../runner/metrics.js';
 import { createProvider } from './provider.js';
 import {
   buildPlan,
@@ -30,14 +29,29 @@ import {
   type BatchPlan,
   type BatchLedger,
 } from '../runner/batch.js';
+import type { PriceEvidence } from '../runner/batch.js';
+export type { PriceEvidence };
+import type { FetchLike } from '../session/http.js';
 
-/** The prices the reservation is computed from, with where they came from. */
-export const BATCH_PRICES = {
-  source: 'OpenRouter models API, https://openrouter.ai/api/v1/models',
-  checkedAt: '',
-  inputPerMillion: PRICES['openrouter/deepseek/deepseek-chat']!.input,
-  outputPerMillion: PRICES['openrouter/deepseek/deepseek-chat']!.output,
-};
+/** The dated published prices for a model, from the provider's own catalogue. */
+export async function pricesFor(model: string, fetchLike?: FetchLike): Promise<PriceEvidence> {
+  const get = fetchLike ?? ((url: string) => fetch(url));
+  const response = await get('https://openrouter.ai/api/v1/models');
+  if (!response.ok) throw new Error(`could not read the published prices (${response.status})`);
+  const body = await response.json() as { data?: Array<{ id?: string; pricing?: { prompt?: string; completion?: string } }> };
+  const entry = body.data?.find(candidate => candidate.id === model);
+  const prompt = entry?.pricing?.prompt;
+  const completion = entry?.pricing?.completion;
+  if (prompt === undefined || completion === undefined) {
+    throw new Error(`the provider publishes no prices for ${model}, so a run could not be reserved`);
+  }
+  return {
+    source: 'OpenRouter models API, https://openrouter.ai/api/v1/models',
+    checkedAt: new Date().toISOString(),
+    inputPerMillion: Number(prompt) * 1_000_000,
+    outputPerMillion: Number(completion) * 1_000_000,
+  };
+}
 
 /** The model the batch runs, and the endpoint that serves it. */
 export const BATCH_MODEL = {
@@ -73,9 +87,8 @@ function promptHash(): string {
   return `sha256:${createHash('sha256').update(canonicalJson(policy)).digest('hex')}`;
 }
 
-/** The plan this invocation would run, with today's prices checked in. */
-export function planFor(options: BatchOptions): BatchPlan {
-  const prices = { ...BATCH_PRICES, checkedAt: new Date().toISOString() };
+/** The plan this invocation would run, against the prices it was given. */
+export function planFor(options: BatchOptions, prices: PriceEvidence): BatchPlan {
   return buildPlan({
     worlds: Object.values(ADVENTURES),
     runsPerWorld: options.runs,
@@ -99,16 +112,16 @@ export function booksFor(options: BatchOptions): { plan: BatchPlan; ledger: Retu
 }
 
 /** Write the plan and the empty books. Never calls a model. */
-export function writePlan(options: BatchOptions): BatchPlan {
-  const plan = planFor(options);
+export async function writePlan(options: BatchOptions, prices: PriceEvidence): Promise<BatchPlan> {
+  const plan = planFor(options, prices);
   persistPlan(plan, options.root);
   if (!ledgerExists(options.root)) saveLedger(openLedger(plan), options.root);
   return plan;
 }
 
 /** Show what the batch would do, and what it would reserve. Never calls a model. */
-export function describeBatch(options: BatchOptions): string {
-  const plan = planFor(options);
+export async function describeBatch(options: BatchOptions, prices: PriceEvidence): Promise<string> {
+  const plan = planFor(options, prices);
   const ledger = ledgerExists(options.root) ? loadLedger(options.root) : openLedger(plan);
   const outstanding = ledger.cells.filter(cell => cell.status === 'outstanding');
   const lines = [
