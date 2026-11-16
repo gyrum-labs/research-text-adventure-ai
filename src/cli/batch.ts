@@ -67,6 +67,8 @@ export interface BatchOptions {
   model: string;
   maxTotalUsd: number;
   maxPerRunUsd: number;
+  /** One world, when the experiment is about that world alone. */
+  world?: string;
 }
 
 /** The source revision the plan is written against. */
@@ -89,8 +91,11 @@ function promptHash(): string {
 
 /** The plan this invocation would run, against the prices it was given. */
 export function planFor(options: BatchOptions, prices: PriceEvidence): BatchPlan {
+  const worlds = options.world === undefined
+    ? Object.values(ADVENTURES)
+    : [adventureById(options.world)];
   return buildPlan({
-    worlds: Object.values(ADVENTURES),
+    worlds,
     runsPerWorld: options.runs,
     model: { provider: BATCH_MODEL.provider, model: options.model },
     temperature: 0,

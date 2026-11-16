@@ -203,6 +203,7 @@ program
   .option('--model <name>', 'the model to ask for', 'deepseek/deepseek-chat')
   .option('--max-total-usd <usd>', 'the most this experiment may spend', '0.40')
   .option('--max-per-run-usd <usd>', 'the most one run may be reserved for', '0.02')
+  .option('--world <id>', 'one world only, instead of every shipped one')
   .action(async (options: Record<string, string>, command: { args: string[] }) => {
     const parsed: BatchOptions = {
       root: options.root!,
@@ -210,6 +211,7 @@ program
       model: options.model!,
       maxTotalUsd: Number(options.maxTotalUsd),
       maxPerRunUsd: Number(options.maxPerRunUsd),
+      world: options.world,
     };
     const verb = command.args[0] ?? 'help';
     try {
