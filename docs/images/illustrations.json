@@ -1,8 +1,8 @@
 {
-  "version": 1,
+  "version": 2,
   "generated": "2026-11-16",
-  "note": "Illustrations for the book. Each entry pairs a rendered PNG (the deliverable) with its editable SVG source. The sketch style follows the reference images collected by the operator; every subject is taken from the two shipped adventures (Operation Nightingale, The 2.4.1 Hotfix) or from the experiment series, so the pictures show the actual game. Regenerate a PNG after editing its SVG with: rsvg-convert -w 1240 <file>.svg -o <file>.png",
-  "style": "hand-drawn ink sketch, wobbly linework, paper tones, minimal hand-lettered labels",
+  "note": "Illustrations for the book. Each entry pairs a rendered PNG (the deliverable) with its editable SVG source. Two standing requirements: (1) the SVG base is drawn clean and precise - professional technical style, correct rooms, labels and layout - because it is the accurate version a reader could measure from; (2) when an image-generation credential is available, the rendered base passes through the image model with the sketch-pen style prompt (pipeline.stage2_prompt) plus the collected style references, producing <name>-hand.png: the same drawing, rendered as an organic hand-pen sketch. Stage 2 status per file is recorded below; the credential was rejected by the gateway as of 2026-11-16 (the OpenCode Go plan does not include the image model), so stage 2 is pending for the whole set. Colours follow the docs palette in docs/shared/doc-standards.md: success #d4edda/#28a745, warning #fff3cd/#ffc107, error #f8d7da/#dc3545, neutral #e2e3e5/#6c757d. Regenerate a PNG after editing its SVG with: rsvg-convert -w 1240 <file>.svg -o <file>.png",
+  "style": "clean technical base, hand-drawn ink sketch in the stage 2 pass, house palette colours, minimal hand-lettered labels",
   "references": [
     "https://www.collybird.com/assets/assets/projects/adventure/map.a65fe0e73a41.webp (grid dungeon map, labelled rooms, item icons)",
     "https://i.redd.it/9oif6pt90g721.jpg (the 1976 Adventure working map, pencil on fan-fold paper)",
@@ -10,62 +10,123 @@
     "https://i.pinimg.com/736x/b7/1e/63/b71e634a14e70e4cfe0a4e3353cc1f9d.jpg (old-school RPG rulebook page: ink characters and rule text)",
     "https://media.rightmove.co.uk/property-floorplan/d1f4df78e/773379850995457/d1f4df78e2568c8ec6630448c3a9d47d.png (technical floorplan with walls, door swings, furniture)"
   ],
+  "pipeline": {
+    "stage1": "clean precise SVG source (the accurate version), rendered to PNG at 1240 px with rsvg-convert",
+    "stage2_prompt": "Redraw this exact diagram as a clean hand-drawn illustration in black sketch-pen style on white paper: keep every room, label, layout element, prop and their positions faithful to the original, but render all linework with an organic hand-pen stroke, slightly uneven like quick confident pen sketching. Very clean and legible, not messy. Keep the small colour accents where the original has them.",
+    "stage2_status": "pending - image credential rejected by gateway (2026-11-16)"
+  },
   "items": [
     {
       "file": "map-nightingale-floorplan.png",
       "source": "map-nightingale-floorplan.svg",
       "title": "Operation Nightingale, bunker floorplan",
-      "description": "The mission-impossible adventure drawn as a property floorplan: Briefing Room with desk, bulletin board and the keycard; Service Corridor with the tall locker and fire extinguisher; Server Vault with racks, the cased bomb on its pedestal, and the bold locked vault door with keycard reader. Title block bottom right, like a drawing sheet.",
-      "appears_in": "docs/MAPS.md (Operation Nightingale section) and docs/ADVENTURES.md section 2"
+      "description": "The mission-impossible adventure drawn as a property floorplan: Briefing Room with desk, bulletin board and the keycard (success green); Service Corridor with the tall locker and fire extinguisher; Server Vault in error red with racks, the cased bomb on its pedestal, and the bold locked vault door with keycard reader. Title block bottom right, like a drawing sheet.",
+      "appears_in": "docs/MAPS.md (Operation Nightingale section) and docs/ADVENTURES.md section 2",
+      "stage2": "pending"
     },
     {
       "file": "map-hotfix-floorplan.png",
       "source": "map-hotfix-floorplan.svg",
       "title": "The 2.4.1 Hotfix, office floorplan",
-      "description": "The hotfix-2-4-1 adventure as an office fit-out plan: Platform On-call with standup board and the open incident ticket; Release Engineering with shared inbox, the shelf of releases 2.3.9 / 2.4.0 / 2.4.1 and the release gate; Customer Success behind a locked door, with handover board and phone. The wall clock reads five o'clock: the SLA deadline.",
-      "appears_in": "docs/MAPS.md (The 2.4.1 Hotfix section)"
+      "description": "The hotfix-2-4-1 adventure as an office fit-out plan: Platform On-call with standup board and the open incident ticket; Release Engineering with shared inbox, the shelf of releases 2.3.9 / 2.4.0 / 2.4.1 and the red release gate barrier; Customer Success behind a locked door, with handover board and phone. The wall clock in warning amber reads five o'clock: the SLA deadline.",
+      "appears_in": "docs/MAPS.md (The 2.4.1 Hotfix section)",
+      "stage2": "pending"
     },
     {
       "file": "map-nightingale-working-sketch.png",
       "source": "map-nightingale-working-sketch.svg",
       "title": "A player's working map, Nightingale",
-      "description": "The map as a player actually draws it: pencil boxes for the three rooms joined by labelled N/S arrows, the locked vault door marked between corridor and vault, margin notes ('take the keycard FIRST', 'cut the YELLOW wire, not the red one!', safe code 4821), the two goals DISARM and RECOVER circled in red pencil. Fan-fold paper with sprocket holes, fold creases and a coffee ring.",
-      "appears_in": "docs/MAPS.md intro or docs/ADVENTURES.md section 3 worked examples"
+      "description": "The map as a player actually keeps it: the three rooms with contents (keycard in success green, locker, the cased bomb in the error-red vault), labelled N/S route arrows, the locked door marked in red, a numbered player-notes panel walking the gold path, and the two goals DISARM and RECOVER in success-green pills. Stats line: 3 rooms, 14 objects, 4 doors, 19 verbs.",
+      "appears_in": "docs/MAPS.md intro or docs/ADVENTURES.md section 3 worked examples",
+      "stage2": "pending"
     },
     {
       "file": "characters-sheet-sketch.png",
       "source": "characters-sheet-sketch.svg",
       "title": "The cast of the book",
-      "description": "Character sheet in rulebook ink style with expression heads: the Field Operative (Nightingale's player, holding the keycard), the On-Call Engineer (Hotfix's player, headset and coffee), THE AGENT (the small cube robot that plays the same commands over its keyboard), and the Puzzle Architect seen from behind, drawing the world. Each has a one-line note on which adventure or experiment they belong to.",
-      "appears_in": "docs/proposal.md or experiments/README.md opening"
+      "description": "Four-column character sheet in the house palette: the Field Operative (Nightingale's player, success-green keycard), the On-Call Engineer (Hotfix's player, warning-amber headset and mug - the SLA expires at 17:00), THE AGENT (the cube robot with the red lens that plays the same commands through the same loop), and the Puzzle Architect seen from behind, drawing the world.",
+      "appears_in": "docs/proposal.md or experiments/README.md opening",
+      "stage2": "pending"
     },
     {
       "file": "scene-briefing-room-sketch.png",
       "source": "scene-briefing-room-sketch.svg",
       "title": "Turn one: the briefing room",
-      "description": "The opening moment of Operation Nightingale: the operative under a single hanging lamp reads the mission brief pinned to the cork board; the photo of the booby-trapped case is crossed out in red; the keycard waits on the desk. Caption: discover the rest by exploring.",
-      "appears_in": "docs/ADVENTURES.md or the userguide's first-steps section"
+      "description": "The opening moment of Operation Nightingale: the operative under a single hanging lamp reads the mission brief pinned to the neutral-grey cork board; the photo of the booby-trapped case is crossed out in error red; the keycard waits on the desk in success green. Caption: discover the rest by exploring.",
+      "appears_in": "docs/ADVENTURES.md or the userguide's first-steps section",
+      "stage2": "pending"
     },
     {
       "file": "scene-wire-choice-sketch.png",
       "source": "scene-wire-choice-sketch.svg",
       "title": "The wire choice",
-      "description": "The book's memorable beat: gloved hands with cutters at the opened bomb, three wires (red, blue, yellow), the defusal manual open beside it with 'SAFE WIRE: YELLOW' highlighted, and a drop of sweat. The manual is the only way the book discloses the fact, which is the hard gate the gold path walks through.",
-      "appears_in": "docs/ADVENTURES.md section 3 worked examples"
+      "description": "The book's memorable beat: gloved hands with cutters at the opened bomb (error-red tint), three literal-coloured wires (red, blue, yellow), the defusal manual open beside it with 'SAFE WIRE: YELLOW' highlighted in warning amber, and a drop of sweat. The manual is the only way the book discloses the fact, which is the hard gate the gold path walks through.",
+      "appears_in": "docs/ADVENTURES.md section 3 worked examples",
+      "stage2": "pending"
     },
     {
       "file": "diagram-agent-view-gap-sketch.png",
       "source": "diagram-agent-view-gap-sketch.svg",
       "title": "Experiment 02: the gap",
-      "description": "The idea of exp-02 as one picture: the full little world (many rooms and props) on the left, the agent's three-line terminal view on the right, a magnifying lens with an eye between them, and the words 'the gap' in red. The gap between world and observation is the experiment.",
-      "appears_in": "experiments/exp-02-what-the-agent-sees/README.md"
+      "description": "The idea of exp-02 as one picture: the full little world (rooms in neutral grey, props, one goal-green room) on the left, the agent's dark terminal with its three-line view on the right, a magnifying lens with an eye between them, and the words 'the gap' in error red with an arrow into the terminal.",
+      "appears_in": "experiments/exp-02-what-the-agent-sees/README.md",
+      "stage2": "pending"
     },
     {
       "file": "diagram-matrix-tally-sketch.png",
       "source": "diagram-matrix-tally-sketch.svg",
       "title": "Experiment 05: the matrix as tallies",
-      "description": "The measurement idea as a hand-drawn tally grid: rows for the two adventures, columns for runs, tally marks for wins, X marks for failures, one failing cell circled in red pencil with 'why?' and an arrow. Pencil on the corner, coffee ring on the page. One number is an anecdote; a cell of a matrix is a result.",
-      "appears_in": "experiments/exp-05-the-matrix/README.md"
+      "description": "The measurement idea as a hand-drawn tally grid on light grey: rows for the two adventures, columns for runs, tally marks for wins, X marks for failures, one failing cell in error red with 'why?' and an arrow. Amber pencil on the corner, coffee ring on the page. One number is an anecdote; a cell of a matrix is a result.",
+      "appears_in": "experiments/exp-05-the-matrix/README.md",
+      "stage2": "pending"
+    },
+    {
+      "file": "six-words-sketch.png",
+      "source": "six-words-sketch.svg",
+      "title": "The six words the design rests on (SPEC 0.3)",
+      "description": "Six numbered tiles, one per concept, each with a small icon and the Nightingale example: ROOM (a place - the Service Corridor), OBJECT (a thing - the cutters, the manual, the keycard in success green), DOOR (open, closed or locked - the vault door), ACTION (one command - take keycard), GOAL (a condition that must become true - disarm, recover; tile in success green), and TURN (one action and its consequences - the game's only unit of time).",
+      "appears_in": "SPEC.md section 0.3 or docs/docs-guide.md onboarding",
+      "stage2": "pending"
+    },
+    {
+      "file": "failure-taxonomy-sketch.png",
+      "source": "failure-taxonomy-sketch.svg",
+      "title": "Experiment 04: the failure classifier",
+      "description": "The nine failure categories as a 3x3 drawer cabinet, one labelled drawer each: F1 Parsing, F2 Hallucination, F3 Planning (repeated a failed action), F4 Ordering/precondition, F5 Exploration failure, F6 Lethal trap (detonated the bomb) in error red, F7 Budget exhaustion, F8 Provider error in neutral grey, F9 Abstention (declared itself stuck) in warning amber. Exactly one category per failed run, computed from the transcript alone.",
+      "appears_in": "experiments/exp-04-why-it-failed/README.md",
+      "stage2": "pending"
+    },
+    {
+      "file": "hash-chain-sketch.png",
+      "source": "hash-chain-sketch.svg",
+      "title": "The journal is tamper-evident (kernel T0.4)",
+      "description": "Three journal event blocks (agent.moved, door.unlocked, agent.moved) each carrying prev-hash and hash in monospace, linked by prev-hash arrows; a red annotation shows someone editing tick 15 to rewrite history, and the chain breaks: every later hash disagrees. A canonical-JSON strip below shows the keys-sorted form that makes the hash stable across machines.",
+      "appears_in": "docs/ARCHITECTURE.md or experiments/exp-01-the-game/README.md",
+      "stage2": "pending"
+    },
+    {
+      "file": "turn-loop-sketch.png",
+      "source": "turn-loop-sketch.svg",
+      "title": "One turn (kernel T0.5 - T0.7)",
+      "description": "The loop that is the game's only unit of time, drawn as four stations on a circle: command in ('take keycard'), parser (verb + target resolved), pure reducer (world changes, or a fair refusal), observation (what the player now sees), then out to the renderer + goals + hints in success green. The human CLI and the agent harness are shown as two dashed feeders into the identical loop - that is what makes their runs comparable.",
+      "appears_in": "docs/ARCHITECTURE.md or experiments/exp-01-the-game/README.md",
+      "stage2": "pending"
+    },
+    {
+      "file": "phase-roadmap-sketch.png",
+      "source": "phase-roadmap-sketch.svg",
+      "title": "The road the book walks (the phase plan)",
+      "description": "The phase plan from docs/MAPS.md as a winding road with numbered milestone pins: T0 Kernel (types, DSL, reducer, hash chain, parser), T1 Adventure (adventure data, gold path, BFS oracle), T2 Human CLI (play loop, transcript), T3 Agent harness (policies, budgets, context strategies), T4 Measurement (metrics, failure classifier, replay), T5 Web + server, T6 Results (matrix, write-up), and a dashed stretch branch to the generality probe and engine comparison.",
+      "appears_in": "docs/MAPS.md (the flow) or docs/docs-guide.md",
+      "stage2": "pending"
+    },
+    {
+      "file": "replay-reproducibility-sketch.png",
+      "source": "replay-reproducibility-sketch.svg",
+      "title": "Replay: same events, same world, every time (T4.4 - T6.2)",
+      "description": "One recorded event tape (seed 4821) feeds two replay runs - a fresh process and a next-day other-machine run - and both produce byte-identical transcripts ending in the same hash, badged in success green. Beside them, the counter-case in error red: a torn history fails closed, never 'probably fine'. Determinism is part of the fiction.",
+      "appears_in": "docs/TESTING.md or experiments/exp-05-the-matrix/README.md",
+      "stage2": "pending"
     }
   ]
 }

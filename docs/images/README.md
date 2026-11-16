@@ -12,18 +12,35 @@ resolve.
 ## Illustrations (sketch set)
 
 Beyond screenshots, this directory carries the book's sketch
-illustrations, recorded in `illustrations.json`. One subject, one
-pair of files: `<name>.svg` is the editable source and
-`<name>.png` is the rendered deliverable the docs reference. The
-descriptions in the manifest say what each picture shows and which
-chapter it belongs to, so a future edit can find the right file
-without opening them all.
+illustrations, recorded in `illustrations.json`. The style contract for
+every illustration is a two-stage pipeline:
 
-To change an illustration: edit the SVG, then re-render
+**Stage 1 - clean base (required).** Each subject is drawn as a clean,
+precise SVG in a professional technical style: correct rooms, labels,
+layout and proportions, tidy geometry, sans-serif lettering. This file is
+the editable source of truth. It is rendered to the deliverable PNG at
+1240 px:
 
     rsvg-convert -w 1240 docs/images/<name>.svg -o docs/images/<name>.png
 
-and run `scripts/update-docs.sh` so the viewer index follows.
+The base is deliberately not sketchy: it is the accurate version a
+reader could measure from.
+
+**Stage 2 - sketch-pen pass (required when the image credential is
+available).** The rendered base is passed through the image model with
+the sketch-pen style and the collected style references, producing
+`<name>-hand.png`: the same drawing, every room, label and position
+preserved, rendered as an organic hand-pen sketch. Very clean, not
+messy. The prompt template lives in `illustrations.json` under
+`pipeline.stage2_prompt`. Status of the pass per file is recorded in the
+manifest (`stage2`: pending, done, or skipped with a reason). The image
+credential was rejected by the gateway as of 2026-11-16, so stage 2 is
+pending for the whole set; stage 1 outputs are the deliverables until
+then.
+
+To change an illustration: edit the SVG, re-render, run
+`scripts/update-docs.sh`, then run the stage 2 pass when a working
+credential is installed.
 
 ## Naming convention
 

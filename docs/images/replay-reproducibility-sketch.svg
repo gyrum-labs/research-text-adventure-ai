@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Inter,'Helvetica Neue',Arial,sans-serif">
+  <rect width="960" height="620" fill="#ffffff"/>
+  <text x="480" y="46" font-size="20" font-weight="600" fill="#1a1a1a" text-anchor="middle">replay: the same events, the same world, every time (T4.4 - T6.2)</text>
+
+  <!-- seed + event tape -->
+  <g stroke="#1a1a1a" fill="#f8f9fa" stroke-width="2">
+    <rect x="90" y="200" width="150" height="70" rx="8"/>
+  </g>
+  <text x="165" y="230" font-size="13" fill="#1a1a1a" text-anchor="middle">seed 4821</text>
+  <text x="165" y="252" font-size="12" fill="#5a6069" text-anchor="middle">one recorded event tape</text>
+  <g stroke="#1a1a1a" fill="none" stroke-width="2" stroke-linecap="round">
+    <path d="M240 235 L330 235" marker-end="url(#arrr)"/>
+    <path d="M240 235 L330 395" marker-end="url(#arrr)"/>
+  </g>
+
+  <!-- two replay engines -->
+  <g stroke="#1a1a1a" fill="#e2e3e5" stroke-width="2">
+    <rect x="336" y="200" width="150" height="70" rx="8"/>
+    <rect x="336" y="360" width="150" height="70" rx="8"/>
+  </g>
+  <text x="411" y="230" font-size="13" fill="#1a1a1a" text-anchor="middle">replay, run A</text>
+  <text x="411" y="252" font-size="11" fill="#5a6069" text-anchor="middle">fresh process</text>
+  <text x="411" y="390" font-size="13" fill="#1a1a1a" text-anchor="middle">replay, run B</text>
+  <text x="411" y="412" font-size="11" fill="#5a6069" text-anchor="middle">next day, other machine</text>
+
+  <g stroke="#1a1a1a" fill="none" stroke-width="2" stroke-linecap="round">
+    <path d="M486 235 L576 260" marker-end="url(#arrr)"/>
+    <path d="M486 395 L576 380" marker-end="url(#arrr)"/>
+  </g>
+
+  <!-- two transcripts -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="1.8">
+    <rect x="582" y="200" width="290" height="100" rx="6" fill="#f8f9fa"/>
+    <rect x="582" y="360" width="290" height="100" rx="6" fill="#f8f9fa"/>
+  </g>
+  <g font-family="'DejaVu Sans Mono',monospace" fill="#1a1a1a" font-size="12">
+    <text x="596" y="228">tick 12  agent.moved</text>
+    <text x="596" y="248">tick 15  door.unlocked</text>
+    <text x="596" y="268">tick 18  agent.moved  hash d40e…9b63</text>
+    <text x="596" y="388">tick 12  agent.moved</text>
+    <text x="596" y="408">tick 15  door.unlocked</text>
+    <text x="596" y="428">tick 18  agent.moved  hash d40e…9b63</text>
+  </g>
+
+  <!-- equality badge -->
+  <g stroke="#28a745" fill="#d4edda" stroke-width="2.4">
+    <rect x="400" y="500" width="230" height="60" rx="30"/>
+  </g>
+  <text x="515" y="537" font-size="16" font-weight="600" fill="#1a1a1a" text-anchor="middle">byte-identical</text>
+  <g stroke="#28a745" fill="none" stroke-width="2" stroke-linecap="round">
+    <path d="M520 500 C 540 484 560 474 584 468" marker-end="url(#arrr)"/>
+  </g>
+
+  <!-- torn history note -->
+  <g stroke="#dc3545" fill="#f8d7da" stroke-width="1.8">
+    <rect x="700" y="500" width="200" height="60" rx="8"/>
+  </g>
+  <text x="800" y="526" font-size="13" fill="#dc3545" text-anchor="middle" font-weight="600">a torn history</text>
+  <text x="800" y="546" font-size="12" fill="#5a6069" text-anchor="middle">fails closed, never "probably fine"</text>
+
+  <text x="480" y="592" font-size="14" fill="#5a6069" text-anchor="middle" font-style="italic">determinism is part of the fiction: if a replay disagrees, the world was never trustworthy</text>
+</svg>

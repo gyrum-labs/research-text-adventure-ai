@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Inter,'Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <marker id="arrr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#1a1a1a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="620" fill="#ffffff"/>
+  <text x="480" y="46" font-size="20" font-weight="600" fill="#1a1a1a" text-anchor="middle">the road the book walks (the phase plan)</text>
+
+  <!-- the road -->
+  <path d="M80 520 C 180 470 240 430 340 400 C 440 370 500 330 600 290 C 700 250 760 220 880 180" fill="none" stroke="#1a1a1a" stroke-width="3" marker-end="url(#arrr)"/>
+
+  <!-- milestones -->
+  <g stroke="#1a1a1a" fill="#f8f9fa" stroke-width="2">
+    <circle cx="120" cy="508" r="30"/>
+    <circle cx="300" cy="428" r="30"/>
+    <circle cx="452" cy="374" r="30"/>
+    <circle cx="600" cy="316" r="30"/>
+    <circle cx="712" cy="266" r="30"/>
+    <circle cx="812" cy="228" r="30"/>
+    <circle cx="890" cy="184" r="30"/>
+  </g>
+  <g fill="#1a1a1a" font-size="14" font-weight="600" text-anchor="middle">
+    <text x="120" y="513">T0</text>
+    <text x="300" y="433">T1</text>
+    <text x="452" y="379">T2</text>
+    <text x="600" y="321">T3</text>
+    <text x="712" y="271">T4</text>
+    <text x="812" y="233">T5</text>
+    <text x="890" y="189">T6</text>
+  </g>
+  <g fill="#1a1a1a" font-size="13" font-weight="600">
+    <text x="86"  y="566">Kernel</text>
+    <text x="268" y="486">Adventure</text>
+    <text x="424" y="428">Human CLI</text>
+    <text x="574" y="366">Agent harness</text>
+    <text x="684" y="312">Measurement</text>
+    <text x="770" y="270">Web + server</text>
+    <text x="856" y="222">Results</text>
+  </g>
+  <g fill="#5a6069" font-size="11">
+    <text x="86"  y="584">types, DSL, reducer,</text>
+    <text x="86"  y="598">hash chain, parser</text>
+    <text x="252" y="504">adventure data, gold</text>
+    <text x="252" y="518">path, BFS oracle</text>
+    <text x="424" y="446">play loop, transcript</text>
+    <text x="566" y="384">policies, budgets,</text>
+    <text x="566" y="398">context strategies</text>
+    <text x="676" y="330">metrics, failure</text>
+    <text x="676" y="344">classifier, replay</text>
+    <text x="754" y="288">sessions, client</text>
+    <text x="846" y="240">matrix, write-up</text>
+  </g>
+
+  <!-- stretch branch -->
+  <path d="M890 184 C 900 140 880 110 830 96" fill="none" stroke="#6c757d" stroke-width="2" stroke-dasharray="6 5"/>
+  <g stroke="#6c757d" fill="#ffffff" stroke-width="1.8" stroke-dasharray="none">
+    <rect x="700" y="76" width="128" height="34" rx="17"/>
+    <rect x="846" y="52" width="96" height="34" rx="17"/>
+  </g>
+  <g fill="#5a6069" font-size="12" text-anchor="middle">
+    <text x="764" y="97">generality probe</text>
+    <text x="894" y="73">engine comparison</text>
+  </g>
+
+  <text x="120" y="110" font-size="13" fill="#5a6069" font-style="italic">each phase lands something runnable before the next one starts -</text>
+  <text x="120" y="128" font-size="13" fill="#5a6069" font-style="italic">that is what makes the plan checkable instead of aspirational</text>
+</svg>

@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Inter,'Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <marker id="arrh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#1a1a1a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="620" fill="#ffffff"/>
+  <text x="480" y="46" font-size="20" font-weight="600" fill="#1a1a1a" text-anchor="middle">the journal is tamper-evident (kernel T0.4)</text>
+  <text x="480" y="70" font-size="13" fill="#5a6069" text-anchor="middle" font-style="italic">hash chain + canonical JSON: every event carries the fingerprint of everything before it</text>
+
+  <!-- three chain blocks -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2.2">
+    <rect x="80"  y="160" width="220" height="150" rx="8" fill="#f8f9fa"/>
+    <rect x="370" y="160" width="220" height="150" rx="8" fill="#f8f9fa"/>
+    <rect x="660" y="160" width="220" height="150" rx="8" fill="#f8f9fa"/>
+  </g>
+  <g font-family="'DejaVu Sans Mono',monospace" fill="#1a1a1a" font-size="12">
+    <text x="96"  y="188">event: agent.moved</text>
+    <text x="386" y="188">event: door.unlocked</text>
+    <text x="676" y="188">event: agent.moved</text>
+    <text x="96"  y="212" fill="#5a6069">prev: -</text>
+    <text x="386" y="212" fill="#5a6069">prev: 3f9a…c21e</text>
+    <text x="676" y="212" fill="#5a6069">prev: 81bd…04f7</text>
+    <text x="96"  y="236">hash: 3f9a…c21e</text>
+    <text x="386" y="236">hash: 81bd…04f7</text>
+    <text x="676" y="236">hash: d40e…9b63</text>
+    <text x="96"  y="268" fill="#5a6069">tick 12 - corridor</text>
+    <text x="386" y="268" fill="#5a6069">tick 15 - corridor</text>
+    <text x="676" y="268" fill="#5a6069">tick 18 - vault</text>
+  </g>
+  <!-- hash link arrows -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2">
+    <path d="M300 236 L368 236" marker-end="url(#arrh)"/>
+    <path d="M590 236 L658 236" marker-end="url(#arrh)"/>
+  </g>
+  <text x="334" y="226" font-size="11" fill="#5a6069" text-anchor="middle">prev-hash</text>
+  <text x="624" y="226" font-size="11" fill="#5a6069" text-anchor="middle">prev-hash</text>
+
+  <!-- the tamper attempt -->
+  <g stroke="#dc3545" fill="none" stroke-width="2" stroke-linecap="round">
+    <path d="M470 210 L470 120" stroke-dasharray="5 5"/>
+    <path d="M470 120 C 440 90 420 80 400 72"/>
+  </g>
+  <g transform="rotate(-8 380 60)">
+    <rect x="330" y="44" width="150" height="34" rx="6" fill="#f8d7da" stroke="#dc3545" stroke-width="1.8"/>
+    <text x="405" y="66" font-size="13" fill="#dc3545" text-anchor="middle" font-weight="600">edit tick 15 - rewrite history</text>
+  </g>
+  <g stroke="#dc3545" fill="none" stroke-width="2">
+    <line x1="352" y1="300" x2="380" y2="330"/>
+    <line x1="380" y1="300" x2="352" y2="330"/>
+  </g>
+  <text x="398" y="322" font-size="14" fill="#dc3545" font-weight="600">chain broken:</text>
+  <text x="398" y="342" font-size="13" fill="#5a6069">every later hash disagrees</text>
+
+  <!-- canonical JSON note -->
+  <g stroke="#1a1a1a" fill="#f8f9fa" stroke-width="1.6">
+    <rect x="80" y="430" width="800" height="110" rx="8"/>
+  </g>
+  <text x="100" y="462" font-size="14" fill="#1a1a1a" font-weight="600">canonical JSON, or the chain is a matter of opinion</text>
+  <g font-family="'DejaVu Sans Mono',monospace" fill="#1a1a1a" font-size="13">
+    <text x="100" y="492">{"tick":15,"type":"door.unlocked","actor":"operative","object":"vault_door"}   keys sorted, no whitespace</text>
+    <text x="100" y="518" fill="#5a6069">the same event always hashes to the same fingerprint - on your machine, on mine, in the replay</text>
+  </g>
+</svg>

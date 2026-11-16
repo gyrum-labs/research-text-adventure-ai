@@ -1,84 +1,87 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 640" font-family="'Comic Sans MS','Segoe Print','Bradley Hand',cursive">
-  <rect width="920" height="640" fill="#f4eedb"/>
-  <!-- fan-fold sprocket holes, both edges -->
-  <g fill="#fdfcf7" stroke="#b9b09a" stroke-width="1">
-    <circle cx="22" cy="40" r="8"/><circle cx="22" cy="90" r="8"/><circle cx="22" cy="140" r="8"/><circle cx="22" cy="190" r="8"/><circle cx="22" cy="240" r="8"/><circle cx="22" cy="290" r="8"/><circle cx="22" cy="340" r="8"/><circle cx="22" cy="390" r="8"/><circle cx="22" cy="440" r="8"/><circle cx="22" cy="490" r="8"/><circle cx="22" cy="540" r="8"/><circle cx="22" cy="590" r="8"/>
-    <circle cx="898" cy="40" r="8"/><circle cx="898" cy="90" r="8"/><circle cx="898" cy="140" r="8"/><circle cx="898" cy="190" r="8"/><circle cx="898" cy="240" r="8"/><circle cx="898" cy="290" r="8"/><circle cx="898" cy="340" r="8"/><circle cx="898" cy="390" r="8"/><circle cx="898" cy="440" r="8"/><circle cx="898" cy="490" r="8"/><circle cx="898" cy="540" r="8"/><circle cx="898" cy="590" r="8"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Inter,'Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#1a1a1a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="620" fill="#faf7ee"/>
+  <text x="480" y="44" font-size="20" font-weight="600" fill="#1a1a1a" text-anchor="middle">Operation Nightingale - the player's map</text>
+
+  <!-- rooms -->
+  <g stroke="#1a1a1a" fill="#e2e3e5" stroke-width="2">
+    <rect x="110" y="110" width="220" height="84"/>
+    <rect x="410" y="312" width="220" height="84"/>
+    <rect x="640" y="110" width="220" height="84" fill="#f8d7da" stroke="#dc3545"/>
   </g>
-  <!-- fold creases -->
-  <line x1="40" y1="212" x2="880" y2="210" stroke="#c9bfa4" stroke-width="1.6"/>
-  <line x1="40" y1="426" x2="880" y2="428" stroke="#c9bfa4" stroke-width="1.6"/>
-  <!-- coffee ring -->
-  <circle cx="820" cy="84" r="30" fill="none" stroke="#8a5a2b" stroke-width="5" opacity="0.30"/>
-  <g stroke="#2b3440" fill="none" stroke-width="2.2" stroke-linecap="round">
-    <!-- briefing room box -->
-    <path d="M96 120 L268 116 L272 204 L100 208 Z"/>
-    <!-- corridor box -->
-    <path d="M330 240 L520 236 L524 324 L334 328 Z"/>
-    <!-- vault box -->
-    <path d="M560 130 L788 126 L792 236 L564 240 Z"/>
-    <!-- arrows with wobble -->
-    <path d="M262 200 C 290 214 306 226 328 240"/>
-    <path d="M334 246 C 306 232 290 220 268 206"/>
-    <!-- to the vault: north out of the corridor, south back in -->
-    <path d="M518 254 L564 242"/>
-    <path d="M564 250 L520 262"/>
-    <!-- the locked vault door between them -->
-    <path d="M524 286 L562 284" stroke-width="4"/>
-    <path d="M524 293 L562 291" stroke-width="1.4"/>
+  <g fill="#1a1a1a" font-size="15" font-weight="600" text-anchor="middle">
+    <text x="220" y="158">BRIEFING ROOM</text>
+    <text x="520" y="360">SERVICE CORRIDOR</text>
+    <text x="750" y="158">SERVER VAULT</text>
   </g>
-  <g fill="#2b3440" font-size="15">
-    <text x="118" y="162">BRIEFING ROOM</text>
-    <text x="427" y="288" text-anchor="middle" font-size="14">SERVICE CORRIDOR</text>
-    <text x="586" y="176">SERVER VAULT</text>
-    <text x="278" y="234" font-size="13">S</text>
-    <text x="286" y="212" font-size="13">N</text>
-    <text x="532" y="246" font-size="13">N</text>
-    <text x="530" y="276" font-size="13">S</text>
-    <text x="543" y="308" font-size="11" font-style="italic">vault door (locked)</text>
+
+  <!-- connections -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2">
+    <path d="M286 194 L434 312" marker-end="url(#arr)"/>
+    <path d="M440 330 L292 212" marker-end="url(#arr)"/>
+    <path d="M586 302 L662 198" marker-end="url(#arr)" stroke="#28a745"/>
+    <path d="M668 204 L590 308" marker-end="url(#arr)" stroke="#28a745"/>
   </g>
-  <!-- corridor contents doodles -->
-  <g stroke="#2b3440" fill="none" stroke-width="1.8" stroke-linecap="round">
-    <rect x="352" y="244" width="20" height="34"/>
-    <line x1="352" y1="256" x2="372" y2="256" stroke-width="1"/>
-    <circle cx="492" cy="252" r="7"/>
+  <g fill="#1a1a1a" font-size="13">
+    <text x="346" y="248">S</text>
+    <text x="368" y="232">N</text>
+    <text x="608" y="248">N</text>
+    <text x="616" y="272">S</text>
   </g>
-  <!-- vault contents doodles -->
-  <g stroke="#2b3440" fill="none" stroke-width="1.8" stroke-linecap="round">
-    <path d="M640 196 L700 194 L702 218 L642 220 Z"/>
-    <path d="M646 202 C 664 196 684 198 696 202"/>
-    <circle cx="744" cy="206" r="14"/>
-    <path d="M740 200 L750 212 M750 200 L740 212"/>
+  <g stroke="#dc3545" fill="none" stroke-width="2">
+    <line x1="606" y1="240" x2="642" y2="252"/>
   </g>
-  <g fill="#2b3440" font-size="12">
-    <text x="648" y="226">the case</text>
-    <text x="722" y="224">bomb!</text>
+  <text x="560" y="266" font-size="12" fill="#dc3545" font-style="italic">vault door (locked)</text>
+
+  <!-- room contents -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="1.4">
+    <rect x="150" y="132" width="26" height="15" fill="#d4edda" stroke="#28a745"/>
+    <circle cx="310" cy="150" r="7"/>
+    <rect x="450" y="330" width="20" height="30"/>
+    <rect x="490" y="336" width="14" height="20" rx="5"/>
+    <rect x="680" y="130" width="70" height="18"/>
+    <circle cx="790" cy="150" r="10"/>
+    <rect x="700" y="156" width="60" height="14"/>
   </g>
-  <!-- margin notes, hand-written -->
-  <g fill="#33415c" font-size="15" font-style="italic">
-    <text transform="rotate(-3 300 90)" x="300" y="90">take the keycard FIRST -</text>
-    <text transform="rotate(-3 300 112)" x="300" y="112">the vault door stays locked without it</text>
-    <text transform="rotate(2 700 300)" x="700" y="300">locker in the corridor:</text>
-    <text transform="rotate(2 700 320)" x="700" y="320">cutters + the defusal manual</text>
+  <g fill="#5a6069" font-size="11" text-anchor="middle">
+    <text x="163" y="162">keycard</text>
+    <text x="310" y="172">bulletin</text>
+    <text x="460" y="374">locker</text>
+    <text x="497" y="370">exting.</text>
+    <text x="715" y="162">the case</text>
+    <text x="790" y="174">bomb</text>
+    <text x="730" y="182">wires</text>
   </g>
-  <g fill="#33415c" font-size="15" font-style="italic">
-    <text transform="rotate(-2 96 364)" x="96" y="364">read the manual in the corridor -</text>
-    <text transform="rotate(-2 96 386)" x="96" y="386">it names the safe code: 4821</text>
-    <text transform="rotate(2 140 470)" x="140" y="470">cut the</text>
+
+  <!-- player notes panel -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="1.4">
+    <rect x="640" y="300" width="264" height="220" rx="6" fill="#ffffff"/>
+    <line x1="640" y1="330" x2="904" y2="330" stroke-width="1.2"/>
   </g>
-  <g font-size="16" font-weight="bold">
-    <text transform="rotate(2 228 470)" x="228" y="470" fill="#b3261e">YELLOW</text>
-    <text transform="rotate(2 330 470)" x="330" y="470" fill="#33415c" font-style="italic">wire, not the red one!</text>
+  <text x="656" y="322" font-size="13" font-weight="600" fill="#1a1a1a">player notes</text>
+  <g fill="#1a1a1a" font-size="13">
+    <text x="656" y="354">1. take keycard (briefing room)</text>
+    <text x="656" y="378">2. go corridor - read the manual:</text>
+    <text x="668" y="398">safe code 4821, yellow wire</text>
+    <text x="656" y="422">3. open locker - take cutters</text>
+    <text x="656" y="446">4. unlock vault door with keycard</text>
+    <text x="656" y="470">5. cut yellow wire, open safe (4821)</text>
+    <text x="656" y="494">6. take case - both goals done</text>
   </g>
-  <!-- the two goals, circled in red pencil -->
-  <g stroke="#b3261e" fill="none" stroke-width="2.4">
-    <ellipse cx="200" cy="560" rx="88" ry="34" transform="rotate(-4 200 560)"/>
-    <ellipse cx="470" cy="560" rx="88" ry="34" transform="rotate(3 470 560)"/>
+
+  <!-- goals: success green -->
+  <g stroke="#28a745" fill="#d4edda" stroke-width="2">
+    <rect x="120" y="470" width="150" height="52" rx="26"/>
+    <rect x="310" y="470" width="150" height="52" rx="26"/>
   </g>
-  <g fill="#2b3440" font-size="20" font-weight="bold" text-anchor="middle">
-    <text x="200" y="566">DISARM</text>
-    <text x="470" y="566">RECOVER</text>
+  <g fill="#1a1a1a" font-size="17" font-weight="600" text-anchor="middle">
+    <text x="195" y="502">DISARM</text>
+    <text x="385" y="502">RECOVER</text>
   </g>
-  <text x="620" y="574" fill="#33415c" font-size="14" font-style="italic" transform="rotate(-2 620 574)">two goals, ten commands, no second chances</text>
-  <text x="52" y="618" fill="#7a7261" font-size="13" font-style="italic">my map, played through twice - the gold path is the only path</text>
+  <text x="120" y="560" font-size="13" fill="#5a6069" font-style="italic">gold path: 10 commands - the only route the world ships</text>
+  <text x="120" y="584" font-size="13" fill="#5a6069" font-style="italic">3 rooms - 14 objects - 4 doors - 19 verbs</text>
 </svg>
