@@ -139,7 +139,7 @@ glm 5.3 could not be re-run (its vendor's account stayed unfunded), so its
 ten first-sweep runs are quoted from that attempt's preserved summary in the
 repository history, with its cells marked incomplete at twenty seeds.
 
-## The honest reading## The honest reading
+## The honest reading
 
 If this experiment fails. If the organisation cannot be written as an adventure without bending
 the kernel. Then the game was still worth building, because we now know where the metaphor
