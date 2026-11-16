@@ -45,6 +45,8 @@ interface HeldRun {
 export interface SessionServerOptions {
   /** Opt-in model configuration; absent by default and never serialized. */
   liveAi?: LiveAiDemo;
+  /** Several configured models, one per entry the watcher can offer. */
+  liveAis?: { demos: Map<string, LiveAiDemo>; models: LiveAiMetadata[] };
   /** The worlds a session can be opened against. Defaults to every shipped one. */
   adventures?: Record<string, Adventure>;
   /** The held sessions, injected so a test can look inside. */
@@ -72,6 +74,8 @@ interface Route {
 /** Everything the handlers share. */
 interface ServerState {
   liveAi?: LiveAiDemo;
+  liveAis?: Map<string, LiveAiDemo>;
+  aiModels: LiveAiMetadata[];
   activeAiId?: string;
   adventures: Record<string, Adventure>;
   sessions: Map<string, InMemorySession>;
@@ -86,7 +90,8 @@ const ROUTES: Route[] = [
     method: 'GET',
     segments: ['api', 'health'],
     handle: async (_params, _request, response, state) => {
-      json(response, 200, { ok: true, adventures: Object.keys(state.adventures), ai: state.liveAi?.metadata ?? null });
+      json(response, 200, { ok: true, adventures: Object.keys(state.adventures),
+        ai: state.liveAi?.metadata ?? state.aiModels[0] ?? null, aiModels: state.aiModels });
     },
   },
   {
@@ -157,6 +162,7 @@ const ROUTES: Route[] = [
       const body = (await readJson(request)) as {
         adventureId?: string;
         policy?: 'scripted' | 'random' | 'llm';
+        model?: string;
         seed?: number;
       };
       const requested = body.policy ?? 'scripted';
@@ -168,9 +174,16 @@ const ROUTES: Route[] = [
         json(response, 403, { error: 'AI demos require a same-origin local request.' });
         return;
       }
-      if (requested === 'llm' && (state.liveAi === undefined || state.activeAiId !== undefined)) {
-        json(response, state.liveAi === undefined ? 503 : 409,
-          { error: state.liveAi === undefined ? 'AI is not configured on this server.' : 'An AI run is already active. Stop it before starting another.' });
+      if (requested === 'llm' && state.liveAis === undefined) {
+        json(response, 503, { error: 'AI is not configured on this server.' });
+        return;
+      }
+      if (requested === 'llm' && body.model !== undefined && state.liveAis?.has(body.model) !== true) {
+        json(response, 400, { error: `this server does not offer ${body.model}.` });
+        return;
+      }
+      if (requested === 'llm' && state.activeAiId !== undefined) {
+        json(response, 409, { error: 'An AI run is already active. Stop it before starting another.' });
         return;
       }
       const adventure = adventureIn(state, body.adventureId ?? '');
@@ -180,7 +193,8 @@ const ROUTES: Route[] = [
       }
       if (requested === 'llm') {
         const id = randomUUID();
-        state.runs.set(id, pendingModelRun({ id, adventure, seed: body.seed ?? 1, state }));
+        const demo = body.model === undefined ? undefined : state.liveAis?.get(body.model);
+        state.runs.set(id, pendingModelRun({ id, adventure, seed: body.seed ?? 1, state, demo }));
         json(response, 201, { id, adventureId: adventure.id, policy: 'llm' });
         return;
       }
@@ -284,8 +298,9 @@ function localModelRequest(request: IncomingMessage): boolean {
   } catch { return false; }
 }
 
-function pendingModelRun({ id, adventure, seed, state }: { id: string; adventure: Adventure; seed: number; state: ServerState }): HeldRun {
-  const held: HeldRun = { id, adventureId: adventure.id, records: [], finished: false, listeners: new Set(), metadata: state.liveAi!.metadata };
+function pendingModelRun({ id, adventure, seed, state, demo }: { id: string; adventure: Adventure; seed: number; state: ServerState; demo?: LiveAiDemo }): HeldRun {
+  const live = demo ?? state.liveAis?.get([...state.liveAis.keys()][0]!) ?? state.liveAi;
+  const held: HeldRun = { id, adventureId: adventure.id, records: [], finished: false, listeners: new Set(), metadata: live?.metadata };
   const expiry = setTimeout(() => { state.runs.delete(id); }, 30_000);
   expiry.unref();
   held.cancel = () => {
@@ -294,13 +309,13 @@ function pendingModelRun({ id, adventure, seed, state }: { id: string; adventure
     else { held.finished = true; state.runs.delete(id); }
   };
   held.start = () => {
-    if (state.activeAiId !== undefined) return false;
-    const live = state.liveAi!.create({ adventure, runId: id, seed });
+    if (state.activeAiId !== undefined || live === undefined) return false;
+    const liveRun = live.create({ adventure, runId: id, seed });
     clearTimeout(expiry);
-    held.live = live;
+    held.live = liveRun;
     held.start = undefined;
     state.activeAiId = id;
-    void driveRun(held, adventure, live.policy, state).finally(() => {
+    void driveRun(held, adventure, liveRun.policy, state).finally(() => {
       if (state.activeAiId === id) state.activeAiId = undefined;
     });
     return true;
@@ -498,6 +513,9 @@ function serveStatic(root: string, pathname: string, response: ServerResponse): 
 export function createSessionServer(options: SessionServerOptions = {}): Server {
   const state: ServerState = {
     liveAi: options.liveAi,
+    liveAis: options.liveAis?.demos
+      ?? (options.liveAi ? new Map([[options.liveAi.metadata.model, options.liveAi]]) : undefined),
+    aiModels: options.liveAis?.models ?? (options.liveAi ? [options.liveAi.metadata] : []),
     adventures: options.adventures ?? ADVENTURES,
     sessions: options.sessions ?? new Map(),
     runs: new Map(),

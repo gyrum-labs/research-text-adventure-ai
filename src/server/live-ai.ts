@@ -156,3 +156,25 @@ export function liveAiFromEnvironment(environment: NodeJS.ProcessEnv = process.e
   if (!apiKey || !model) return undefined;
   return createLiveAiDemo({ apiKey, model, transcriptRoot: environment.AI_DEMO_TRANSCRIPT_DIR });
 }
+
+/**
+ * Several configured models, so the watcher can offer each of them.
+ *
+ * `AI_DEMO_MODELS` is a comma-separated list; `AI_DEMO_MODEL` still works and
+ * remains the first entry, so an existing deployment keeps behaving.
+ */
+export function liveAisFromEnvironment(environment: NodeJS.ProcessEnv = process.env):
+  { demos: Map<string, LiveAiDemo>; models: LiveAiMetadata[] } | undefined {
+  const apiKey = environment.OPENROUTER_API_KEY?.trim();
+  const listed = (environment.AI_DEMO_MODELS?.trim() || environment.AI_DEMO_MODEL?.trim() || '')
+    .split(',').map(name => name.trim()).filter(name => name.length > 0);
+  if (!apiKey || listed.length === 0) return undefined;
+  const demos = new Map<string, LiveAiDemo>();
+  const models: LiveAiMetadata[] = [];
+  for (const model of listed) {
+    const demo = createLiveAiDemo({ apiKey, model, transcriptRoot: environment.AI_DEMO_TRANSCRIPT_DIR });
+    demos.set(model, demo);
+    models.push(demo.metadata);
+  }
+  return { demos, models };
+}

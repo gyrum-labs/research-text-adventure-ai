@@ -50,6 +50,9 @@ export async function boot(
   const watch = watchRoot === null ? undefined : mountWatchView(watchRoot, {
     baseUrl: config.baseUrl ?? globalThis.location?.origin ?? '',
     adventureId: session.adventure.id,
+    // The panel builds its option elements on the same document as the page,
+    // so a stand-in document in the tests sees every element it should.
+    createElement: (tagName: string) => documentImpl.createElement(tagName),
   });
   const playButton = documentImpl.querySelector<HTMLButtonElement>('#play-mode');
   const watchButton = documentImpl.querySelector<HTMLButtonElement>('#watch-mode');
