@@ -142,6 +142,78 @@
       "appears_in": "docs/TESTING.md or experiments/exp-05-the-matrix/README.md",
       "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
       "final": "replay-reproducibility-sketch-hand.png"
+    },
+    {
+      "file": "exp03-agent-playing-sketch.png",
+      "source": "exp03-agent-playing-sketch.svg",
+      "title": "Experiment 03: the agent plays",
+      "description": "A model can drive a state machine, given a clean loop and a fair error message: the model cloud proposes actions down to the agent at its terminal, the clean loop (observation - action - repeat) feeds it, the world answers in two colours - the world moves in success green, the world refuses in error red - and both are answers the agent learns from. Annotates exp-03; the matrix has been run against live providers.",
+      "appears_in": "experiments/exp-03-the-agent-plays/README.md",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "exp03-agent-playing-sketch-hand.png"
+    },
+    {
+      "file": "budget-envelope-sketch.png",
+      "source": "budget-envelope-sketch.svg",
+      "title": "Runner, budgets, guards (T3.6)",
+      "description": "Every run carries an envelope: turns, token cap and cost cap, reserved before the run and refunded if unused, drawn as an amber envelope with a progress bar. Each step spends from it; the red guard refuses overspend before it happens - a guard that says no before the money burns is cheaper than a postmortem after.",
+      "appears_in": "docs/ARCHITECTURE.md (runner section) or experiments/exp-03 README",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "budget-envelope-sketch-hand.png"
+    },
+    {
+      "file": "hints-true-and-vague-sketch.png",
+      "source": "hints-true-and-vague-sketch.svg",
+      "title": "Hints: true and vague (T0.7)",
+      "description": "The hint discipline as three real note cards from the adventure (h1 maintenance lockers are usually not locked; h2 a defusal manual would say which wire to cut; h3 the vault needs a keycard, not a code), the rule band - a hint must be true and vague: never the object, never the order, never the solution - and the side-by-side: a hint in success green versus a spoiler struck through in error red. Every use is recorded as hintsUsed.",
+      "appears_in": "docs/ADVENTURES.md section 5 (Hints)",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "hints-true-and-vague-sketch-hand.png"
+    },
+    {
+      "file": "context-suitcase-sketch.png",
+      "source": "context-suitcase-sketch.svg",
+      "title": "Context strategies (T3.5)",
+      "description": "What goes in the window is a decision, not an accident: the whole world on the left (drowning the agent buries the signal), three pluggable strategies in the middle (current room + exits; goal + key facts; recent turns, trimmed), and the agent's dark window on the right packed with exactly what fits - goal, room, exits, objects held, last refusal. The suitcase is small on purpose: what the agent sees decides what the agent can think.",
+      "appears_in": "docs/ARCHITECTURE.md (context strategies) or experiments/exp-02 README",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "context-suitcase-sketch-hand.png"
+    },
+    {
+      "file": "exp06-organisation-sketch.png",
+      "source": "exp06-organisation-sketch.svg",
+      "title": "Experiment 06: an organisation",
+      "description": "The adventure vocabulary has to survive contact with a real organisation - or the whole idea was a metaphor that does not pay. The owner delegates a mission, an envelope and a boundary to two worker agents; the six words (rooms, objects, doors, actions, goals, turns) appear unchanged on both org desks; both report back through the same receipt: evidence, not vibes.",
+      "appears_in": "experiments/exp-06-an-organisation/README.md",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "exp06-organisation-sketch-hand.png"
+    },
+    {
+      "file": "exp08-engine-comparison-sketch.png",
+      "source": "exp08-engine-comparison-sketch.svg",
+      "title": "Experiment 08: the engine comparison",
+      "description": "A stretch probe as one honest seesaw: the same agent (same policies, budgets, commands) runs against our engine - the vocabulary it was taught - and against another engine where the same vocabulary lives in someone else's world. Read the two scores side by side: good here and bad there means the engine carried it; good in both means the vocabulary travelled.",
+      "appears_in": "experiments/exp-08-the-engine-comparison/README.md",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "exp08-engine-comparison-sketch-hand.png"
+    },
+    {
+      "file": "architecture-boundary-sketch.png",
+      "source": "architecture-boundary-sketch.svg",
+      "title": "Architecture boundary (T0.8)",
+      "description": "The kernel behind its wall: pure functions only (types + DSL, pure reducer, hash chain, canonical JSON), no clock, no network, no screen, no secrets, fully deterministic. The red boundary wall marks one narrow port - actions in, observations out, the only traffic - with the human CLI, the agent harness and the web client on the far side, none able to reach into the kernel.",
+      "appears_in": "docs/ARCHITECTURE.md or experiments/exp-01 README",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "architecture-boundary-sketch-hand.png"
+    },
+    {
+      "file": "metrics-gauges-sketch.png",
+      "source": "metrics-gauges-sketch.svg",
+      "title": "Measurement (T4.1): the gauges that matter",
+      "description": "Four honest instruments, each readable in one glance: the success-rate dial (the headline, and the least informative), the hallucination-rate dial in error red (the number that separates luck from sense), tokens and cost counted per run, turns to finish and wall clock - plus the strip reminding that every failure lands in exactly one drawer (experiment 04).",
+      "appears_in": "docs/TESTING.md or experiments/exp-05-the-matrix/README.md",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "metrics-gauges-sketch-hand.png"
     }
   ]
 }
