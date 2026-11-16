@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 620" font-family="'Comic Sans MS','Segoe Print','Bradley Hand',cursive">
+  <defs>
+    <pattern id="inkhatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(-40)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#2b3440" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="920" height="620" fill="#fdfcf9"/>
+  <text x="460" y="44" font-size="24" text-anchor="middle" fill="#2b3440" font-weight="bold">the cast of the book</text>
+  <line x1="80" y1="58" x2="840" y2="58" stroke="#2b3440" stroke-width="1.4"/>
+
+  <!-- 1. field operative -->
+  <g stroke="#2b3440" fill="none" stroke-width="2.2" stroke-linecap="round">
+    <circle cx="150" cy="120" r="20"/>
+    <path d="M138 104 C 130 96 152 90 160 102" stroke-width="1.6"/>
+    <path d="M136 140 C 120 158 118 196 128 216 L172 216 C 184 192 180 156 164 140 Z" fill="url(#inkhatch)"/>
+    <path d="M132 158 L112 206 M168 158 L190 202" stroke-width="2.4"/>
+    <path d="M130 216 L124 288 M166 216 L176 288" stroke-width="2.6"/>
+    <path d="M124 288 L114 288 M176 288 L188 288" stroke-width="3"/>
+    <rect x="186" y="188" width="18" height="11" transform="rotate(-12 195 193)"/>
+    <path d="M190 216 C 186 202 188 196 194 190" stroke-width="1.6"/>
+  </g>
+  <g fill="#2b3440" font-size="15" text-anchor="middle">
+    <text x="152" y="316">FIELD OPERATIVE</text>
+    <text x="152" y="336" font-size="12" font-style="italic">Nightingale - two goals, one keycard</text>
+  </g>
+  <!-- expression head -->
+  <g stroke="#2b3440" fill="none" stroke-width="1.6">
+    <circle cx="228" cy="118" r="13"/>
+    <circle cx="223" cy="115" r="1.4" fill="#2b3440" stroke="none"/>
+    <circle cx="233" cy="115" r="1.4" fill="#2b3440" stroke="none"/>
+    <path d="M222 123 C 226 126 230 126 234 123"/>
+  </g>
+
+  <!-- 2. on-call engineer -->
+  <g stroke="#2b3440" fill="none" stroke-width="2.2" stroke-linecap="round">
+    <circle cx="400" cy="128" r="20"/>
+    <path d="M380 124 C 376 104 424 104 420 124" stroke-width="1.6"/>
+    <path d="M420 118 C 436 118 438 134 428 140" stroke-width="1.8"/>
+    <circle cx="428" cy="142" r="4" stroke-width="1.4"/>
+    <path d="M386 148 C 372 168 372 200 382 218 L420 218 C 430 198 428 164 414 148 Z" fill="url(#inkhatch)"/>
+    <path d="M398 148 L390 166 L394 178" stroke-width="1.4"/>
+    <rect x="382" y="170" width="9" height="26" stroke-width="1.4"/>
+    <path d="M386 218 L380 290 M416 218 L424 290" stroke-width="2.6"/>
+    <path d="M370 196 C 360 200 356 206 356 212" stroke-width="1.8"/>
+    <rect x="348" y="212" width="14" height="16" rx="4"/>
+    <path d="M352 212 C 350 204 358 202 360 208" stroke-width="1.4"/>
+  </g>
+  <g fill="#2b3440" font-size="15" text-anchor="middle">
+    <text x="400" y="316">ON-CALL ENGINEER</text>
+    <text x="400" y="336" font-size="12" font-style="italic">Hotfix - the SLA expires at 17:00</text>
+  </g>
+  <g stroke="#2b3440" fill="none" stroke-width="1.6">
+    <circle cx="466" cy="122" r="13"/>
+    <line x1="460" y1="118" x2="472" y2="118"/>
+    <circle cx="463" cy="124" r="1.4" fill="#2b3440" stroke="none"/>
+    <circle cx="469" cy="124" r="1.4" fill="#2b3440" stroke="none"/>
+  </g>
+
+  <!-- 3. the agent -->
+  <g stroke="#2b3440" fill="none" stroke-width="2.2" stroke-linecap="round">
+    <rect x="600" y="140" width="86" height="74" rx="10"/>
+    <circle cx="643" cy="172" r="15" stroke-width="2.4"/>
+    <circle cx="643" cy="172" r="5" fill="#2b3440" stroke="none"/>
+    <path d="M608 156 L616 164 M678 156 L670 164" stroke-width="1.6"/>
+    <path d="M612 214 L676 214 L668 246 L620 246 Z"/>
+    <path d="M622 224 L666 224 M624 232 L664 232 M626 240 L662 240" stroke-width="1.2"/>
+    <path d="M596 246 L692 246 L692 300 L596 300 Z" stroke-width="1.8"/>
+    <rect x="606" y="256" width="76" height="16" stroke-width="1.6"/>
+    <path d="M612 262 L664 262 M612 268 L652 268" stroke-width="1"/>
+    <path d="M604 300 L604 312 M688 300 L688 312" stroke-width="2"/>
+  </g>
+  <g fill="#2b3440" font-size="15" text-anchor="middle">
+    <text x="644" y="316">THE AGENT</text>
+    <text x="644" y="336" font-size="12" font-style="italic">plays the same commands</text>
+  </g>
+  <g stroke="#2b3440" fill="none" stroke-width="1.6">
+    <rect x="712" y="150" width="52" height="34" rx="4"/>
+    <path d="M716 170 L728 158 L742 168 L760 156" stroke-width="1.8"/>
+    <circle cx="760" cy="156" r="2.4" fill="#2b3440" stroke="none"/>
+  </g>
+
+  <!-- 4. the puzzle architect -->
+  <g stroke="#2b3440" fill="none" stroke-width="2.2" stroke-linecap="round">
+    <circle cx="824" cy="132" r="18"/>
+    <path d="M814 116 C 820 108 830 108 836 116" stroke-width="1.6"/>
+    <path d="M806 150 C 796 168 798 190 808 202 L842 202 C 852 186 850 164 840 150 Z" fill="url(#inkhatch)"/>
+    <path d="M760 196 L888 192 L892 250 L764 254 Z" stroke-width="1.8"/>
+    <path d="M776 232 L806 230 L808 244 L778 246 Z" stroke-width="1.4"/>
+    <path d="M816 210 L848 208 M816 220 L846 218" stroke-width="1.2"/>
+    <path d="M784 226 L812 218 L816 226" stroke-width="1.4"/>
+    <path d="M852 160 L876 138 L882 144 L858 166 Z" stroke-width="1.6"/>
+    <path d="M876 138 L872 132 L878 134 Z" fill="#2b3440" stroke="none"/>
+  </g>
+  <g fill="#2b3440" font-size="15" text-anchor="middle">
+    <text x="826" y="316">THE PUZZLE ARCHITECT</text>
+    <text x="826" y="336" font-size="12" font-style="italic">draws the world</text>
+  </g>
+  <g stroke="#2b3440" fill="none" stroke-width="1.6">
+    <circle cx="768" cy="128" r="13"/>
+    <path d="M762 132 C 766 128 770 128 774 132" stroke-width="1.2"/>
+    <circle cx="764" cy="124" r="1.4" fill="#2b3440" stroke="none"/>
+    <circle cx="772" cy="124" r="1.4" fill="#2b3440" stroke="none"/>
+  </g>
+  <text x="460" y="392" font-size="13" fill="#6a7280" text-anchor="middle" font-style="italic">drawn from the two shipped adventures and the experiment series - the agent is a character too</text>
+</svg>

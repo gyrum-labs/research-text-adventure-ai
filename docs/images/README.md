@@ -9,6 +9,22 @@ and registered in `docs-viewer/_index.json`, so the viewer can
 surface them in its sidebar and the validator can confirm links
 resolve.
 
+## Illustrations (sketch set)
+
+Beyond screenshots, this directory carries the book's sketch
+illustrations, recorded in `illustrations.json`. One subject, one
+pair of files: `<name>.svg` is the editable source and
+`<name>.png` is the rendered deliverable the docs reference. The
+descriptions in the manifest say what each picture shows and which
+chapter it belongs to, so a future edit can find the right file
+without opening them all.
+
+To change an illustration: edit the SVG, then re-render
+
+    rsvg-convert -w 1240 docs/images/<name>.svg -o docs/images/<name>.png
+
+and run `scripts/update-docs.sh` so the viewer index follows.
+
 ## Naming convention
 
 Use short, lowercase, hyphen-separated names that describe the

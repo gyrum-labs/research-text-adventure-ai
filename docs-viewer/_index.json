@@ -32,6 +32,11 @@
           "children": [
             {
               "type": "file",
+              "name": "illustrations.json",
+              "path": "docs/images/illustrations.json"
+            },
+            {
+              "type": "file",
               "name": "README.md",
               "path": "docs/images/README.md"
             }
@@ -101,6 +106,26 @@
         },
         {
           "type": "file",
+          "name": "ASL-RESEARCH.md",
+          "path": "docs/ASL-RESEARCH.md"
+        },
+        {
+          "type": "file",
+          "name": "batch-findings-2026-11-13.md",
+          "path": "docs/batch-findings-2026-11-13.md"
+        },
+        {
+          "type": "file",
+          "name": "batch-findings-2026-11-14.md",
+          "path": "docs/batch-findings-2026-11-14.md"
+        },
+        {
+          "type": "file",
+          "name": "batch-findings-third-run.md",
+          "path": "docs/batch-findings-third-run.md"
+        },
+        {
+          "type": "file",
           "name": "design-system.md",
           "path": "docs/design-system.md"
         },
@@ -113,6 +138,11 @@
           "type": "file",
           "name": "docs-guide.md",
           "path": "docs/docs-guide.md"
+        },
+        {
+          "type": "file",
+          "name": "MAPS.md",
+          "path": "docs/MAPS.md"
         },
         {
           "type": "file",

@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "generated": "2026-11-16",
+  "note": "Illustrations for the book. Each entry pairs a rendered PNG (the deliverable) with its editable SVG source. The sketch style follows the reference images collected by the operator; every subject is taken from the two shipped adventures (Operation Nightingale, The 2.4.1 Hotfix) or from the experiment series, so the pictures show the actual game. Regenerate a PNG after editing its SVG with: rsvg-convert -w 1240 <file>.svg -o <file>.png",
+  "style": "hand-drawn ink sketch, wobbly linework, paper tones, minimal hand-lettered labels",
+  "references": [
+    "https://www.collybird.com/assets/assets/projects/adventure/map.a65fe0e73a41.webp (grid dungeon map, labelled rooms, item icons)",
+    "https://i.redd.it/9oif6pt90g721.jpg (the 1976 Adventure working map, pencil on fan-fold paper)",
+    "http://bitwisebooks.com/wp-content/uploads/2019/12/AdventureGames-p19.png (beginner book page with a friendly four-room map diagram)",
+    "https://i.pinimg.com/736x/b7/1e/63/b71e634a14e70e4cfe0a4e3353cc1f9d.jpg (old-school RPG rulebook page: ink characters and rule text)",
+    "https://media.rightmove.co.uk/property-floorplan/d1f4df78e/773379850995457/d1f4df78e2568c8ec6630448c3a9d47d.png (technical floorplan with walls, door swings, furniture)"
+  ],
+  "items": [
+    {
+      "file": "map-nightingale-floorplan.png",
+      "source": "map-nightingale-floorplan.svg",
+      "title": "Operation Nightingale, bunker floorplan",
+      "description": "The mission-impossible adventure drawn as a property floorplan: Briefing Room with desk, bulletin board and the keycard; Service Corridor with the tall locker and fire extinguisher; Server Vault with racks, the cased bomb on its pedestal, and the bold locked vault door with keycard reader. Title block bottom right, like a drawing sheet.",
+      "appears_in": "docs/MAPS.md (Operation Nightingale section) and docs/ADVENTURES.md section 2"
+    },
+    {
+      "file": "map-hotfix-floorplan.png",
+      "source": "map-hotfix-floorplan.svg",
+      "title": "The 2.4.1 Hotfix, office floorplan",
+      "description": "The hotfix-2-4-1 adventure as an office fit-out plan: Platform On-call with standup board and the open incident ticket; Release Engineering with shared inbox, the shelf of releases 2.3.9 / 2.4.0 / 2.4.1 and the release gate; Customer Success behind a locked door, with handover board and phone. The wall clock reads five o'clock: the SLA deadline.",
+      "appears_in": "docs/MAPS.md (The 2.4.1 Hotfix section)"
+    },
+    {
+      "file": "map-nightingale-working-sketch.png",
+      "source": "map-nightingale-working-sketch.svg",
+      "title": "A player's working map, Nightingale",
+      "description": "The map as a player actually draws it: pencil boxes for the three rooms joined by labelled N/S arrows, the locked vault door marked between corridor and vault, margin notes ('take the keycard FIRST', 'cut the YELLOW wire, not the red one!', safe code 4821), the two goals DISARM and RECOVER circled in red pencil. Fan-fold paper with sprocket holes, fold creases and a coffee ring.",
+      "appears_in": "docs/MAPS.md intro or docs/ADVENTURES.md section 3 worked examples"
+    },
+    {
+      "file": "characters-sheet-sketch.png",
+      "source": "characters-sheet-sketch.svg",
+      "title": "The cast of the book",
+      "description": "Character sheet in rulebook ink style with expression heads: the Field Operative (Nightingale's player, holding the keycard), the On-Call Engineer (Hotfix's player, headset and coffee), THE AGENT (the small cube robot that plays the same commands over its keyboard), and the Puzzle Architect seen from behind, drawing the world. Each has a one-line note on which adventure or experiment they belong to.",
+      "appears_in": "docs/proposal.md or experiments/README.md opening"
+    },
+    {
+      "file": "scene-briefing-room-sketch.png",
+      "source": "scene-briefing-room-sketch.svg",
+      "title": "Turn one: the briefing room",
+      "description": "The opening moment of Operation Nightingale: the operative under a single hanging lamp reads the mission brief pinned to the cork board; the photo of the booby-trapped case is crossed out in red; the keycard waits on the desk. Caption: discover the rest by exploring.",
+      "appears_in": "docs/ADVENTURES.md or the userguide's first-steps section"
+    },
+    {
+      "file": "scene-wire-choice-sketch.png",
+      "source": "scene-wire-choice-sketch.svg",
+      "title": "The wire choice",
+      "description": "The book's memorable beat: gloved hands with cutters at the opened bomb, three wires (red, blue, yellow), the defusal manual open beside it with 'SAFE WIRE: YELLOW' highlighted, and a drop of sweat. The manual is the only way the book discloses the fact, which is the hard gate the gold path walks through.",
+      "appears_in": "docs/ADVENTURES.md section 3 worked examples"
+    },
+    {
+      "file": "diagram-agent-view-gap-sketch.png",
+      "source": "diagram-agent-view-gap-sketch.svg",
+      "title": "Experiment 02: the gap",
+      "description": "The idea of exp-02 as one picture: the full little world (many rooms and props) on the left, the agent's three-line terminal view on the right, a magnifying lens with an eye between them, and the words 'the gap' in red. The gap between world and observation is the experiment.",
+      "appears_in": "experiments/exp-02-what-the-agent-sees/README.md"
+    },
+    {
+      "file": "diagram-matrix-tally-sketch.png",
+      "source": "diagram-matrix-tally-sketch.svg",
+      "title": "Experiment 05: the matrix as tallies",
+      "description": "The measurement idea as a hand-drawn tally grid: rows for the two adventures, columns for runs, tally marks for wins, X marks for failures, one failing cell circled in red pencil with 'why?' and an arrow. Pencil on the corner, coffee ring on the page. One number is an anecdote; a cell of a matrix is a result.",
+      "appears_in": "experiments/exp-05-the-matrix/README.md"
+    }
+  ]
+}

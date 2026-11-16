@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 620" font-family="'Comic Sans MS','Segoe Print','Bradley Hand',cursive">
+  <rect width="920" height="620" fill="#fdfcf9"/>
+  <text x="460" y="46" font-size="22" text-anchor="middle" fill="#2b3440" font-weight="bold">experiment 05 - one number is an anecdote, a cell is a result</text>
+  <!-- coffee ring -->
+  <circle cx="120" cy="80" r="34" fill="none" stroke="#8a5a2b" stroke-width="6" opacity="0.28"/>
+  <!-- the grid -->
+  <g stroke="#2b3440" fill="none" stroke-width="2.4" stroke-linecap="round">
+    <path d="M140 130 L700 126 L702 470 L142 474 Z"/>
+    <line x1="140" y1="210" x2="700" y2="206" stroke-width="1.8"/>
+    <line x1="140" y1="340" x2="700" y2="336" stroke-width="1.8"/>
+    <line x1="280" y1="128" x2="281" y2="472" stroke-width="1.8"/>
+    <line x1="420" y1="127" x2="421" y2="471" stroke-width="1.8"/>
+    <line x1="560" y1="126" x2="561" y2="470" stroke-width="1.8"/>
+  </g>
+  <g fill="#2b3440" font-size="16" text-anchor="middle">
+    <text x="418" y="112">runs of the matrix</text>
+    <text x="210" y="176" font-weight="bold">nightingale</text>
+    <text x="210" y="306" font-weight="bold">hotfix</text>
+    <text x="350" y="176">run 1</text>
+    <text x="490" y="176">run 2</text>
+    <text x="630" y="176">run 3</text>
+  </g>
+  <!-- tally marks: successes -->
+  <g stroke="#2b3440" stroke-width="2.4" stroke-linecap="round">
+    <path d="M320 240 L320 286 M334 240 L334 286 M348 240 L348 286 M362 240 L362 286 M356 232 L372 292"/>
+    <path d="M452 244 L452 282 M466 244 L466 282 M480 244 L480 282"/>
+    <path d="M592 240 L592 286 M606 240 L606 286 M620 240 L620 286 M634 240 L634 286 M628 232 L644 292"/>
+    <path d="M320 372 L320 410 M334 372 L334 410 M348 372 L348 410 M362 372 L362 410 M356 364 L372 418"/>
+    <path d="M452 372 L452 410 M466 372 L466 410"/>
+  </g>
+  <!-- failures as X marks -->
+  <g stroke="#2b3440" stroke-width="2.6" stroke-linecap="round">
+    <path d="M478 366 L504 392 M504 366 L478 392"/>
+    <path d="M614 364 L646 396 M646 364 L614 396"/>
+    <path d="M614 378 L646 378" stroke-width="1.6"/>
+    <path d="M614 382 L646 382" stroke-width="1.6"/>
+  </g>
+  <!-- the circled cell with why? -->
+  <g stroke="#b3261e" fill="none" stroke-width="2.6">
+    <rect x="574" y="344" width="116" height="86" rx="8" transform="rotate(-2 632 387)"/>
+    <path d="M560 508 C 588 496 612 486 630 468" stroke-width="2"/>
+    <path d="M622 470 L630 468 L628 476"/>
+  </g>
+  <text x="540" y="534" font-size="20" fill="#b3261e" font-weight="bold" transform="rotate(-2 540 534)">why?</text>
+  <text x="180" y="530" font-size="15" fill="#2b3440" font-style="italic">each cell is a category, not a vibe:</text>
+  <text x="180" y="552" font-size="15" fill="#2b3440" font-style="italic">the failure classifier names what went wrong</text>
+  <!-- pencil -->
+  <g stroke="#2b3440" fill="none" stroke-width="2" stroke-linecap="round">
+    <path d="M720 520 L866 468 L874 482 L728 534 Z"/>
+    <path d="M866 468 L884 462 L874 482" stroke-width="1.8"/>
+    <path d="M884 462 L888 466 L884 470" fill="#2b3440" stroke="none"/>
+    <line x1="740" y1="516" x2="748" y2="530" stroke-width="1.2"/>
+  </g>
+  <text x="460" y="596" font-size="14" fill="#6a7280" text-anchor="middle" font-style="italic">the summary table, as the reader will meet it in results/summary.md</text>
+</svg>
