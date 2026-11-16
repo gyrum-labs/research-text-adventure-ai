@@ -96,6 +96,21 @@ export interface RunOptions {
    * records exactly what the agent was shown.
    */
   maskLegalActions?: boolean;
+  /**
+   * The world to start from, instead of the adventure's first.
+   *
+   * A run resumed after a pause continues the mission it was paused in, so it
+   * starts from the state the pause left behind. Everything else about the
+   * run is ordinary: the same reducer, the same guards, the same caps.
+   */
+  initial?: GameState;
+  /**
+   * The turn the run resumes from.
+   *
+   * A pause spends turns, and the caps apply to the whole lineage rather than
+   * to each piece of it, so a resumed run counts from here.
+   */
+  startingTurn?: number;
 }
 
 export interface RunResult {
@@ -152,7 +167,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
     if (delay > 0) await sleepOrAbort(delay, sleep, options.signal);
   };
 
-  let state: GameState = structuredClone(adventure.initial);
+  let state: GameState = structuredClone(options.initial ?? adventure.initial);
   let hash = hashInitial(state);
   const events: Event[] = [];
   const commands: string[] = [];
@@ -220,7 +235,8 @@ export async function run(options: RunOptions): Promise<RunResult> {
     return undefined;
   };
 
-  for (let turn = 0; turn < budgets.maxTurns && state.status === 'running'; turn += 1) {
+  const startingTurn = options.startingTurn ?? 0;
+  for (let turn = startingTurn; turn < startingTurn + budgets.maxTurns && state.status === 'running'; turn += 1) {
     const stopped = interrupted(turn);
     if (stopped !== undefined) return stopped;
 
