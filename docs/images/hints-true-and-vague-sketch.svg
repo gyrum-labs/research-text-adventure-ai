@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Inter,'Helvetica Neue',Arial,sans-serif">
+  <rect width="960" height="620" fill="#ffffff"/>
+  <text x="480" y="46" font-size="20" font-weight="600" fill="#1a1a1a" text-anchor="middle">hints: true and vague (T0.7)</text>
+  <text x="480" y="70" font-size="13" fill="#5a6069" text-anchor="middle" font-style="italic">a last-resort affordance, identical across every experiment - and every use is recorded as hintsUsed</text>
+
+  <!-- the three real hints, as note cards -->
+  <g stroke="#1a1a1a" fill="#fff3cd" stroke-width="1.8">
+    <rect x="80"  y="120" width="240" height="120" transform="rotate(-3 200 180)"/>
+    <rect x="360" y="120" width="240" height="120" transform="rotate(2 480 180)"/>
+    <rect x="640" y="120" width="240" height="120" transform="rotate(-2 760 180)"/>
+  </g>
+  <circle cx="104" cy="136" r="4" fill="#6c757d"/>
+  <circle cx="384" cy="136" r="4" fill="#6c757d"/>
+  <circle cx="664" cy="136" r="4" fill="#6c757d"/>
+  <g fill="#1a1a1a" font-size="13">
+    <text x="98"  y="168" transform="rotate(-3 98 168)">h1  Maintenance lockers are</text>
+    <text x="98"  y="188" transform="rotate(-3 98 188)">usually not locked.</text>
+    <text x="378" y="168" transform="rotate(2 378 168)">h2  A defusal manual would say</text>
+    <text x="378" y="188" transform="rotate(2 378 188)">which wire to cut.</text>
+    <text x="658" y="168" transform="rotate(-2 658 168)">h3  The vault needs a keycard,</text>
+    <text x="658" y="188" transform="rotate(-2 658 188)">not a code.</text>
+  </g>
+
+  <!-- the rule: true and vague -->
+  <g stroke="#28a745" fill="#d4edda" stroke-width="2">
+    <rect x="120" y="290" width="720" height="60" rx="8"/>
+  </g>
+  <text x="480" y="316" font-size="15" fill="#1a1a1a" text-anchor="middle" font-weight="600">a hint must be true and vague - never the object, never the order, never the solution</text>
+  <text x="480" y="338" font-size="12" fill="#5a6069" text-anchor="middle">otherwise the experiment stops measuring thinking and starts measuring copying</text>
+
+  <!-- hint vs spoiler -->
+  <g stroke="#28a745" fill="#d4edda" stroke-width="1.8">
+    <rect x="140" y="380" width="320" height="90" rx="8"/>
+  </g>
+  <text x="160" y="406" font-size="13" fill="#28a745" font-weight="600">A HINT</text>
+  <text x="160" y="430" font-size="13" fill="#1a1a1a">"Maintenance lockers are usually</text>
+  <text x="160" y="450" font-size="13" fill="#1a1a1a">not locked."</text>
+  <g stroke="#dc3545" fill="#f8d7da" stroke-width="1.8">
+    <rect x="500" y="380" width="320" height="90" rx="8"/>
+  </g>
+  <text x="520" y="406" font-size="13" fill="#dc3545" font-weight="600">A SPOILER</text>
+  <text x="520" y="430" font-size="13" fill="#1a1a1a">"Read the manual, then cut the</text>
+  <text x="520" y="450" font-size="13" fill="#1a1a1a">yellow wire."   (never ship this)</text>
+  <line x1="500" y1="380" x2="820" y2="470" stroke="#dc3545" stroke-width="2.4"/>
+
+  <text x="480" y="540" font-size="14" fill="#5a6069" text-anchor="middle" font-style="italic">every hintsUsed is in the transcript - the matrix can see who needed help and when</text>
+</svg>

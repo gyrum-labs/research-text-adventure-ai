@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Inter,'Helvetica Neue',Arial,sans-serif">
+  <rect width="960" height="620" fill="#ffffff"/>
+  <text x="480" y="46" font-size="20" font-weight="600" fill="#1a1a1a" text-anchor="middle">measurement (T4.1) - the gauges that matter</text>
+  <text x="480" y="70" font-size="13" fill="#5a6069" text-anchor="middle" font-style="italic">not a leaderboard: four honest instruments, each readable in one glance</text>
+
+  <!-- gauge 1: success rate -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2">
+    <path d="M150 260 A 110 110 0 1 1 370 260" stroke-width="10"/>
+    <path d="M170 260 A 90 90 0 1 1 350 260" stroke="#28a745" stroke-width="10"/>
+    <line x1="260" y1="260" x2="330" y2="180" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="260" cy="260" r="8" fill="#1a1a1a" stroke="none"/>
+  </g>
+  <text x="260" y="300" font-size="16" font-weight="600" fill="#1a1a1a" text-anchor="middle">success rate</text>
+  <text x="260" y="322" font-size="12" fill="#5a6069" text-anchor="middle">wins / runs, per adventure</text>
+  <text x="260" y="342" font-size="12" fill="#28a745" text-anchor="middle" font-weight="600">the headline, and the least informative</text>
+
+  <!-- gauge 2: hallucination rate -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2">
+    <path d="M450 260 A 110 110 0 1 1 670 260" stroke-width="10"/>
+    <path d="M470 260 A 90 90 0 1 1 650 260" stroke="#dc3545" stroke-width="10"/>
+    <line x1="560" y1="260" x2="516" y2="186" stroke="#1a1a1a" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="560" cy="260" r="8" fill="#1a1a1a" stroke="none"/>
+  </g>
+  <text x="560" y="300" font-size="16" font-weight="600" fill="#1a1a1a" text-anchor="middle">hallucination rate</text>
+  <text x="560" y="322" font-size="12" fill="#5a6069" text-anchor="middle">commands naming things that are not there</text>
+  <text x="560" y="342" font-size="12" fill="#dc3545" text-anchor="middle" font-weight="600">the number that separates luck from sense</text>
+
+  <!-- gauge 3: cost -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2">
+    <rect x="700" y="150" width="180" height="120" rx="8" fill="#f8f9fa"/>
+  </g>
+  <text x="790" y="186" font-size="14" fill="#5a6069" text-anchor="middle">tokens in / out</text>
+  <text x="790" y="216" font-size="22" font-weight="600" fill="#1a1a1a" text-anchor="middle">+ cost</text>
+  <text x="790" y="248" font-size="12" fill="#5a6069" text-anchor="middle">counted per run, budgeted per run</text>
+
+  <!-- gauge 4: wall clock + turns -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2">
+    <rect x="150" y="410" width="180" height="120" rx="8" fill="#f8f9fa"/>
+  </g>
+  <text x="240" y="446" font-size="14" fill="#5a6069" text-anchor="middle">turns to finish</text>
+  <text x="240" y="474" font-size="22" font-weight="600" fill="#1a1a1a" text-anchor="middle">and wall clock</text>
+  <text x="240" y="506" font-size="12" fill="#5a6069" text-anchor="middle">a win after 200 turns is a different finding</text>
+
+  <!-- failure categories strip -->
+  <g stroke="#1a1a1a" fill="#e2e3e5" stroke-width="1.8">
+    <rect x="700" y="410" width="180" height="120" rx="8"/>
+  </g>
+  <text x="790" y="440" font-size="13" fill="#1a1a1a" text-anchor="middle" font-weight="600">and every failure</text>
+  <text x="790" y="460" font-size="13" fill="#1a1a1a" text-anchor="middle" font-weight="600">lands in exactly one drawer</text>
+  <text x="790" y="490" font-size="12" fill="#5a6069" text-anchor="middle">F1 parsing ... F9 abstention</text>
+  <text x="790" y="510" font-size="12" fill="#5a6069" text-anchor="middle">(experiment 04)</text>
+
+  <text x="480" y="580" font-size="14" fill="#5a6069" text-anchor="middle" font-style="italic">metrics is the quiet gauge panel behind the matrix - it feeds every cell you have seen</text>
+</svg>
