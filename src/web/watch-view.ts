@@ -125,6 +125,7 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): Wa
     element(root, '.watch-note').textContent = hint;
   };
   policy.addEventListener('change', updatePolicy);
+  updatePolicy();
   void discoverAgents();
 
   /** The agents the server offers, one policy option each. */

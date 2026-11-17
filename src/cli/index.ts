@@ -217,14 +217,15 @@ program
     try {
       switch (verb) {
         case 'plan': {
-          await writePlan(parsed, await pricesFor(parsed.model));
-          console.log(describeBatch(parsed, await pricesFor(parsed.model)));
+          const prices = await pricesFor(parsed.model);
+          await writePlan(parsed, prices);
+          console.log(await describeBatch(parsed, prices));
           console.log(`plan written to ${parsed.root}/plan.json`);
           return;
         }
         case 'dry-run': {
           const prices = await pricesFor(parsed.model);
-          console.log(describeBatch(parsed, prices));
+          console.log(await describeBatch(parsed, prices));
           console.log('dry run: no model was called.');
           return;
         }
