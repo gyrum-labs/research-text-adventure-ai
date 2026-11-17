@@ -65,7 +65,131 @@ describe('resuming a run', () => {
     const commands = readTranscript(path).filter(record => record.type === 'command');
     expect(commands.map(record => record.raw)).toEqual(GOLD_PATH);
   });
+
+  it('marks the pause in the transcript and leaves the run unfinished', async () => {
+    const path = join('runs', 'resume-pause-test.jsonl');
+    if (existsSync(path)) unlinkSync(path);
+    const transcript = new Transcript(path, header(1));
+    const { policy } = pausingAfter(2);
+    const first = await run({ adventure, policy: policy as never, transcript, signal: policy.signal, maxTurns: 10 });
+    expect(first.outcome).toBe('paused');
+    const markers = readTranscript(path).filter(record => record.type === 'paused');
+    expect(markers).toHaveLength(1);
+    // A pause writes no ending: the transcript holds no run_ended to mistake
+    // for a finished run.
+    expect(readTranscript(path).filter(record => record.type === 'events' &&
+      JSON.stringify(record).includes('run_ended'))).toHaveLength(0);
+  });
+
+  it('a pause leaves behind everything the continuation needs', async () => {
+    const { policy } = pausingAfter(2);
+    const first = await run({ adventure, policy: policy as never, signal: policy.signal, maxTurns: 10 });
+    expect(first.outcome).toBe('paused');
+    expect(first.pause).toBeDefined();
+    // The pause arrived during the third model call, so two turns had been
+    // spoken and three observations existed, the second one built on the
+    // world the first command changed.
+    expect(first.pause?.history).toHaveLength(3);
+    expect(first.pause?.commands).toEqual(FIRST_HALF);
+    expect(first.pause?.loop.repeats).toBeGreaterThanOrEqual(1);
+  });
+
+  it('a resumed run keeps the loop guard the pause interrupted', async () => {
+    // One turn in the same room before the pause, one after: the guard must
+    // see three repeats across the pause, not start counting again. The
+    // situation the run starts in counts as the first repeat.
+    const waiting = waitingPolicy(1);
+    const first = await run({
+      adventure, policy: waiting.policy as never, maxTurns: 2, signal: waiting.policy.signal,
+    });
+    expect(first.outcome).toBe('paused');
+    expect(first.pause?.loop.repeats).toBe(2);
+    const second = await run({
+      adventure, policy: { id: 'stub', async next() { return 'wait'; } } as never,
+      initial: first.state, startingTurn: first.turns,
+      resume: first.pause, maxTurns: 2,
+    });
+    // One more turn in the same room crosses the guard of three.
+    expect(second.outcome).toBe('loop_detected');
+    expect(second.turns).toBe(2);
+  });
+
+  it('a resumed run carries its error counters across the pause', async () => {
+    // A policy that issues one unparsable command before the pause, then
+    // behaves: the resumed run must still remember the parse error.
+    let calls = 0;
+    const controller = new AbortController();
+    const policy = {
+      id: 'stub',
+      signal: controller.signal,
+      async next() {
+        calls += 1;
+        if (calls === 1) return 'dance a jig';
+        if (calls === 2) {
+          controller.abort(new DOMException('The run was paused.', 'PauseError'));
+          throw new DOMException('The run was paused.', 'AbortError');
+        }
+        return GOLD_PATH[calls - 2] ?? null;
+      },
+    };
+    const first = await run({ adventure, policy: policy as never, maxTurns: 3, signal: controller.signal });
+    expect(first.outcome).toBe('paused');
+    expect(first.pause?.counters.parseErrors).toBe(1);
+    let gold = 0;
+    const second = await run({
+      adventure,
+      policy: { id: 'stub', async next() { return GOLD_PATH[gold++] ?? null; } } as never,
+      initial: first.state, startingTurn: first.turns,
+      resume: first.pause, maxTurns: 10,
+    });
+    expect(second.parseErrors).toBe(1);
+    expect(second.outcome).toBe('success');
+  });
 });
+
+/** A policy that pauses the run during its `at`-th call, the way an operator's button lands mid-model-call. */
+function pausingAfter(at: number): {
+  policy: { id: string; signal: AbortSignal; next: () => Promise<string | null> };
+} {
+  const controller = new AbortController();
+  let calls = 0;
+  return {
+    policy: {
+      id: 'stub',
+      signal: controller.signal,
+      async next() {
+        calls += 1;
+        if (calls > at) {
+          controller.abort(new DOMException('The run was paused.', 'PauseError'));
+          throw new DOMException('The run was paused.', 'AbortError');
+        }
+        return GOLD_PATH[calls - 1] ?? null;
+      },
+    },
+  };
+}
+
+/** A policy that only ever waits, pausing during its `at`-th call. */
+function waitingPolicy(at: number): {
+  policy: { id: string; signal: AbortSignal; next: () => Promise<string | null> };
+} {
+  const controller = new AbortController();
+  let calls = 0;
+  return {
+    policy: {
+      id: 'stub',
+      signal: controller.signal,
+      async next() {
+        calls += 1;
+        if (calls > at) {
+          controller.abort(new DOMException('The run was paused.', 'PauseError'));
+          throw new DOMException('The run was paused.', 'AbortError');
+        }
+        return 'wait';
+      },
+    },
+  };
+}
 
 function header(offset: number): ConstructorParameters<typeof Transcript>[1] {
   return {
