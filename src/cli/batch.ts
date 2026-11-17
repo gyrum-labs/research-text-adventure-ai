@@ -33,10 +33,31 @@ import type { PriceEvidence } from '../runner/batch.js';
 export type { PriceEvidence };
 import type { FetchLike } from '../session/http.js';
 
-/** The dated published prices for a model, from the provider's own catalogue. */
+/** How long the price catalogue may take to answer before the plan gives up. */
+const PRICES_TIMEOUT_MS = 10_000;
+
+/**
+ * The dated published prices for a model, from the provider's own catalogue.
+ *
+ * The seam: the provider is OpenRouter's models API (GET /api/v1/models), the
+ * consumer is this CLI's batch planner on the operator's side only — the demo
+ * server and the browser never call it. The contract is external, read-only,
+ * and consumed without a cache: a plan must carry today's dated prices, so
+ * failure is fail-fast with a named reason, never a silent zero price or a
+ * stale table. The fetch is bounded so an unreachable API cannot hang the
+ * operator's terminal.
+ */
 export async function pricesFor(model: string, fetchLike?: FetchLike): Promise<PriceEvidence> {
-  const get = fetchLike ?? ((url: string) => fetch(url));
-  const response = await get('https://openrouter.ai/api/v1/models');
+  const get = fetchLike ?? ((url: string) => fetch(url, { signal: AbortSignal.timeout(PRICES_TIMEOUT_MS) }));
+  let response: Response;
+  try {
+    response = await get('https://openrouter.ai/api/v1/models');
+  } catch (error) {
+    const reason = error instanceof Error && error.name === 'TimeoutError'
+      ? `no answer within ${PRICES_TIMEOUT_MS / 1000}s`
+      : error instanceof Error ? error.message : String(error);
+    throw new Error(`could not read the published prices: ${reason}`);
+  }
   if (!response.ok) throw new Error(`could not read the published prices (${response.status})`);
   const body = await response.json() as { data?: Array<{ id?: string; pricing?: { prompt?: string; completion?: string } }> };
   const entry = body.data?.find(candidate => candidate.id === model);
