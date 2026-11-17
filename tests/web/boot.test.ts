@@ -145,8 +145,26 @@ describe('the page', () => {
     expect(play.getAttribute('aria-pressed')).toBe('true');
   });
 
-  it('stops the watched run when the tab is hidden', async () => {
-    const { doc, terminal, panel } = page();
+  it('the watch view hides the game and shows the panel, and back', async () => {
+    const { doc, terminal, panel, play, watch } = page();
+    await boot(terminal as unknown as HTMLElement, { mode: 'memory' }, asDocument(doc));
+
+    // Watching: the game hides, the panel shows, and the buttons say which is on.
+    watch.fire('click');
+    expect(terminal.hidden).toBe(true);
+    expect(panel.hidden).toBe(false);
+    expect(watch.getAttribute('aria-pressed')).toBe('true');
+    expect(play.getAttribute('aria-pressed')).toBe('false');
+
+    // Playing: exactly the reverse.
+    play.fire('click');
+    expect(terminal.hidden).toBe(false);
+    expect(panel.hidden).toBe(true);
+    expect(watch.getAttribute('aria-pressed')).toBe('false');
+    expect(play.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('stops the watched run when the tab is hidden', async () => {    const { doc, terminal, panel } = page();
     const status = panel.children.find(child => child.className === 'watch-status');
     const policy = panel.children.find(child => child.className === 'watch-policy');
     if (status === undefined || policy === undefined) throw new Error('the panel is missing parts');
