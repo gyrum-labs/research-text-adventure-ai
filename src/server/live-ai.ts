@@ -5,7 +5,7 @@ import { canonicalJson } from '../kernel/hash.js';
 import { LlmPolicy } from '../agents/llm/policy.js';
 import { PROMPT_VERSION } from '../agents/llm/prompt.js';
 import { OpenAiProvider, redact, type LlmProvider, type LlmRequest } from '../agents/llm/provider.js';
-import { DEFAULT_BUDGETS, RunBudgetExceeded, type RunBudgets } from '../runner/run.js';
+import { DEFAULT_BUDGETS, RunBudgetExceeded, type RunBudgets, type RunResumeState } from '../runner/run.js';
 import { PRICES } from '../runner/metrics.js';
 import { Transcript } from '../runner/transcript.js';
 
@@ -51,14 +51,28 @@ export interface LiveAiRun {
   /** Where the transcript is written, so a caller can copy it into a store. */
   transcriptPath(): string;
   cancel(): void;
+  /** Ask the run to pause: it ends nothing, and returns what a resume continues from. */
+  pause(): void;
   close(): void;
   usage(): LiveAiUsage;
+}
+
+/** What the server holds while a paused run waits for its operator. */
+export interface LiveResume {
+  /** The runner's bundle: everything a pause took with it. */
+  state: RunResumeState;
+  /** Turns the lineage has already spent. */
+  turns: number;
+  /** Wall-clock the lineage already spent, so the timer guards only the rest. */
+  elapsedMs: number;
+  /** What the policy has already counted, so the token cap continues. */
+  tokens: { inputTokens: number; outputTokens: number };
 }
 
 /** A configured local demo, with credentials kept inside its factory closure. */
 export interface LiveAiDemo {
   metadata: LiveAiMetadata;
-  create(options: { adventure: Adventure; runId: string; seed: number }): LiveAiRun;
+  create(options: { adventure: Adventure; runId: string; seed: number; resume?: LiveResume }): LiveAiRun;
 }
 
 function boundedBudgets(overrides: Partial<RunBudgets> = {}): RunBudgets {
@@ -73,11 +87,11 @@ function boundedBudgets(overrides: Partial<RunBudgets> = {}): RunBudgets {
   return budgets;
 }
 
-function guardedProvider(options: LiveAiOptions, signal: AbortSignal, limits: { maxPromptBytes: number; budgets: RunBudgets }) {
+function guardedProvider(options: LiveAiOptions, signal: AbortSignal, limits: { maxPromptBytes: number; budgets: RunBudgets }, alreadyUsed = 0) {
   const remote = new OpenAiProvider({ apiKey: options.apiKey, model: options.model,
     baseUrl: 'https://openrouter.ai/api/v1' });
   let estimated = false;
-  let tokensUsed = 0;
+  let tokensUsed = alreadyUsed;
   const provider: LlmProvider = {
     id: 'openrouter', model: options.model,
     async complete(request: LlmRequest) {
@@ -125,23 +139,41 @@ export function createLiveAiDemo(options: LiveAiOptions): LiveAiDemo {
   const maxPromptBytes = Math.min(requestedBytes, 16_000);
   return {
     metadata: { provider: 'OpenRouter', model: configuration.model, budgets: Object.freeze({ ...budgets }), maxPromptBytes },
-    create({ adventure, runId, seed }) {
+    create({ adventure, runId, seed, resume }) {
       const controller = new AbortController();
-      const guarded = guardedProvider(configuration, controller.signal, { maxPromptBytes, budgets });
+      // The caps belong to the lineage, not to the piece of it after the
+      // pause: what the run has left is what the pause left it. The published
+      // metadata keeps the full caps, so the reader still sees the ceilings.
+      const remaining: RunBudgets = { ...budgets,
+        maxTurns: Math.max(0, budgets.maxTurns - (resume?.turns ?? 0)),
+        maxWallClockMs: Math.max(0, budgets.maxWallClockMs - (resume?.elapsedMs ?? 0)),
+      };
+      const guarded = guardedProvider(configuration, controller.signal, { maxPromptBytes, budgets: remaining },
+        (resume?.tokens.inputTokens ?? 0) + (resume?.tokens.outputTokens ?? 0));
       const policy = new LlmPolicy({ adventure, provider: guarded.provider, strategy: 'structured',
-        renderer: 'json', thinking: false, temperature: 0, maxOutputTokens: budgets.maxOutputTokensPerTurn });
-      const transcript = new Transcript(join(options.transcriptRoot ?? 'runs/browser', `${runId}.jsonl`), {
-        type: 'header', runId, adventure: adventure.id, adventureVersion: adventure.version,
-        adventureHash: `sha256:${createHash('sha256').update(canonicalJson(adventure)).digest('hex')}`,
-        policy: policy.id, provider: guarded.provider.id, model: configuration.model, seed,
-        maxTurns: budgets.maxTurns, startedAt: new Date().toISOString(), engineVersion: '0.1.0',
-      });
-      transcript.write({ type: 'demo_config', promptVersion: PROMPT_VERSION, strategy: 'structured', renderer: 'json', thinking: false, budgets, maxPromptBytes });
-      const timer = setTimeout(() => controller.abort(new DOMException('AI run time limit.', 'TimeoutError')), budgets.maxWallClockMs);
+        renderer: 'json', thinking: false, temperature: 0, maxOutputTokens: budgets.maxOutputTokensPerTurn,
+        ...(resume === undefined ? {} : {
+          resume: { commands: resume.state.policyCommands ?? [],
+            inputTokens: resume.tokens.inputTokens, outputTokens: resume.tokens.outputTokens },
+        }) });
+      const transcript = resume === undefined
+        ? new Transcript(join(options.transcriptRoot ?? 'runs/browser', `${runId}.jsonl`), {
+            type: 'header', runId, adventure: adventure.id, adventureVersion: adventure.version,
+            adventureHash: `sha256:${createHash('sha256').update(canonicalJson(adventure)).digest('hex')}`,
+            policy: policy.id, provider: guarded.provider.id, model: configuration.model, seed,
+            maxTurns: budgets.maxTurns, startedAt: new Date().toISOString(), engineVersion: '0.1.0',
+          })
+        // A resumed run appends to the transcript its pause left behind.
+        : new Transcript(join(options.transcriptRoot ?? 'runs/browser', `${runId}.jsonl`));
+      if (resume === undefined) {
+        transcript.write({ type: 'demo_config', promptVersion: PROMPT_VERSION, strategy: 'structured', renderer: 'json', thinking: false, budgets, maxPromptBytes });
+      }
+      const timer = setTimeout(() => controller.abort(new DOMException('AI run time limit.', 'TimeoutError')), remaining.maxWallClockMs);
       timer.unref();
-      return { policy, budgets: { ...budgets }, signal: controller.signal, transcript,
+      return { policy, budgets: remaining, signal: controller.signal, transcript,
         transcriptPath: () => transcript.file,
         cancel: () => controller.abort(new DOMException('AI run stopped.', 'AbortError')),
+        pause: () => controller.abort(new DOMException('AI run paused.', 'PauseError')),
         close: () => { clearTimeout(timer); transcript.close(); },
         usage: () => usageOf(policy, configuration.model, guarded.estimated()),
       };

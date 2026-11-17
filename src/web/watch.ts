@@ -9,7 +9,12 @@ export type RunRecord =
   | { type: 'command'; turn: number; raw: string }
   | { type: 'message'; text: string }
   | { type: 'run_ended'; data: { outcome: string; reason?: string; turns?: number; hash?: string } }
+  | { type: 'paused'; data: { usage: UsageView; budgets?: BudgetsView } }
+  | { type: 'resumed'; data: { usage?: UsageView; budgets?: BudgetsView } }
   | { type: 'end' };
+
+type BudgetsView = { maxTurns: number; maxTotalTokens: number; maxWallClockMs: number };
+type UsageView = { tokensUsed: number; estimatedCostUsd: number | null; estimated?: boolean };
 
 /** One bounded, local demo run and the view that receives its records. */
 export interface WatchOptions {
@@ -21,6 +26,8 @@ export interface WatchOptions {
   seed?: number;
   signal?: AbortSignal;
   fetch?: FetchLike;
+  /** Called once the server has named the run, before any record arrives. */
+  onRun?: (id: string) => void;
   onRecord(record: RunRecord): void;
 }
 
@@ -36,6 +43,7 @@ export async function watchAgent(options: WatchOptions): Promise<void> {
   }));
   const body = await opened.json() as { id?: unknown };
   if (typeof body.id !== 'string' || body.id.length === 0) throw new Error('The demo server returned no run id.');
+  options.onRun?.(body.id);
   const runUrl = `${base}/api/runs/${encodeURIComponent(body.id)}`;
   let cancellation: Promise<void> | undefined;
   const stop = (): void => {
@@ -69,10 +77,51 @@ function recordFrom(block: string): RunRecord | undefined {
   if (data.length === 0) return undefined;
   const record: unknown = JSON.parse(data);
   if (record === null || typeof record !== 'object' || !('type' in record) ||
-      !['run_started', 'usage', 'observation', 'command', 'message', 'run_ended', 'end'].includes(String(record.type))) {
+      !['run_started', 'usage', 'observation', 'command', 'message', 'run_ended', 'paused', 'resumed', 'end'].includes(String(record.type))) {
     throw new Error('The demo server sent an invalid event.');
   }
   return record as RunRecord;
+}
+
+/** Ask the server to pause a running model demo. It ends nothing. */
+export async function pauseRun(options: { baseUrl: string; id: string; fetch?: FetchLike }): Promise<void> {
+  const base = options.baseUrl.replace(/\/+$/, '');
+  const fetchLike = options.fetch ?? globalThis.fetch;
+  await checkedResponse(await fetchLike(`${base}/api/runs/${encodeURIComponent(options.id)}/pause`,
+    { method: 'POST', headers: { 'content-type': 'application/json' } }));
+}
+
+/** Ask the server to continue a paused model demo. Refused with a reason if it cannot. */
+export async function resumeRun(options: { baseUrl: string; id: string; fetch?: FetchLike }): Promise<void> {
+  const base = options.baseUrl.replace(/\/+$/, '');
+  const fetchLike = options.fetch ?? globalThis.fetch;
+  await checkedResponse(await fetchLike(`${base}/api/runs/${encodeURIComponent(options.id)}/resume`,
+    { method: 'POST', headers: { 'content-type': 'application/json' } }));
+}
+
+/** Read a run's stream, for a run the server already holds. */
+export async function attachRun(options: {
+  baseUrl: string; id: string; signal?: AbortSignal; fetch?: FetchLike;
+  onRecord(record: RunRecord): void;
+}): Promise<void> {
+  const base = options.baseUrl.replace(/\/+$/, '');
+  const fetchLike = options.fetch ?? globalThis.fetch;
+  const runUrl = `${base}/api/runs/${encodeURIComponent(options.id)}`;
+  let cancellation: Promise<void> | undefined;
+  const stop = (): void => {
+    if (cancellation !== undefined) return;
+    cancellation = fetchLike(runUrl, { method: 'DELETE', signal: AbortSignal.timeout(2_000) })
+      .then(async response => { await response.body?.cancel(); }).catch(() => {});
+  };
+  options.signal?.addEventListener('abort', stop, { once: true });
+  try {
+    const stream = await checkedResponse(await fetchLike(`${runUrl}/stream`, { signal: options.signal }));
+    if (stream.body === null) throw new Error('The demo server returned no event stream.');
+    await readRun(stream.body.getReader(), options.onRecord);
+  } finally {
+    options.signal?.removeEventListener('abort', stop);
+    await cancellation;
+  }
 }
 
 async function readRun(reader: ReadableStreamDefaultReader<Uint8Array>, receive: WatchOptions['onRecord']): Promise<void> {

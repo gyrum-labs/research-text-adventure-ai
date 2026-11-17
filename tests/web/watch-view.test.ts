@@ -22,6 +22,8 @@ function watchPanel(): StubElement {
   }
   add('button', 'watch-start');
   add('button', 'watch-stop');
+  add('button', 'watch-pause');
+  add('button', 'watch-resume');
   add('span', 'watch-note');
   add('pre', 'watch-output');
   add('pre', 'watch-log');
@@ -200,4 +202,110 @@ beforeAll(async () => {
   const { adventure } = await import('../../src/adventures/mission-impossible/adventure.js');
   const snapshot = await new InMemorySession('fixture', adventure).snapshot();
   realObservation = buildObservation(adventure, snapshot.state);
+});
+describe('the watched-run panel — pause and resume', () => {
+  it('pauses a running agent run and says what is held', async () => {
+    const root = watchPanel();
+    const requests: Array<{ url: string; method?: string }> = [];
+    const stream = lateStream();
+    const fetch = vi.fn((url: string, init?: RequestInit) => {
+      const target = String(url);
+      requests.push({ url: target, method: init?.method });
+      if (target.endsWith('/api/health')) return Promise.resolve(Response.json({ ok: true,
+        aiModels: [{ provider: 'OpenRouter', model: 'deepseek/deepseek-chat',
+          budgets: { maxTurns: 20, maxTotalTokens: 30000, maxWallClockMs: 120000 } }] }));
+      if (target.endsWith('/api/runs/saved')) return Promise.resolve(Response.json({ runs: [] }));
+      if (target.endsWith('/api/runs') && init?.method === 'POST') {
+        return Promise.resolve(Response.json({ id: 'run/one' }, { status: 201 }));
+      }
+      if (target.includes('/stream')) return Promise.resolve(stream.response);
+      if (target.endsWith('/pause')) return Promise.resolve(Response.json({ pausing: true }));
+      return Promise.resolve(new Response('', { status: 404 }));
+    });
+    mountWatchView(panel(root), { baseUrl: 'http://demo.test', adventureId: 'mission-impossible', fetch,
+      createElement: (tagName: string) => new StubElement(tagName) as unknown as HTMLElement });
+
+    // The agent choice exists once discovery has built the panel's options.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    part(root, 'watch-policy').value = 'deepseek/deepseek-chat';
+    part(root, 'watch-start').fire('click');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    stream.push({ type: 'observation', turn: 1, data: realObservation });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(part(root, 'watch-pause').disabled).toBe(false);
+
+    part(root, 'watch-pause').fire('click');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(requests.some(request => request.url.endsWith('/pause'))).toBe(true);
+
+    // The server answers the pause on the stream: the usage stays on the
+    // panel with the caps it has left, and Resume is offered.
+    stream.push({ type: 'paused', data: {
+      usage: { tokensUsed: 4200, estimatedCostUsd: 0.031 },
+      budgets: { maxTurns: 20, maxTotalTokens: 30000, maxWallClockMs: 120000 },
+    } });
+    stream.push({ type: 'end' });
+    stream.end();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(part(root, 'watch-status').textContent).toContain('Paused');
+    expect(part(root, 'watch-status').textContent).toContain('4200 tokens');
+    expect(part(root, 'watch-resume').disabled).toBe(false);
+    expect(part(root, 'watch-start').disabled).toBe(false);
+  });
+
+
+  it('resuming continues the transcript instead of clearing it', async () => {
+    const root = watchPanel();
+    const requests: Array<{ url: string; method?: string }> = [];
+    const firstStream = lateStream();
+    const secondStream = lateStream();
+    let streamsOpened = 0;
+    const fetch = vi.fn((url: string, init?: RequestInit) => {
+      const target = String(url);
+      requests.push({ url: target, method: init?.method });
+      if (target.endsWith('/api/health')) return Promise.resolve(Response.json({ ok: true,
+        aiModels: [{ provider: 'OpenRouter', model: 'deepseek/deepseek-chat',
+          budgets: { maxTurns: 20, maxTotalTokens: 30000, maxWallClockMs: 120000 } }] }));
+      if (target.endsWith('/api/runs/saved')) return Promise.resolve(Response.json({ runs: [] }));
+      if (target.endsWith('/api/runs') && init?.method === 'POST') {
+        return Promise.resolve(Response.json({ id: 'run/one' }, { status: 201 }));
+      }
+      if (target.includes('/stream')) {
+        streamsOpened += 1;
+        return Promise.resolve((streamsOpened === 1 ? firstStream : secondStream).response);
+      }
+      if (target.endsWith('/pause')) return Promise.resolve(Response.json({ pausing: true }));
+      if (target.endsWith('/resume')) return Promise.resolve(Response.json({ id: 'run/one', resumed: true }, { status: 201 }));
+      return Promise.resolve(new Response('', { status: 404 }));
+    });
+    mountWatchView(panel(root), { baseUrl: 'http://demo.test', adventureId: 'mission-impossible', fetch,
+      createElement: (tagName: string) => new StubElement(tagName) as unknown as HTMLElement });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    part(root, 'watch-policy').value = 'deepseek/deepseek-chat';
+    part(root, 'watch-start').fire('click');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    firstStream.push({ type: 'observation', turn: 1, data: realObservation });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    firstStream.push({ type: 'paused', data: {
+      usage: { tokensUsed: 4200, estimatedCostUsd: 0.031 },
+      budgets: { maxTurns: 20, maxTotalTokens: 30000, maxWallClockMs: 120000 },
+    } });
+    firstStream.push({ type: 'end' });
+    firstStream.end();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    part(root, 'watch-resume').fire('click');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(requests.some(request => request.url.endsWith('/resume'))).toBe(true);
+    secondStream.push({ type: 'resumed', data: {} });
+    secondStream.push({ type: 'observation', turn: 2, data: realObservation });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Both halves of the mission read as one transcript: the world rendered
+    // before the pause is still there, with the resumed half appended.
+    const output = part(root, 'watch-output').textContent;
+    expect(output.split('Briefing Room').length - 1).toBeGreaterThanOrEqual(2);
+    expect(part(root, 'watch-log').textContent).toContain('resumed');
+  });
 });

@@ -2,7 +2,7 @@ import { renderObservation } from '../kernel/render.js';
 import { describeLimits, describeStop, type RunBudgetView, type RunProgress } from './limits.js';
 import { titleOf } from './scenario.js';
 import type { FetchLike } from '../session/http.js';
-import { watchAgent, type RunRecord } from './watch.js';
+import { watchAgent, attachRun, pauseRun, resumeRun, type RunRecord } from './watch.js';
 import { listSavedRuns, openSavedRun, replaySavedRun } from './saved-runs.js';
 
 /** The optional server and adventure selected by the page. */
@@ -60,6 +60,8 @@ function element<T extends HTMLElement>(root: HTMLElement, selector: string): T 
 export function mountWatchView(root: HTMLElement, options: WatchViewOptions): WatchView {
   const start = element<HTMLButtonElement>(root, '.watch-start');
   const stopButton = element<HTMLButtonElement>(root, '.watch-stop');
+  const pause = element<HTMLButtonElement>(root, '.watch-pause');
+  const resume = element<HTMLButtonElement>(root, '.watch-resume');
   const policy = element<HTMLSelectElement>(root, '.watch-policy');
   const status = element(root, '.watch-status');
   const limits = element(root, '.watch-limits');
@@ -73,6 +75,11 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): Wa
   let adventureId = options.adventureId;
   let active: { controller: AbortController } | undefined;
   let choices: WatchChoice[] = freeChoices();
+  // The run the server is executing or holding for this panel, and the one a
+  // pause left waiting. A paused run spends nothing until Resume is pressed.
+  let activeRunId: string | undefined;
+  let activeIsAgent = false;
+  let pausedRunId: string | undefined;
   // The caps the run reported, and what has been seen of it so far. Both come
   // from the records the server already streams; nothing here asks for more.
   let budget: RunBudgetView | undefined;
@@ -175,8 +182,10 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): Wa
   };
 
   const stopWatching = (reason?: string): void => {
+    const hadPaused = pausedRunId !== undefined;
     const stopped = cancelRun();
-    if (stopped && reason !== undefined) status.textContent = reason;
+    discardPaused();
+    if ((stopped || hadPaused) && reason !== undefined) status.textContent = reason;
     setRunning(false);
   };
 
@@ -210,6 +219,7 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): Wa
       return;
     }
     if (active !== undefined) return;
+    activeIsAgent = choice.kind === 'agent';
     const controller = new AbortController();
     active = { controller };
     setRunning(true);
@@ -226,6 +236,7 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): Wa
         fetch: fetchLike,
         signal: controller.signal,
         policy: choice.kind === 'agent' ? 'llm' : choice.policy,
+        onRun: id => { activeRunId = id; },
         onRecord: record => {
           if (active?.controller !== controller) return;
           applyRecord(record);
@@ -244,7 +255,18 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): Wa
   const setRunning = (running: boolean): void => {
     start.disabled = running;
     policy.disabled = running;
-    stopButton.disabled = !running;
+    stopButton.disabled = !running && pausedRunId === undefined;
+    pause.disabled = !running || !activeIsAgent;
+    resume.disabled = pausedRunId === undefined;
+  };
+
+  /** Tell the server to let a paused run go: stopping a paused run discards it. */
+  const discardPaused = (): void => {
+    if (pausedRunId === undefined) return;
+    const id = pausedRunId;
+    pausedRunId = undefined;
+    void fetchLike(`${options.baseUrl.replace(/\/+$/, '')}/api/runs/${encodeURIComponent(id)}`,
+      { method: 'DELETE' }).then(async response => { await response.body?.cancel(); }).catch(() => {});
   };
 
   /** Apply one streamed record to the panel, and keep the limits line true. */
@@ -288,6 +310,21 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): Wa
       progress.reason = result.reason;
       if (budget !== undefined) limits.textContent = describeStop(budget, progress);
       stopClock();
+    } else if (record.type === 'paused') {
+      // The run holds still: nothing runs, nothing spends, and the usage it
+      // accounted stays on the panel with the caps it has left.
+      pausedRunId = activeRunId;
+      setRunning(false);
+      stopClock();
+      const usage = record.data.usage;
+      const cost = usage.estimatedCostUsd === null ? 'cost estimate unavailable' : `est. $${usage.estimatedCostUsd.toFixed(4)}`;
+      status.textContent = `Paused · ${usage.tokensUsed} tokens · ${cost} · nothing runs until you press Resume.`;
+      if (record.data.budgets !== undefined) budget = { ...record.data.budgets };
+      limits.textContent = budget === undefined ? '' : describeLimits(budget, progress);
+    } else if (record.type === 'resumed') {
+      if (record.data.budgets !== undefined) budget = { ...record.data.budgets };
+      status.textContent = 'Resumed — the same mission continues.';
+      limits.textContent = budget === undefined ? '' : describeLimits(budget, progress);
     }
     output.scrollTop = output.scrollHeight;
     log.scrollTop = log.scrollHeight;
@@ -348,6 +385,56 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): Wa
   savedOpen.addEventListener('click', () => { void showSaved(); });
   savedReplay.addEventListener('click', () => { void replay(); });
 
+  start.addEventListener('click', () => { void startWatching(); });
+  stopButton.addEventListener('click', () => {
+    const choice = chosen();
+    stopWatching(choice !== undefined && choice.kind === 'agent'
+      ? 'Stopped the AI run.'
+      : 'Stopped watching. The bounded demo may finish on the server.');
+  });
+  pause.addEventListener('click', () => {
+    if (activeRunId === undefined) return;
+    pause.disabled = true;
+    void pauseRun({ baseUrl: options.baseUrl, id: activeRunId, fetch: fetchLike }).catch((error: unknown) => {
+      pause.disabled = active !== undefined && activeIsAgent;
+      status.textContent = `Could not pause: ${error instanceof Error ? error.message : String(error)}`;
+    });
+  });
+  resume.addEventListener('click', () => {
+    const id = pausedRunId;
+    if (id === undefined) return;
+    resume.disabled = true;
+    const controller = new AbortController();
+    active = { controller };
+    activeRunId = id;
+    activeIsAgent = true;
+    setRunning(true);
+    void (async () => {
+      try {
+        await resumeRun({ baseUrl: options.baseUrl, id, fetch: fetchLike });
+        pausedRunId = undefined;
+        status.textContent = 'Resuming…';
+        // The transcript stays: the resumed half appends to what was watched.
+        await attachRun({ baseUrl: options.baseUrl, id, signal: controller.signal,
+          fetch: fetchLike, onRecord: record => {
+            if (active?.controller !== controller) return;
+            applyRecord(record);
+            if (record.type === 'resumed') startClock();
+          } });
+      } catch (error) {
+        // The server names why a resume cannot happen; say so in its words.
+        if (pausedRunId === undefined && active?.controller === controller) {
+          pausedRunId = id; // nothing was lost; the run still waits
+        }
+        if (active?.controller === controller) {
+          status.textContent = `Could not resume: ${error instanceof Error ? error.message : String(error)}`;
+        }
+      } finally {
+        if (active?.controller === controller) { active = undefined; setRunning(false); stopClock(); }
+      }
+    })();
+  });
+
   return {
     stop(reason?: string): void {
       const stopped = cancelRun();
@@ -356,6 +443,10 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): Wa
     },
     setScenario(next: string): void {
       const wasRunning = cancelRun();
+      const hadPaused = pausedRunId !== undefined;
+      // A paused run belongs to the world it was paused in; the new world gets
+      // nothing left over from the old one.
+      discardPaused();
       element(root, '.watch-output').textContent = '';
       element(root, '.watch-log').textContent = '';
       element(root, '.watch-usage').textContent = '';
@@ -365,7 +456,7 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): Wa
       adventureId = next;
       setRunning(false);
       const named = `${titleOf(next)} (${next})`;
-      status.textContent = wasRunning
+      status.textContent = wasRunning || hadPaused
         ? `The scenario is now ${named}, so the run was stopped.`
         : `The scenario is now ${named}.`;
     },
