@@ -10,14 +10,6 @@
       "apiKeyEnv": "OPENROUTER_API_KEY"
     },
     {
-      "id": "live-strong",
-      "label": "glm 5.3 (z.ai)",
-      "provider": "openai",
-      "model": "glm-5.3",
-      "baseUrl": "https://api.z.ai/api/paas/v4",
-      "apiKeyEnv": "ZAI_API_KEY"
-    },
-    {
       "id": "live-mid",
       "label": "gpt-4.1-mini (openrouter)",
       "provider": "openai",
@@ -41,24 +33,24 @@
     "D",
     "E"
   ],
-  "seeds": 10,
+  "seeds": 20,
   "cells": [
     {
       "model": "live-frontier",
       "condition": "A",
-      "expected": 10,
-      "runs": 10,
+      "expected": 20,
+      "runs": 20,
       "complete": true,
-      "successes": 0,
+      "successes": 10,
       "interval": {
-        "estimate": 0,
-        "lower": 0,
-        "upper": 0.2775327998628892
+        "estimate": 0.5,
+        "lower": 0.2992980081982123,
+        "upper": 0.7007019918017877
       },
-      "medianTurns": 24,
-      "costPerSolve": 0,
-      "tokensUsed": 813007,
-      "tokensPerSolve": 0,
+      "medianTurns": 19.5,
+      "costPerSolve": 0.36432690000000006,
+      "tokensUsed": 1111043,
+      "tokensPerSolve": 111104.3,
       "failures": {
         "F3": 4,
         "F4": 1,
@@ -68,427 +60,345 @@
     {
       "model": "live-frontier",
       "condition": "B",
-      "expected": 10,
-      "runs": 10,
+      "expected": 20,
+      "runs": 20,
       "complete": true,
-      "successes": 0,
+      "successes": 4,
       "interval": {
-        "estimate": 0,
-        "lower": 0,
-        "upper": 0.2775327998628892
+        "estimate": 0.2,
+        "lower": 0.08065766257979809,
+        "upper": 0.4160174322518936
       },
-      "medianTurns": 20.5,
-      "costPerSolve": 0,
-      "tokensUsed": 1791675,
-      "tokensPerSolve": 0,
+      "medianTurns": 22.5,
+      "costPerSolve": 2.7964754999999997,
+      "tokensUsed": 3588898,
+      "tokensPerSolve": 897224.5,
       "failures": {
         "F7": 5,
-        "F2": 4,
-        "F3": 1
+        "F2": 9,
+        "F3": 1,
+        "F1": 1
       }
     },
     {
       "model": "live-frontier",
       "condition": "C",
-      "expected": 10,
-      "runs": 10,
+      "expected": 20,
+      "runs": 20,
       "complete": true,
-      "successes": 0,
+      "successes": 4,
       "interval": {
-        "estimate": 0,
-        "lower": 0,
-        "upper": 0.2775327998628892
+        "estimate": 0.2,
+        "lower": 0.08065766257979809,
+        "upper": 0.4160174322518936
       },
-      "medianTurns": 21,
-      "costPerSolve": 0,
-      "tokensUsed": 316612,
-      "tokensPerSolve": 0,
+      "medianTurns": 21.5,
+      "costPerSolve": 0.56251725,
+      "tokensUsed": 636483,
+      "tokensPerSolve": 159120.75,
       "failures": {
         "F7": 9,
-        "F3": 1
+        "F3": 1,
+        "F5": 6
       }
     },
     {
       "model": "live-frontier",
       "condition": "D",
-      "expected": 10,
-      "runs": 10,
+      "expected": 20,
+      "runs": 20,
       "complete": true,
       "successes": 0,
       "interval": {
         "estimate": 0,
         "lower": 0,
-        "upper": 0.2775327998628892
+        "upper": 0.16112515805281938
       },
       "medianTurns": 29,
       "costPerSolve": 0,
-      "tokensUsed": 280266,
+      "tokensUsed": 517426,
       "tokensPerSolve": 0,
       "failures": {
-        "F2": 6,
-        "F3": 4
+        "F2": 15,
+        "F3": 5
       }
     },
     {
       "model": "live-frontier",
       "condition": "E",
-      "expected": 10,
-      "runs": 10,
+      "expected": 20,
+      "runs": 20,
       "complete": true,
-      "successes": 0,
+      "successes": 4,
       "interval": {
-        "estimate": 0,
-        "lower": 0,
-        "upper": 0.2775327998628892
+        "estimate": 0.2,
+        "lower": 0.08065766257979809,
+        "upper": 0.4160174322518936
       },
-      "medianTurns": 18,
-      "costPerSolve": 0,
-      "tokensUsed": 1411398,
-      "tokensPerSolve": 0,
+      "medianTurns": 19.5,
+      "costPerSolve": 2.383581,
+      "tokensUsed": 3051084,
+      "tokensPerSolve": 762771,
       "failures": {
         "F3": 2,
-        "F2": 1,
-        "F7": 7
+        "F2": 6,
+        "F7": 7,
+        "F5": 1
       }
-    },
-    {
-      "model": "live-strong",
-      "condition": "A",
-      "expected": 10,
-      "runs": 0,
-      "complete": false,
-      "successes": 0,
-      "interval": {
-        "estimate": 0,
-        "lower": 0,
-        "upper": 1
-      },
-      "medianTurns": 0,
-      "costPerSolve": 0,
-      "tokensUsed": 0,
-      "tokensPerSolve": 0,
-      "failures": {}
-    },
-    {
-      "model": "live-strong",
-      "condition": "B",
-      "expected": 10,
-      "runs": 0,
-      "complete": false,
-      "successes": 0,
-      "interval": {
-        "estimate": 0,
-        "lower": 0,
-        "upper": 1
-      },
-      "medianTurns": 0,
-      "costPerSolve": 0,
-      "tokensUsed": 0,
-      "tokensPerSolve": 0,
-      "failures": {}
-    },
-    {
-      "model": "live-strong",
-      "condition": "C",
-      "expected": 10,
-      "runs": 0,
-      "complete": false,
-      "successes": 0,
-      "interval": {
-        "estimate": 0,
-        "lower": 0,
-        "upper": 1
-      },
-      "medianTurns": 0,
-      "costPerSolve": 0,
-      "tokensUsed": 0,
-      "tokensPerSolve": 0,
-      "failures": {}
-    },
-    {
-      "model": "live-strong",
-      "condition": "D",
-      "expected": 10,
-      "runs": 0,
-      "complete": false,
-      "successes": 0,
-      "interval": {
-        "estimate": 0,
-        "lower": 0,
-        "upper": 1
-      },
-      "medianTurns": 0,
-      "costPerSolve": 0,
-      "tokensUsed": 0,
-      "tokensPerSolve": 0,
-      "failures": {}
-    },
-    {
-      "model": "live-strong",
-      "condition": "E",
-      "expected": 10,
-      "runs": 0,
-      "complete": false,
-      "successes": 0,
-      "interval": {
-        "estimate": 0,
-        "lower": 0,
-        "upper": 1
-      },
-      "medianTurns": 0,
-      "costPerSolve": 0,
-      "tokensUsed": 0,
-      "tokensPerSolve": 0,
-      "failures": {}
     },
     {
       "model": "live-mid",
       "condition": "A",
-      "expected": 10,
-      "runs": 10,
+      "expected": 20,
+      "runs": 20,
       "complete": true,
-      "successes": 0,
+      "successes": 9,
       "interval": {
-        "estimate": 0,
-        "lower": 0,
-        "upper": 0.2775327998628892
+        "estimate": 0.45,
+        "lower": 0.2581978582556243,
+        "upper": 0.6579146575496577
       },
-      "medianTurns": 26.5,
-      "costPerSolve": 0,
-      "tokensUsed": 610302,
-      "tokensPerSolve": 0,
+      "medianTurns": 20,
+      "costPerSolve": 0.047681422222222235,
+      "tokensUsed": 999209,
+      "tokensPerSolve": 111023.22222222222,
       "failures": {
-        "F2": 9,
+        "F2": 10,
         "F4": 1
       }
     },
     {
       "model": "live-mid",
       "condition": "B",
-      "expected": 10,
-      "runs": 10,
+      "expected": 20,
+      "runs": 20,
       "complete": true,
-      "successes": 0,
+      "successes": 2,
       "interval": {
-        "estimate": 0,
-        "lower": 0,
-        "upper": 0.2775327998628892
+        "estimate": 0.1,
+        "lower": 0.027866481213768224,
+        "upper": 0.3010336452284873
       },
       "medianTurns": 23.5,
-      "costPerSolve": 0,
-      "tokensUsed": 2343187,
-      "tokensPerSolve": 0,
+      "costPerSolve": 0.8222448,
+      "tokensUsed": 3998319,
+      "tokensPerSolve": 1999159.5,
       "failures": {
-        "F2": 10
+        "F2": 16,
+        "F3": 1,
+        "F1": 1
       }
     },
     {
       "model": "live-mid",
       "condition": "C",
-      "expected": 10,
-      "runs": 10,
+      "expected": 20,
+      "runs": 20,
       "complete": true,
       "successes": 0,
       "interval": {
         "estimate": 0,
         "lower": 0,
-        "upper": 0.2775327998628892
+        "upper": 0.16112515805281938
       },
-      "medianTurns": 23,
+      "medianTurns": 22.5,
       "costPerSolve": 0,
-      "tokensUsed": 316700,
+      "tokensUsed": 631469,
       "tokensPerSolve": 0,
       "failures": {
-        "F2": 10
+        "F2": 20
       }
     },
     {
       "model": "live-mid",
       "condition": "D",
-      "expected": 10,
-      "runs": 10,
+      "expected": 20,
+      "runs": 20,
       "complete": true,
       "successes": 0,
       "interval": {
         "estimate": 0,
         "lower": 0,
-        "upper": 0.2775327998628892
+        "upper": 0.16112515805281938
       },
-      "medianTurns": 25.5,
+      "medianTurns": 25,
       "costPerSolve": 0,
-      "tokensUsed": 271795,
+      "tokensUsed": 520826,
       "tokensPerSolve": 0,
       "failures": {
-        "F2": 10
+        "F2": 20
       }
     },
     {
       "model": "live-mid",
       "condition": "E",
-      "expected": 10,
-      "runs": 10,
+      "expected": 20,
+      "runs": 20,
       "complete": true,
       "successes": 0,
       "interval": {
         "estimate": 0,
         "lower": 0,
-        "upper": 0.2775327998628892
+        "upper": 0.16112515805281938
       },
-      "medianTurns": 24,
+      "medianTurns": 23.5,
       "costPerSolve": 0,
-      "tokensUsed": 2354955,
+      "tokensUsed": 4366597,
       "tokensPerSolve": 0,
       "failures": {
-        "F2": 10
+        "F2": 20
       }
     },
     {
       "model": "live-open",
       "condition": "A",
-      "expected": 10,
-      "runs": 10,
+      "expected": 20,
+      "runs": 20,
       "complete": true,
-      "successes": 0,
+      "successes": 9,
       "interval": {
-        "estimate": 0,
-        "lower": 0,
-        "upper": 0.2775327998628892
+        "estimate": 0.45,
+        "lower": 0.2581978582556243,
+        "upper": 0.6579146575496577
       },
-      "medianTurns": 27.5,
+      "medianTurns": 23,
       "costPerSolve": 0,
-      "tokensUsed": 774802,
-      "tokensPerSolve": 0,
+      "tokensUsed": 1240450,
+      "tokensPerSolve": 137827.77777777778,
       "failures": {
         "F3": 8,
-        "F2": 2
+        "F2": 2,
+        "F1": 1
       }
     },
     {
       "model": "live-open",
       "condition": "B",
-      "expected": 10,
-      "runs": 10,
+      "expected": 20,
+      "runs": 20,
       "complete": true,
       "successes": 0,
       "interval": {
         "estimate": 0,
         "lower": 0,
-        "upper": 0.2775327998628892
+        "upper": 0.16112515805281938
       },
-      "medianTurns": 27,
+      "medianTurns": 25,
       "costPerSolve": 0,
-      "tokensUsed": 2430526,
+      "tokensUsed": 4448826,
       "tokensPerSolve": 0,
       "failures": {
-        "F2": 9,
+        "F2": 19,
         "F3": 1
       }
     },
     {
       "model": "live-open",
       "condition": "C",
-      "expected": 10,
-      "runs": 10,
+      "expected": 20,
+      "runs": 20,
       "complete": true,
-      "successes": 0,
+      "successes": 1,
       "interval": {
-        "estimate": 0,
-        "lower": 0,
-        "upper": 0.2775327998628892
+        "estimate": 0.05,
+        "lower": 0.008881448800795402,
+        "upper": 0.23613119344674205
       },
-      "medianTurns": 28.5,
+      "medianTurns": 27.5,
       "costPerSolve": 0,
-      "tokensUsed": 425313,
-      "tokensPerSolve": 0,
+      "tokensUsed": 874675,
+      "tokensPerSolve": 874675,
       "failures": {
-        "F3": 2,
-        "F2": 5,
+        "F3": 3,
+        "F2": 11,
         "F5": 2,
-        "F7": 1
+        "F7": 3
       }
     },
     {
       "model": "live-open",
       "condition": "D",
-      "expected": 10,
-      "runs": 10,
+      "expected": 20,
+      "runs": 20,
       "complete": true,
       "successes": 0,
       "interval": {
         "estimate": 0,
         "lower": 0,
-        "upper": 0.2775327998628892
+        "upper": 0.16112515805281938
       },
-      "medianTurns": 28.5,
+      "medianTurns": 28,
       "costPerSolve": 0,
-      "tokensUsed": 311145,
+      "tokensUsed": 595799,
       "tokensPerSolve": 0,
       "failures": {
         "F5": 2,
-        "F3": 7,
-        "F7": 1
+        "F3": 9,
+        "F7": 7,
+        "F2": 2
       }
     },
     {
       "model": "live-open",
       "condition": "E",
-      "expected": 10,
-      "runs": 10,
+      "expected": 20,
+      "runs": 20,
       "complete": true,
       "successes": 0,
       "interval": {
         "estimate": 0,
         "lower": 0,
-        "upper": 0.2775327998628892
+        "upper": 0.16112515805281938
       },
-      "medianTurns": 25.5,
+      "medianTurns": 25,
       "costPerSolve": 0,
-      "tokensUsed": 2436528,
+      "tokensUsed": 4386666,
       "tokensPerSolve": 0,
       "failures": {
-        "F2": 7,
-        "F3": 3
+        "F2": 16,
+        "F3": 4
       }
     }
   ],
   "failures": {
-    "F3": 33,
+    "F3": 39,
     "F4": 2,
-    "F2": 88,
-    "F7": 23,
-    "F5": 4
+    "F2": 171,
+    "F7": 31,
+    "F1": 3,
+    "F5": 11
   },
-  "costPerSolvedMission": 0,
+  "costPerSolvedMission": 0.7689560465116282,
   "hypotheses": [
     {
       "id": "H1",
       "hypothesis": "A capable LLM agent solves the mission ≥ 80% of runs within a 30-turn budget",
       "verdict": "falsified",
-      "reason": "The pooled success rate across every cell is 0.0%, including the no-history control, against a threshold of 80%."
+      "reason": "The pooled success rate across every cell is 14.3%, including the no-history control, against a threshold of 80%."
     },
     {
       "id": "H2",
       "hypothesis": "Masking the action space to legal commands raises the success rate",
       "verdict": "falsified",
-      "reason": "The masked condition E succeeded on 0.0% of runs and the unmasked condition B on 0.0%. The two differ only in the masking."
+      "reason": "The masked condition E succeeded on 6.7% of runs and the unmasked condition B on 10.0%. The two differ only in the masking."
     },
     {
       "id": "H3",
       "hypothesis": "A structured observation beats prose for multi-step reasoning",
       "verdict": "falsified",
-      "reason": "The JSON condition B succeeded on 0.0% of runs and the prose condition A on 0.0%. The two differ only in the rendering."
+      "reason": "The JSON condition B succeeded on 10.0% of runs and the prose condition A on 46.7%. The two differ only in the rendering."
     },
     {
       "id": "H4",
       "hypothesis": "Most failures are not parsing failures but reasoning/ordering failures",
       "verdict": "falsified",
-      "reason": "88 of the 150 failures were malformed output and 62 were reasoning, ordering or planning failures."
+      "reason": "174 of the 257 failures were malformed output and 83 were reasoning, ordering or planning failures."
     },
     {
       "id": "H5",
       "hypothesis": "Full transcript history causes context dilution versus a structured memory summary",
       "verdict": "falsified",
-      "reason": "The structured condition C succeeded on 0.0% of runs in 24.2 turns, the full-history condition E on 0.0% in 22.5 turns. The two differ only in the context strategy."
+      "reason": "The structured condition C succeeded on 8.3% of runs in 23.8 turns, the full-history condition E on 6.7% in 22.7 turns. The two differ only in the context strategy."
     }
   ]
 }

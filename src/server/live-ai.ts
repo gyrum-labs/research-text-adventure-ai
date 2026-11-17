@@ -48,6 +48,8 @@ export interface LiveAiRun {
   budgets: RunBudgets;
   signal: AbortSignal;
   transcript: Transcript;
+  /** Where the transcript is written, so a caller can copy it into a store. */
+  transcriptPath(): string;
   cancel(): void;
   close(): void;
   usage(): LiveAiUsage;
@@ -138,6 +140,7 @@ export function createLiveAiDemo(options: LiveAiOptions): LiveAiDemo {
       const timer = setTimeout(() => controller.abort(new DOMException('AI run time limit.', 'TimeoutError')), budgets.maxWallClockMs);
       timer.unref();
       return { policy, budgets: { ...budgets }, signal: controller.signal, transcript,
+        transcriptPath: () => transcript.file,
         cancel: () => controller.abort(new DOMException('AI run stopped.', 'AbortError')),
         close: () => { clearTimeout(timer); transcript.close(); },
         usage: () => usageOf(policy, configuration.model, guarded.estimated()),

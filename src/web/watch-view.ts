@@ -3,6 +3,7 @@ import { describeLimits, describeStop, type RunBudgetView, type RunProgress } fr
 import { titleOf } from './scenario.js';
 import type { FetchLike } from '../session/http.js';
 import { watchAgent, type RunRecord } from './watch.js';
+import { listSavedRuns, openSavedRun, replaySavedRun } from './saved-runs.js';
 
 /** The optional server and adventure selected by the page. */
 export interface WatchViewOptions {
@@ -56,6 +57,10 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): Wa
   let ticker: ReturnType<typeof setInterval> | undefined;
 
   const limits = element(root, '.watch-limits');
+  const savedList = element<HTMLSelectElement>(root, '.saved-runs');
+  const savedOpen = element<HTMLButtonElement>(root, '.saved-open');
+  const savedReplay = element<HTMLButtonElement>(root, '.saved-replay');
+  const savedOutput = element(root, '.watch-saved');
   const renderLimits = (): void => {
     limits.textContent = budget === undefined ? '' : describeLimits(budget, progress);
   };
@@ -189,6 +194,61 @@ export function mountWatchView(root: HTMLElement, options: WatchViewOptions): Wa
       ? `The scenario is now ${named}, so the run was stopped.`
       : `The scenario is now ${named}.`;
   };
+
+  let savedIds: string[] = [];
+
+  const refreshSaved = async (): Promise<void> => {
+    try {
+      const runs = await listSavedRuns(options.baseUrl, fetchLike);
+      savedIds = runs.map(run => run.id);
+      savedList.textContent = '';
+      for (const run of runs) {
+        const option = document.createElement('option');
+        option.value = run.id;
+        option.textContent = `${run.startedAt.slice(0, 19).replace('T', ' ')} · ${run.adventure} · ${run.outcome} · ${run.turns} turns`;
+        savedList.appendChild(option);
+      }
+      savedOpen.disabled = savedIds.length === 0;
+      savedReplay.disabled = savedIds.length === 0;
+    } catch { // a static host has no saved runs to show
+      savedOpen.disabled = true;
+      savedReplay.disabled = true;
+    }
+  };
+  void refreshSaved();
+
+  const showSaved = async (): Promise<void> => {
+    const id = savedList.value;
+    try {
+      const run = await openSavedRun(options.baseUrl, id, fetchLike);
+      savedOutput.textContent = [
+        `${run.adventure} @ ${run.id}`,
+        ...run.commands.map(command => `> ${command.raw}`),
+        `\n${run.outcome}: ${run.reason ?? 'Run complete.'}`,
+        `${run.turns} turns · ${run.hash}`,
+      ].join('\n');
+    } catch (error) {
+      savedOutput.textContent = error instanceof Error ? error.message : String(error);
+    }
+  };
+
+  const replay = async (): Promise<void> => {
+    const id = savedList.value;
+    savedReplay.disabled = true;
+    try {
+      const result = await replaySavedRun(options.baseUrl, id, fetchLike);
+      savedOutput.textContent = result.ok
+        ? `Replayed ${result.steps} commands: the chain matches what was recorded. No model was asked for anything.`
+        : `Replayed ${result.steps} commands: the chain does not match what was recorded.`;
+    } catch (error) {
+      savedOutput.textContent = error instanceof Error ? error.message : String(error);
+    } finally {
+      savedReplay.disabled = false;
+    }
+  };
+
+  savedOpen.addEventListener('click', () => { void showSaved(); });
+  savedReplay.addEventListener('click', () => { void replay(); });
 
   start.addEventListener('click', () => { void startWatching(); });
   stop.addEventListener('click', () => {

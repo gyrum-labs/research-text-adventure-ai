@@ -25,9 +25,12 @@ import { RandomPolicy } from '../agents/random.js';
 import { run } from '../runner/run.js';
 import type { AgentPolicy } from '../agents/policy.js';
 import type { LiveAiDemo, LiveAiMetadata, LiveAiRun } from './live-ai.js';
+import { SavedRunStore } from './saved-runs.js';
+import { Transcript, readTranscript } from '../runner/transcript.js';
 
 /** One streaming agent run the server is holding or has held. */
 interface HeldRun {
+  id: string;
   adventureId: string;
   records: Array<Record<string, unknown>>;
   finished: boolean;
@@ -50,6 +53,8 @@ export interface SessionServerOptions {
   staticRoot?: string;
   /** Where scripted runs find their command list, by world. */
   scriptedPathFor?: (adventureId: string) => string[] | undefined;
+  /** Where watched runs are kept. The default is `runs/watched`, next to the process. */
+  savedRunsRoot?: string;
 }
 
 /** A route pattern: method, segments with :params, and a handler. */
@@ -71,6 +76,7 @@ interface ServerState {
   adventures: Record<string, Adventure>;
   sessions: Map<string, InMemorySession>;
   runs: Map<string, HeldRun>;
+  saved: SavedRunStore;
   staticRoot?: string;
   scriptedPathFor: (adventureId: string) => string[] | undefined;
 }
@@ -188,6 +194,7 @@ const ROUTES: Route[] = [
       }
       const id = randomUUID();
       const held: HeldRun = {
+        id,
         adventureId: adventure.id,
         records: [],
         finished: false,
@@ -196,7 +203,7 @@ const ROUTES: Route[] = [
       state.runs.set(id, held);
 
       // The run happens on its own; the stream endpoint reads it as it goes.
-      void driveRun(held, adventure, policy);
+      void driveRun(held, adventure, policy, state);
 
       json(response, 201, { id, adventureId: adventure.id, policy: policy.id });
     },
@@ -221,6 +228,42 @@ const ROUTES: Route[] = [
       streamRun(held, response);
     },
   },
+
+  {
+    method: 'GET',
+    segments: ['api', 'runs', 'saved'],
+    handle: async (_params, _request, response, state) => {
+      json(response, 200, { runs: state.saved.list() });
+    },
+  },
+  {
+    method: 'GET',
+    segments: ['api', 'runs', 'saved', ':id'],
+    handle: async (params, _request, response, state) => {
+      const saved = state.saved.open(params['id']!);
+      if (saved === null) {
+        json(response, 404, { error: `unknown saved run: ${params['id']}` });
+        return;
+      }
+      json(response, 200, saved);
+    },
+  },
+  {
+    method: 'POST',
+    segments: ['api', 'runs', 'saved', ':id', 'replay'],
+    handle: async (params, _request, response, state) => {
+      const replay = state.saved.replay(params['id']!);
+      if (replay === null) {
+        json(response, 404, { error: `unknown saved run: ${params['id']}` });
+        return;
+      }
+      if (replay.error !== undefined) {
+        json(response, 422, { error: replay.error });
+        return;
+      }
+      json(response, 200, replay);
+    },
+  },
   {
     method: 'DELETE', segments: ['api', 'runs', ':id'],
     handle: async (params, request, response, state) => {
@@ -242,7 +285,7 @@ function localModelRequest(request: IncomingMessage): boolean {
 }
 
 function pendingModelRun({ id, adventure, seed, state }: { id: string; adventure: Adventure; seed: number; state: ServerState }): HeldRun {
-  const held: HeldRun = { adventureId: adventure.id, records: [], finished: false, listeners: new Set(), metadata: state.liveAi!.metadata };
+  const held: HeldRun = { id, adventureId: adventure.id, records: [], finished: false, listeners: new Set(), metadata: state.liveAi!.metadata };
   const expiry = setTimeout(() => { state.runs.delete(id); }, 30_000);
   expiry.unref();
   held.cancel = () => {
@@ -257,7 +300,7 @@ function pendingModelRun({ id, adventure, seed, state }: { id: string; adventure
     held.live = live;
     held.start = undefined;
     state.activeAiId = id;
-    void driveRun(held, adventure, live.policy).finally(() => {
+    void driveRun(held, adventure, live.policy, state).finally(() => {
       if (state.activeAiId === id) state.activeAiId = undefined;
     });
     return true;
@@ -270,6 +313,7 @@ async function driveRun(
   held: HeldRun,
   adventure: Adventure,
   policy: AgentPolicy,
+  state: ServerState,
 ): Promise<void> {
   const push = (record: Record<string, unknown>): void => {
     held.records.push(record);
@@ -277,14 +321,32 @@ async function driveRun(
   };
   const usage = (): void => { if (held.live !== undefined) push({ type: 'usage', data: held.live.usage() }); };
 
+  // Every watched run is evidence, whatever its policy: write the transcript
+  // the replay route can re-apply, in the format replay already reads.
+  const transcript = new Transcript(state.saved.transcriptPath(held.id), {
+    type: 'header',
+    runId: held.id,
+    adventure: adventure.id,
+    adventureVersion: adventure.version,
+    adventureHash: 'sha256:unversioned',
+    policy: policy.id,
+    provider: held.metadata?.provider ?? null,
+    model: held.metadata?.model ?? null,
+    seed: 1,
+    maxTurns: held.live?.budgets.maxTurns ?? 30,
+    startedAt: new Date().toISOString(),
+    engineVersion: '0.1.0',
+  });
+
   try {
     if (held.metadata !== undefined) push({ type: 'run_started', data: held.metadata });
     const result = await run({
       adventure,
       policy,
       maxTurns: 30,
+      transcript: held.live === undefined ? transcript : held.live.transcript,
       ...(held.live === undefined ? {} : { maxTurns: held.live.budgets.maxTurns,
-        budgets: held.live.budgets, signal: held.live.signal, transcript: held.live.transcript }),
+        budgets: held.live.budgets, signal: held.live.signal }),
       onObservation: (observation) => {
         push({ type: 'observation', turn: observation.turn, data: observation });
         usage();
@@ -310,7 +372,25 @@ async function driveRun(
     });
   } finally {
     held.finished = true;
+    // The live transcript is closed before it is copied, so the copy reads a
+    // finished file rather than depending on how the writer buffers.
     held.live?.close();
+    // A live run writes its own transcript, which carries the prompt evidence
+    // the replay does not need; keep a copy of it in the store so a reader can
+    // revisit the same evidence. An unreadable transcript is not a reason to
+    // lose the run.
+    try {
+      if (held.live !== undefined) {
+        state.saved.save(held.id, readTranscript(held.live.transcriptPath()));
+      }
+    } catch (error) {
+      // A copy that fails leaves the store holding a run with no commands, so
+      // say so there rather than leaving a bare header to look like evidence.
+      const reason = error instanceof Error ? error.message : String(error);
+      transcript.write({ type: 'copy_failed', reason });
+      console.error(`saved run ${held.id}: the live transcript could not be copied: ${reason}`);
+    }
+    transcript.close();
     // The end marker is a record like the others, so a stream opened after
     // the run finished still terminates.
     push({ type: 'end' });
@@ -421,6 +501,7 @@ export function createSessionServer(options: SessionServerOptions = {}): Server 
     adventures: options.adventures ?? ADVENTURES,
     sessions: options.sessions ?? new Map(),
     runs: new Map(),
+    saved: new SavedRunStore(options.savedRunsRoot ?? join(process.cwd(), 'runs', 'watched')),
     staticRoot: options.staticRoot,
     scriptedPathFor: options.scriptedPathFor ?? findGoldPath,
   };

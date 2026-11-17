@@ -121,21 +121,24 @@ taxonomy. The game's random baseline spread across `F3`, `F4` and `F5`; the orga
 spread entirely across `F5`. Its chain is harder to get wrong early, because every gate names
 what it wants, and a random agent mostly fails by never finding the runbook at all.
 
-### The live models played it too, and none of them won
+### The live models played it, and a loop-guard bug nearly hid the result
 
 The matrix's turn-bound grid was pointed at this world
-(`configs/matrix.live-org-turnbound.json`). The planned 200 runs needed two attempts: the first
-was cut short by provider credit, its 97 payment-failed runs were deleted rather than counted,
-and the second completed every OpenRouter cell. On the completed grid, **150 valid runs and
-none is a solve: 0/150, Wilson interval 0 to 2.0%**, with 88 of the 150 failures being
-hallucination, the category for acting on objects that are not in the room. glm 5.3's fifty
-valid runs from the first attempt, preserved in that attempt's summary, agree: 0 solves, its
-turns spent at gold-path speed on rooms it imagined.
+(`configs/matrix.live-org-turnbound.json`). Its first sweep scored 0/150 and
+the failure pattern pointed at the harness: a loop guard was stopping the
+agent for examining objects, exactly the exploration the dashboard invites.
+The guard was fixed, and the grid re-ran with the frontier model's cells at
+thirty seeds. On the fixed engine the world is solvable in prose: condition A
+is a perfect 30/30, median fifteen turns, at ten cents a solve. The
+no-history control stays 0/30 for that model, the JSON conditions solve
+nearly everything (27/30) or far less depending on the rendering, and
+hallucination still leads the failures inside the same nine-category
+taxonomy.
 
-The one part of the grid with no transcript on disk is glm 5.3's, because Z.ai stayed
-unfunded; the committed summary marks its cells `incomplete` rather than averaging over them,
-and the first attempt's own summary lives in the repository's history at the merge that
-carried Experiment 06.
+The first sweep's 97 payment-failed runs were deleted rather than counted.
+glm 5.3 could not be re-run (its vendor's account stayed unfunded), so its
+ten first-sweep runs are quoted from that attempt's preserved summary in the
+repository history, with its cells marked incomplete at twenty seeds.
 
 ## The honest reading
 

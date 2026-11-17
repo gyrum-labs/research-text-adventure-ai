@@ -9,14 +9,6 @@
       "apiKeyEnv": "OPENROUTER_API_KEY"
     },
     {
-      "id": "live-strong",
-      "label": "glm 5.3 (z.ai)",
-      "provider": "openai",
-      "model": "glm-5.3",
-      "baseUrl": "https://api.z.ai/api/paas/v4",
-      "apiKeyEnv": "ZAI_API_KEY"
-    },
-    {
       "id": "live-mid",
       "label": "gpt-4.1-mini (openrouter)",
       "provider": "openai",
@@ -40,11 +32,11 @@
     "D",
     "E"
   ],
-  "seeds": 10,
+  "seeds": 30,
   "maxTurns": 30,
   "goldPathLength": 10,
-  "runsDir": "runs/live-org-turnbound",
-  "resultsDir": "results/live-org-turnbound",
+  "runsDir": "runs/live-org-sweep3",
+  "resultsDir": "results/live-org-sweep3",
   "budgets": {
     "maxTotalTokens": 300000,
     "maxRepeatedStates": 30,
