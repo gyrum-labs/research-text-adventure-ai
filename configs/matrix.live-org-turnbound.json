@@ -32,11 +32,11 @@
     "D",
     "E"
   ],
-  "seeds": 20,
+  "seeds": 30,
   "maxTurns": 30,
   "goldPathLength": 10,
-  "runsDir": "runs/live-org-turnbound",
-  "resultsDir": "results/live-org-turnbound",
+  "runsDir": "runs/live-org-sweep3",
+  "resultsDir": "results/live-org-sweep3",
   "budgets": {
     "maxTotalTokens": 300000,
     "maxRepeatedStates": 30,

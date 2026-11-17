@@ -127,12 +127,13 @@ The matrix's turn-bound grid was pointed at this world
 (`configs/matrix.live-org-turnbound.json`). Its first sweep scored 0/150 and
 the failure pattern pointed at the harness: a loop guard was stopping the
 agent for examining objects, exactly the exploration the dashboard invites.
-The guard was fixed, and the grid re-ran at twenty seeds. On the fixed engine
-the world is solvable in prose: claude sonnet 4.5 and gpt-4.1-mini take
-condition A 9 to 10 of 10 each, glm 4.5 air 9/10. The no-history control
-stays 0/10 for every model, the JSON conditions solve almost nothing on the
-organisation's dashboard prose, and hallucination still leads the failures
-(171 of 257) inside the same nine-category taxonomy.
+The guard was fixed, and the grid re-ran with the frontier model's cells at
+thirty seeds. On the fixed engine the world is solvable in prose: condition A
+is a perfect 30/30, median fifteen turns, at ten cents a solve. The
+no-history control stays 0/30 for that model, the JSON conditions solve
+nearly everything (27/30) or far less depending on the rendering, and
+hallucination still leads the failures inside the same nine-category
+taxonomy.
 
 The first sweep's 97 payment-failed runs were deleted rather than counted.
 glm 5.3 could not be re-run (its vendor's account stayed unfunded), so its
