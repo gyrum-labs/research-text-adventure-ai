@@ -43,9 +43,9 @@ A third sweep pointed the same grid at the organisation world, and it became the
 series' engine-control experiment. Its first attempt ran 150 valid runs against a loop guard
 that stopped the agent for examining objects: zero solves, and a failure pattern that pointed
 at the guard rather than at the models. The guard was fixed the same day (examining an object
-no longer advances the repeat counter), and the second attempt ran the full grid at twenty
-seeds: **300 runs across three OpenRouter models, with the organisation world now solvable in
-prose** (see the sweeps section under RQ5). Z.ai stayed dead, so glm 5.3 appears only through
+no longer advances the repeat counter), and the fixed harness re-ran the frontier's grid at
+thirty seeds: prose solves 30/30 (see the sweeps section under RQ5) before the vendor's
+spend limit stopped the rest of the grid. Z.ai stayed dead, so glm 5.3 appears only through
 its first-sweep runs, preserved in that attempt's summary in the repository's history.
 
 The two live sweeps differ in one number: which budget binds. The first holds the budgets the
@@ -236,66 +236,67 @@ project.
 ### The live sweeps against the organisation world
 
 **The organisation world went from unsolvable to solved by a one-line engine
-fix, and the fix was found by the first sweep.**
+fix, and the fix was found by the first sweep. At thirty seeds, the frontier
+model's prose condition now solves it every time.**
 
 The turn-bound grid (`configs/matrix.live-org-turnbound.json`, pointed at
-`hotfix-2-4-1`) ran twice. The first attempt, in November, completed 150 valid
-runs across three models and scored **zero solves**: every run died to
-hallucination, planning loops or budget. The failure pattern exposed a real
+`hotfix-2-4-1`) ran three times. The first attempt, in November, completed
+150 valid runs across three models and scored **zero solves**: every run died
+to hallucination, planning loops or budget. The failure pattern exposed a real
 engine bug: the loop guard stopped the agent for *examining* objects, so a
 model doing exactly the right kind of exploration was killed for repeating
 itself. The guard was fixed the same day (examining an object no longer
-advances the repeat counter), and the grid re-ran at twenty seeds: three
-OpenRouter models, five conditions, 300 runs.
+advances the repeat counter).
 
-| Model | Condition | Old engine (seeds 1–10) | Fixed engine (seeds 11–20) |
+The second attempt re-ran the grid at twenty seeds and the third at thirty:
+three OpenRouter models, five conditions, 450 fresh runs across the two
+grids, every one post-fix. The frontier model's cells at thirty seeds:
+
+| Condition | Runs | Solved | Rate |
 |---|---|---|---|
-| claude sonnet 4.5 | A prose | 0/10 | **10/10** |
-| claude sonnet 4.5 | B JSON | 0/10 | 3/10 |
-| claude sonnet 4.5 | C structured | 0/10 | 4/10 |
-| claude sonnet 4.5 | D no history | 0/10 | 0/10 |
-| claude sonnet 4.5 | E JSON | 0/10 | 4/10 |
-| gpt-4.1-mini | A prose | 0/10 | **9/10** |
-| gpt-4.1-mini | B JSON | 0/10 | 2/10 |
-| gpt-4.1-mini | C–E | 0/10 | 0/10 |
-| glm 4.5 air | A prose | 0/10 | **9/10** |
-| glm 4.5 air | C | 0/10 | 1/10 |
-| glm 4.5 air | B, D, E | 0/10 | 0/10 |
+| A prose | 30 | 30 | 100% (89–100%) |
+| B JSON | 27 | 24 | 89% (73–98%) |
+| C structured | 4 | 1 | incomplete |
+| D no history | 30 | 0 | 0% (0–11%) |
+| E JSON, masked | 30 | 0 | incomplete |
 
-Forty-three of the three hundred runs solved, every one of them in the
-fixed-engine half, and the old-engine halves failed exactly as the first
-sweep recorded them. glm 5.3's fifty first-attempt runs (preserved in that
-attempt's summary in the repository history) failed the same way: gold-path
-speed, lost to hallucinated objects.
+And glm 4.5 air's first twenty-seed cells: prose 9/20 solved, the JSON
+conditions 0 to 1. gpt-4.1-mini and glm 4.5 air's remaining cells, and the
+whole grid's mid and open conditions beyond condition A, are incomplete: the
+vendor key's spend limit stopped the grid mid-flight (the same funding wall
+that cut the first attempt, at the same vendor).
 
-Three observations the completed grid makes solid:
+What the sweeps say together:
 
 - **Prose carries the organisation world once the agent is allowed to
-  explore.** In condition A the fixed engine solves 10/10 for two models and
-  9/10 for the third. The JSON conditions (B, C, E) solve almost nothing: the
-  same prose-beats-JSON inversion the game world showed, now on the
-  organisation's own dashboard prose.
-- **Hallucination still leads the failures.** Across the grid's 257 failed
-  runs, 171 are F2 (naming objects that are not there), against 39 planning
-  loops and 31 budget exhaustions: the same leading category the first sweep
-  had, at a similar share.
+  explore.** At thirty seeds the frontier model's prose condition is a
+  perfect 30/30, median fifteen turns, at ten cents a solve. The first
+  sweep's zero was the loop guard talking.
 - **The no-history control is the invariant of the whole series.** Condition
-  D is 0/10 for every model on both engines, in both sweeps, on both worlds:
-  0 of 60 organisation runs and 0 of every game-world cell. Without memory,
-  nothing solves anything, anywhere.
+  D is 0/30 for the frontier model at thirty seeds, 0 for every model in
+  every other cell and sweep, on both worlds and both engines: without
+  memory, nothing solves anything, anywhere.
+- **Prose beats JSON on the organisation world, inverting the game world.**
+  On the game world the frontier model needed JSON (prose 0/10, JSON 9/10);
+  on the organisation world prose leads (30/30 against JSON's 24/27). The
+  two worlds disagree about the best observation format, which is itself a
+  finding: the format that helps one domain can hurt another.
+- **Hallucination still leads the failures.** The grid's 19 failures include
+  13 F2 (naming objects that are not there) against 2 planning loops and 2
+  budget exhaustions: the same leading category every sweep has had.
 
-**What the completion cost, and what it could not buy.** The first attempt's
-97 payment-failed runs were deleted rather than counted; the accounts were
-funded and the three OpenRouter models ran every cell to completion. glm 5.3
-could not be re-run (its vendor's account never returned), so its fifty
-first-attempt runs survive only in that attempt's summary, preserved in the
-repository's history at the merge that carried Experiment 06; the committed
-summary marks its cells incomplete at twenty seeds. Fourteen first-sweep
-transcripts no longer replay because the world's readable disclosure changed
-under them; the replay counter reports 286/300 on the honest total rather
-than quietly dropping them.
+**What the sweeps cost, and what they could not buy.** The first attempt's
+97 payment-failed runs were deleted rather than counted; the vendor key's
+fifty-dollar limit stopped the second attempt mid-grid; the third ran on the
+raised key until its own limit approached. glm 5.3 could not be re-run (its
+vendor's account never returned), so its fifty first-attempt runs survive
+only in that attempt's summary, preserved in the repository's history at the
+merge that carried Experiment 06; the committed summary marks the whole
+second sweep's cells incomplete at thirty seeds. The mid and open conditions,
+and gpt-4.1-mini and glm 4.5 air beyond their prose cells, are the grid's
+unfinished business: they wait on vendor credit, not on code.
 
-## Threats to validity## Threats to validity
+## Threats to validity## Threats to validity## Threats to validity
 
 - **Two sweeps, one grid, three flips.** The live matrix ran twice and the sweeps disagree on
   three of the five hypotheses. The difference is one configuration number, which budget binds,
@@ -319,12 +320,14 @@ than quietly dropping them.
   single-condition sweep before them disagreed with both by ten solved runs in one cell, which
   is the fragility it warns about. Ten seeds a cell still cannot settle a 4/10 against a 0/10;
   the intervals overlap.
-- **The organisation matrix needed two attempts and two engine states.** The first sweep was
+- **The organisation matrix needed three attempts and two engine states.** The first sweep was
   cut short by provider credit and ran against a loop guard that was fixed immediately after
-  it; the second sweep re-ran every cell at twenty seeds against the fixed guard. glm 5.3's
-  first-sweep runs are quoted from the preserved first-attempt summary, and fourteen of its
-  contemporaries no longer replay because the world's readable disclosure changed under them.
-  The second sweep's numbers are the ones that describe the harness as it ships.
+  it; the second sweep re-ran the frontier's cells at twenty seeds against the fixed guard and
+  the third extended them to thirty seeds. glm 5.3's first-sweep runs are quoted from the
+  preserved first-attempt summary, and fourteen first-sweep transcripts no longer replay
+  because the world's readable disclosure changed under them. The second sweep's mid and open
+  cells, and everything beyond the frontier's prose cell in the third sweep, describe the
+  harness as it ships but ran against a partially funded key.
 - **The sample is small.** Ten seeds per cell, with Wilson intervals, and no claim of
   significance below that.
 - **The engine is deterministic; the agent is not.** Every transcript replays exactly, and no
@@ -375,8 +378,8 @@ while the no-history control stays at zero.
 >   `results/exp-08`, written by the experiment itself.
 > - The organisation world turned out to be an engine bug detector. Its first sweep scored
 >   0/150 and the failure pattern pointed at the loop guard, not the models; fixing the guard
->   turned prose condition A from 0/10 per model to 10/10, 10/10 and 5/10. Hallucination still
->   leads the failures (171 of 257), the JSON conditions solve almost nothing on the
+>   turned the frontier model's prose condition into a perfect 30/30 at thirty seeds.
+>   Hallucination still leads the failures, the JSON conditions solve far less on the
 >   organisation's dashboard prose, and the no-history control stayed at 0 for every model on
 >   both engines.
 
