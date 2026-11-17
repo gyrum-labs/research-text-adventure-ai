@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Inter,'Helvetica Neue',Arial,sans-serif">
+  <rect width="960" height="620" fill="#ffffff"/>
+  <text x="480" y="46" font-size="20" font-weight="600" fill="#1a1a1a" text-anchor="middle">the six words everything is built from (SPEC 0.3)</text>
+  <text x="480" y="68" font-size="13" fill="#5a6069" text-anchor="middle" font-style="italic">learn these and the rest is detail - every example is from Operation Nightingale</text>
+
+  <!-- tile grid 3 x 2 -->
+  <g stroke="#1a1a1a" fill="#f8f9fa" stroke-width="1.8">
+    <rect x="70"  y="96"  width="260" height="230" rx="10"/>
+    <rect x="350" y="96"  width="260" height="230" rx="10"/>
+    <rect x="630" y="96"  width="260" height="230" rx="10"/>
+    <rect x="70"  y="346" width="260" height="230" rx="10"/>
+    <rect x="350" y="346" width="260" height="230" rx="10"/>
+    <rect x="630" y="346" width="260" height="230" rx="10" fill="#d4edda" stroke="#28a745"/>
+  </g>
+
+  <!-- ROOM -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2">
+    <rect x="150" y="120" width="100" height="70"/>
+    <circle cx="150" cy="156" r="3" fill="#1a1a1a" stroke="none"/>
+  </g>
+  <text x="200" y="222" font-size="17" font-weight="600" fill="#1a1a1a" text-anchor="middle" letter-spacing="1">ROOM</text>
+  <text x="200" y="246" font-size="12" fill="#5a6069" text-anchor="middle">a place the agent can be in</text>
+  <text x="200" y="266" font-size="12" fill="#5a6069" text-anchor="middle" font-style="italic">the Service Corridor</text>
+  <text x="200" y="304" font-size="12" fill="#1a1a1a" text-anchor="middle" font-weight="600">1</text>
+
+  <!-- OBJECT -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2">
+    <rect x="452" y="128" width="36" height="22" rx="3" fill="#d4edda" stroke="#28a745"/>
+    <rect x="506" y="126" width="16" height="26" rx="7"/>
+    <line x1="514" y1="126" x2="514" y2="152" stroke-width="1"/>
+  </g>
+  <text x="480" y="222" font-size="17" font-weight="600" fill="#1a1a1a" text-anchor="middle" letter-spacing="1">OBJECT</text>
+  <text x="480" y="246" font-size="12" fill="#5a6069" text-anchor="middle">a thing in a room, or carried</text>
+  <text x="480" y="266" font-size="12" fill="#5a6069" text-anchor="middle" font-style="italic">the cutters, the manual, the keycard</text>
+  <text x="480" y="304" font-size="12" fill="#1a1a1a" text-anchor="middle" font-weight="600">2</text>
+
+  <!-- DOOR -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2">
+    <rect x="716" y="118" width="52" height="74"/>
+    <circle cx="760" cy="158" r="3" fill="#1a1a1a" stroke="none"/>
+    <rect x="722" y="146" width="10" height="16" fill="#f8d7da" stroke="#dc3545" stroke-width="1.2"/>
+  </g>
+  <text x="760" y="222" font-size="17" font-weight="600" fill="#1a1a1a" text-anchor="middle" letter-spacing="1">DOOR</text>
+  <text x="760" y="246" font-size="12" fill="#5a6069" text-anchor="middle">open, closed, or locked</text>
+  <text x="760" y="266" font-size="12" fill="#5a6069" text-anchor="middle" font-style="italic">the vault door, locked</text>
+  <text x="760" y="304" font-size="12" fill="#1a1a1a" text-anchor="middle" font-weight="600">3</text>
+
+  <!-- ACTION -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2" stroke-linecap="round">
+    <rect x="96" y="368" width="208" height="40" rx="6"/>
+    <text x="112" y="394" font-size="14" fill="#1a1a1a" stroke="none" font-family="inherit">take keycard</text>
+    <path d="M286 388 L296 388" marker-end="url(#arr6)"/>
+  </g>
+  <text x="200" y="446" font-size="17" font-weight="600" fill="#1a1a1a" text-anchor="middle" letter-spacing="1">ACTION</text>
+  <text x="200" y="470" font-size="12" fill="#5a6069" text-anchor="middle">one command, which may change the world</text>
+  <text x="200" y="490" font-size="12" fill="#5a6069" text-anchor="middle" font-style="italic">take keycard - open locker</text>
+  <text x="200" y="528" font-size="12" fill="#1a1a1a" text-anchor="middle" font-weight="600">4</text>
+
+  <!-- GOAL -->
+  <g stroke="#28a745" fill="#d4edda" stroke-width="2">
+    <rect x="404" y="372" width="30" height="30" rx="4"/>
+    <circle cx="480" cy="388" r="16" stroke-width="2"/>
+    <circle cx="480" cy="388" r="6" fill="#28a745" stroke="none"/>
+  </g>
+  <text x="480" y="446" font-size="17" font-weight="600" fill="#1a1a1a" text-anchor="middle" letter-spacing="1">GOAL</text>
+  <text x="480" y="470" font-size="12" fill="#5a6069" text-anchor="middle">a condition that must become true</text>
+  <text x="480" y="490" font-size="12" fill="#5a6069" text-anchor="middle" font-style="italic">disarm the bomb - recover the case</text>
+  <text x="480" y="528" font-size="12" fill="#1a1a1a" text-anchor="middle" font-weight="600">5</text>
+
+  <!-- TURN -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2.2" stroke-linecap="round">
+    <path d="M712 420 A 50 50 0 1 1 806 428" marker-end="url(#arr6)"/>
+  </g>
+  <text x="760" y="432" font-size="13" fill="#1a1a1a" text-anchor="middle">one action +</text>
+  <text x="760" y="450" font-size="13" fill="#1a1a1a" text-anchor="middle">its consequences</text>
+  <text x="760" y="470" font-size="17" font-weight="600" fill="#1a1a1a" text-anchor="middle" letter-spacing="1">TURN</text>
+  <text x="760" y="494" font-size="12" fill="#5a6069" text-anchor="middle">the game's only unit of time</text>
+  <text x="760" y="528" font-size="12" fill="#1a1a1a" text-anchor="middle" font-weight="600">6</text>
+
+  <defs>
+    <marker id="arr6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#1a1a1a"/>
+    </marker>
+  </defs>
+</svg>

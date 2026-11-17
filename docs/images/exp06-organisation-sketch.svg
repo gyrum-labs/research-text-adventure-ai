@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Inter,'Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <marker id="arro" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#1a1a1a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="620" fill="#ffffff"/>
+  <text x="480" y="46" font-size="20" font-weight="600" fill="#1a1a1a" text-anchor="middle">experiment 06 - an organisation</text>
+  <text x="480" y="70" font-size="13" fill="#5a6069" text-anchor="middle" font-style="italic">the adventure vocabulary has to survive contact with a real organisation - or the whole idea was a metaphor that does not pay</text>
+
+  <!-- the owner -->
+  <g stroke="#1a1a1a" fill="#e2e3e5" stroke-width="2">
+    <rect x="400" y="110" width="160" height="64" rx="10"/>
+  </g>
+  <text x="480" y="138" font-size="14" font-weight="600" fill="#1a1a1a" text-anchor="middle">the owner</text>
+  <text x="480" y="158" font-size="11" fill="#5a6069" text-anchor="middle">purpose, resources, boundaries</text>
+
+  <!-- delegation -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2">
+    <path d="M420 174 C 330 220 280 240 250 268" marker-end="url(#arro)"/>
+    <path d="M540 174 C 630 220 680 240 710 268" marker-end="url(#arro)"/>
+  </g>
+  <text x="300" y="222" font-size="12" fill="#5a6069" text-anchor="middle">a mission, an envelope,</text>
+  <text x="300" y="240" font-size="12" fill="#5a6069" text-anchor="middle">a boundary</text>
+
+  <!-- two workers running the same loop -->
+  <g stroke="#1a1a1a" fill="#f8f9fa" stroke-width="2">
+    <rect x="130" y="274" width="200" height="120" rx="10"/>
+    <rect x="630" y="274" width="200" height="120" rx="10"/>
+  </g>
+  <g fill="#1a1a1a" font-size="13" font-weight="600" text-anchor="middle">
+    <text x="230" y="300">worker agent</text>
+    <text x="730" y="300">worker agent</text>
+  </g>
+  <g fill="#5a6069" font-size="12" text-anchor="middle">
+    <text x="230" y="322">rooms, objects, doors,</text>
+    <text x="230" y="340">actions, goals, turns</text>
+    <text x="230" y="364">- the same six words</text>
+    <text x="730" y="322">in a real org: desks,</text>
+    <text x="730" y="340">inboxes, approvals,</text>
+    <text x="730" y="364">- still the same six words</text>
+  </g>
+  <g stroke="#28a745" fill="#d4edda" stroke-width="1.8">
+    <rect x="150" y="378" width="160" height="10" rx="5"/>
+    <rect x="650" y="378" width="160" height="10" rx="5"/>
+  </g>
+
+  <!-- both report back -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2">
+    <path d="M230 394 C 300 430 400 444 456 452" marker-end="url(#arro)"/>
+    <path d="M730 394 C 660 430 560 444 504 452" marker-end="url(#arro)"/>
+  </g>
+  <g stroke="#28a745" fill="#d4edda" stroke-width="2">
+    <rect x="380" y="452" width="200" height="64" rx="10"/>
+  </g>
+  <text x="480" y="478" font-size="14" font-weight="600" fill="#1a1a1a" text-anchor="middle">evidence, not vibes</text>
+  <text x="480" y="498" font-size="11" fill="#5a6069" text-anchor="middle">every run answers through the same receipt</text>
+
+  <text x="480" y="566" font-size="14" fill="#5a6069" text-anchor="middle" font-style="italic">if rooms and doors mean nothing on a real org chart, the book was a fairy tale</text>
+</svg>

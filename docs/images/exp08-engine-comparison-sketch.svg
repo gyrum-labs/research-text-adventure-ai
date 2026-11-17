@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Inter,'Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <marker id="arre" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#1a1a1a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="620" fill="#ffffff"/>
+  <text x="480" y="46" font-size="20" font-weight="600" fill="#1a1a1a" text-anchor="middle">experiment 08 - the engine comparison</text>
+  <text x="480" y="70" font-size="13" fill="#5a6069" text-anchor="middle" font-style="italic">run the agent against a world whose rules live in another engine, and see whether the score follows the agent or the engine</text>
+
+  <!-- the agent, shared -->
+  <g stroke="#1a1a1a" fill="#e2e3e5" stroke-width="2">
+    <rect x="400" y="120" width="160" height="64" rx="10"/>
+  </g>
+  <text x="480" y="146" font-size="14" font-weight="600" fill="#1a1a1a" text-anchor="middle">the same agent</text>
+  <text x="480" y="166" font-size="11" fill="#5a6069" text-anchor="middle">same policies, same budgets, same commands</text>
+
+  <!-- two branches -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2">
+    <path d="M420 184 C 320 230 260 250 220 280" marker-end="url(#arre)"/>
+    <path d="M540 184 C 640 230 700 250 740 280" marker-end="url(#arre)"/>
+  </g>
+
+  <!-- engine A -->
+  <g stroke="#1a1a1a" fill="#f8f9fa" stroke-width="2">
+    <rect x="90" y="286" width="260" height="130" rx="10"/>
+  </g>
+  <text x="220" y="316" font-size="14" font-weight="600" fill="#1a1a1a" text-anchor="middle">our engine</text>
+  <g fill="#5a6069" font-size="12" text-anchor="middle">
+    <text x="220" y="342">the vocabulary it was taught:</text>
+    <text x="220" y="362">rooms, doors, actions, goals</text>
+    <text x="220" y="388">score: the agent's own abilities</text>
+  </g>
+  <!-- engine B -->
+  <g stroke="#1a1a1a" fill="#f8f9fa" stroke-width="2">
+    <rect x="610" y="286" width="260" height="130" rx="10"/>
+  </g>
+  <text x="740" y="316" font-size="14" font-weight="600" fill="#1a1a1a" text-anchor="middle">another engine</text>
+  <g fill="#5a6069" font-size="12" text-anchor="middle">
+    <text x="740" y="342">the same vocabulary, expressed</text>
+    <text x="740" y="362">in someone else's world</text>
+    <text x="740" y="388">score: the vocabulary's portability</text>
+  </g>
+
+  <!-- the comparison read-out -->
+  <g stroke="#28a745" fill="#d4edda" stroke-width="2">
+    <rect x="290" y="452" width="380" height="70" rx="10"/>
+  </g>
+  <text x="480" y="482" font-size="14" fill="#1a1a1a" text-anchor="middle" font-weight="600">read the two scores side by side</text>
+  <text x="480" y="504" font-size="12" fill="#5a6069" text-anchor="middle">if the agent scores well here and badly there, the engine carried it -</text>
+  <text x="480" y="518" font-size="12" fill="#5a6069" text-anchor="middle">if it scores well in both, the vocabulary travelled</text>
+
+  <text x="480" y="570" font-size="14" fill="#5a6069" text-anchor="middle" font-style="italic">a stretch probe, drawn as one honest seesaw</text>
+</svg>
