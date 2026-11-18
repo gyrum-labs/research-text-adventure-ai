@@ -130,8 +130,10 @@ agent for examining objects, exactly the exploration the dashboard invites.
 The guard was fixed, and the grid re-ran with the frontier model's cells at
 thirty seeds. On the fixed engine the world is solvable in prose: condition A
 is a perfect 30/30, median fifteen turns, at ten cents a solve. The
-no-history control never reached the thirty-seed grid (the vendor key ran
-dry after the first three conditions), staying 0/20 at twenty seeds; the
+no-history control reached the thirty-seed configuration only as a
+ten-seed confirmation (0/10, agreeing with the sweep), which was what the
+remaining credit could afford after the first three conditions; at twenty
+seeds it stays 0/20, the
 JSON condition solves 12 of its 27 valid runs (44%) and the structured
 rendering 1 of 4, and hallucination still leads the failures inside the
 same nine-category taxonomy.

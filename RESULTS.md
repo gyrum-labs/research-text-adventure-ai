@@ -257,7 +257,7 @@ every run post-fix. The frontier model's cells at thirty seeds:
 | A prose | 30 | 30 | 100% (89–100%) |
 | B JSON | 27 | 12 | 44% (28–63%) |
 | C structured | 4 | 1 | incomplete |
-| D no history | 0 | 0 | not run |
+| D no history | 10 | 0 | 0% (0–28%) |
 | E JSON, masked | 0 | 0 | not run |
 
 And glm 4.5 air's first twenty-seed cells: prose 9/20 solved, the JSON
@@ -276,8 +276,10 @@ What the sweeps say together:
   D is 0/20 for the frontier model at twenty seeds, 0 for every model in
   every other cell and sweep, on both worlds and both engines: without
   memory, nothing solves anything, anywhere. The thirty-seed grid never
-  reached D or E: the vendor key ran dry after the frontier model's A, B and
-  C cells.
+  reached D or E at full depth: the vendor key ran dry after the frontier
+  model's A, B and C cells. The D row above is a ten-seed confirmation on
+  the same turn-bound configuration: 0/10, nine hallucination deaths and
+  one planning death, median twenty-eight turns, agreeing with the sweep.
 - **Prose beats JSON on the organisation world, inverting the game world.**
   On the game world the frontier model needed JSON (prose 0/10, JSON 9/10);
   on the organisation world prose leads (30/30 against JSON's 12/27). The
