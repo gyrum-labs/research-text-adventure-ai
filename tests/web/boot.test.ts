@@ -55,7 +55,9 @@ function page(options: { withWatch?: boolean } = {}): {
     }
     const policy = classed('watch-policy', 'select');
     policy.value = 'scripted';
-    for (const value of ['scripted', 'random', 'llm']) {
+    // The free choices are the panel's defaults; agent options are built from
+    // what the server offers, so the stub offers none.
+    for (const value of ['scripted', 'random']) {
       const option = new StubElement('option');
       option.setAttribute('value', value);
       option.value = value;
@@ -143,8 +145,26 @@ describe('the page', () => {
     expect(play.getAttribute('aria-pressed')).toBe('true');
   });
 
-  it('stops the watched run when the tab is hidden', async () => {
-    const { doc, terminal, panel } = page();
+  it('the watch view hides the game and shows the panel, and back', async () => {
+    const { doc, terminal, panel, play, watch } = page();
+    await boot(terminal as unknown as HTMLElement, { mode: 'memory' }, asDocument(doc));
+
+    // Watching: the game hides, the panel shows, and the buttons say which is on.
+    watch.fire('click');
+    expect(terminal.hidden).toBe(true);
+    expect(panel.hidden).toBe(false);
+    expect(watch.getAttribute('aria-pressed')).toBe('true');
+    expect(play.getAttribute('aria-pressed')).toBe('false');
+
+    // Playing: exactly the reverse.
+    play.fire('click');
+    expect(terminal.hidden).toBe(false);
+    expect(panel.hidden).toBe(true);
+    expect(watch.getAttribute('aria-pressed')).toBe('false');
+    expect(play.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('stops the watched run when the tab is hidden', async () => {    const { doc, terminal, panel } = page();
     const status = panel.children.find(child => child.className === 'watch-status');
     const policy = panel.children.find(child => child.className === 'watch-policy');
     if (status === undefined || policy === undefined) throw new Error('the panel is missing parts');
@@ -152,7 +172,9 @@ describe('the page', () => {
     const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(((url: string, init?: RequestInit) => {
       const target = String(url);
       requests.push({ url: target, method: init?.method });
-      if (target.endsWith('/api/health')) return Promise.resolve(Response.json({ ok: true, ai: null }));
+      if (target.endsWith('/api/health')) return Promise.resolve(Response.json({ ok: true,
+        aiModels: [{ provider: 'OpenRouter', model: 'deepseek/deepseek-chat',
+          budgets: { maxTurns: 20, maxTotalTokens: 30000, maxWallClockMs: 120000 } }] }));
       if (target.endsWith('/api/runs') && init?.method === 'POST') {
         return Promise.resolve(Response.json({ id: 'run/one' }, { status: 201 }));
       }
@@ -167,7 +189,10 @@ describe('the page', () => {
 
     try {
       await boot(terminal as unknown as HTMLElement, { mode: 'memory' }, asDocument(doc));
-      policy.value = 'llm';
+      // Hiding the tab must stop a paid run: that is the case where a stop
+      // costs money, and the only case the server can cancel.
+      policy.value = 'deepseek/deepseek-chat';
+      await settle(); // the agent list arrives over fetch, before the click
       const start = panel.children.find(child => child.className === 'watch-start')!;
       start.fire('click');
       await settle();
