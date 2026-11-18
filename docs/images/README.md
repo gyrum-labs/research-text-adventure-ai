@@ -9,6 +9,38 @@ and registered in `docs-viewer/_index.json`, so the viewer can
 surface them in its sidebar and the validator can confirm links
 resolve.
 
+## Illustrations (sketch set)
+
+Beyond screenshots, this directory carries the book's sketch
+illustrations, recorded in `illustrations.json`. The style contract for
+every illustration is a two-stage pipeline:
+
+**Stage 1 - clean base (required).** Each subject is drawn as a clean,
+precise SVG in a professional technical style: correct rooms, labels,
+layout and proportions, tidy geometry, sans-serif lettering. This file is
+the editable source of truth. It is rendered to the deliverable PNG at
+1240 px:
+
+    rsvg-convert -w 1240 docs/images/<name>.svg -o docs/images/<name>.png
+
+The base is deliberately not sketchy: it is the accurate version a
+reader could measure from.
+
+**Stage 2 - sketch-pen pass (done).** The rendered base is passed through
+the image model with the sketch-pen style and the collected style references,
+producing `<name>-hand.png`: the same drawing, every room, label and position
+preserved, rendered as an organic hand-pen sketch. The pass runs through
+**Replicate** (`google/nano-banana`, about $0.04 per image, driven by
+`~/bin/replicate-sketch.sh`) - the OpenCode gateway does not include image
+models on the OpenCode Go plan. The prompt template lives in
+`illustrations.json` under `pipeline.stage2_prompt`; status per file is
+recorded in the manifest (`stage2`: done, pending, or skipped with a reason).
+All fourteen were drawn on 2026-11-16.
+
+To change an illustration: edit the SVG, re-render, run
+`scripts/update-docs.sh`, then run the stage 2 pass when a working
+credential is installed.
+
 ## Naming convention
 
 Use short, lowercase, hyphen-separated names that describe the

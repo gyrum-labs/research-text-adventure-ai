@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Inter,'Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <marker id="arrt" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#1a1a1a"/>
+    </marker>
+    <marker id="arrtG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#28a745"/>
+    </marker>
+  </defs>
+  <rect width="960" height="620" fill="#ffffff"/>
+  <text x="480" y="46" font-size="20" font-weight="600" fill="#1a1a1a" text-anchor="middle">one turn (kernel T0.5 - T0.7)</text>
+  <text x="480" y="70" font-size="13" fill="#5a6069" text-anchor="middle" font-style="italic">the game's only unit of time: one action, and its consequences</text>
+
+  <!-- the loop: four stations on a circle -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2">
+    <circle cx="480" cy="330" r="150" stroke-dasharray="4 6"/>
+  </g>
+  <g stroke="#1a1a1a" fill="none" stroke-width="2">
+    <path d="M560 218 A 150 150 0 0 1 620 300" marker-end="url(#arrt)"/>
+    <path d="M618 392 A 150 150 0 0 1 548 464" marker-end="url(#arrt)"/>
+    <path d="M404 462 A 150 150 0 0 1 344 388" marker-end="url(#arrt)"/>
+    <path d="M346 264 A 150 150 0 0 1 416 214" marker-end="url(#arrt)"/>
+  </g>
+
+  <!-- stations -->
+  <g stroke="#1a1a1a" fill="#f8f9fa" stroke-width="2">
+    <rect x="400" y="150" width="160" height="60" rx="8"/>
+    <rect x="596" y="300" width="170" height="60" rx="8"/>
+    <rect x="404" y="450" width="152" height="60" rx="8"/>
+    <rect x="216" y="300" width="160" height="60" rx="8"/>
+  </g>
+  <g fill="#1a1a1a" font-size="14" font-weight="600" text-anchor="middle">
+    <text x="480" y="176">1. command in</text>
+    <text x="681" y="326">2. parser</text>
+    <text x="480" y="476">3. pure reducer</text>
+    <text x="296" y="326">4. observation</text>
+  </g>
+  <g fill="#5a6069" font-size="11" text-anchor="middle">
+    <text x="480" y="194">"take keycard"</text>
+    <text x="681" y="344">verb + target resolved</text>
+    <text x="480" y="494">world changes, or a fair refusal</text>
+    <text x="296" y="344">what the player now sees</text>
+  </g>
+
+  <!-- renderer side note -->
+  <g stroke="#28a745" fill="#d4edda" stroke-width="1.8">
+    <rect x="640" y="440" width="230" height="60" rx="8"/>
+  </g>
+  <path d="M560 480 L638 470" stroke="#28a745" stroke-width="1.8" marker-end="url(#arrtG)"/>
+  <text x="755" y="466" font-size="13" font-weight="600" fill="#1a1a1a" text-anchor="middle">5. renderer + goals + hints</text>
+  <text x="755" y="486" font-size="11" fill="#5a6069" text-anchor="middle">human text or agent JSON - same facts</text>
+
+  <!-- the two players feed the loop -->
+  <g stroke="#1a1a1a" fill="#e2e3e5" stroke-width="1.8">
+    <rect x="120" y="120" width="120" height="52" rx="8"/>
+  </g>
+  <text x="180" y="151" font-size="13" fill="#1a1a1a" text-anchor="middle">human CLI</text>
+  <g stroke="#1a1a1a" fill="#e2e3e5" stroke-width="1.8">
+    <rect x="120" y="470" width="120" height="52" rx="8"/>
+  </g>
+  <text x="180" y="501" font-size="13" fill="#1a1a1a" text-anchor="middle">agent harness</text>
+  <g stroke="#6c757d" fill="none" stroke-width="1.6" stroke-dasharray="5 5">
+    <path d="M180 172 C 260 190 350 190 414 160"/>
+    <path d="M180 470 C 250 440 330 420 410 404"/>
+  </g>
+  <text x="480" y="560" font-size="14" fill="#5a6069" text-anchor="middle" font-style="italic">a human and an agent drive the identical loop - that is what makes their runs comparable</text>
+</svg>

@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Inter,'Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="#6c757d" stroke-width="1.2"/>
+    </pattern>
+  </defs>
+  <rect width="960" height="620" fill="#ffffff"/>
+
+  <!-- room fills -->
+  <rect x="64" y="84" width="274" height="432" fill="#e2e3e5"/>
+  <rect x="342" y="84" width="236" height="432" fill="#e9eaec"/>
+  <rect x="582" y="84" width="276" height="432" fill="#f0f1f3"/>
+
+  <!-- walls -->
+  <g stroke="#1a1a1a" fill="none" stroke-linecap="square">
+    <rect x="60" y="80" width="800" height="440" stroke-width="7"/>
+    <line x1="340" y1="80" x2="340" y2="262" stroke-width="4"/>
+    <line x1="340" y1="338" x2="340" y2="520" stroke-width="4"/>
+    <path d="M340 262 A76 76 0 0 1 416 338" stroke-width="1.2"/>
+    <line x1="340" y1="338" x2="416" y2="338" stroke-width="2"/>
+    <line x1="580" y1="80" x2="580" y2="250" stroke-width="4"/>
+    <line x1="580" y1="330" x2="580" y2="520" stroke-width="4"/>
+    <line x1="580" y1="250" x2="580" y2="330" stroke-width="8"/>
+    <line x1="588" y1="250" x2="588" y2="330" stroke-width="1.6"/>
+  </g>
+
+  <!-- platform on-call -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="1.6">
+    <rect x="88" y="100" width="96" height="28" fill="url(#hatch)"/>
+    <rect x="92" y="420" width="120" height="46"/>
+    <rect x="150" y="404" width="40" height="16"/>
+    <line x1="158" y1="404" x2="158" y2="420" stroke-width="1"/>
+    <line x1="184" y1="404" x2="184" y2="420" stroke-width="1"/>
+    <circle cx="290" cy="140" r="22" stroke-width="2" fill="#fff3cd" stroke="#ffc107"/>
+    <line x1="290" y1="140" x2="290" y2="125" stroke-width="1.8"/>
+    <line x1="290" y1="140" x2="301" y2="151" stroke-width="1.8"/>
+  </g>
+
+  <!-- release engineering -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="1.6">
+    <rect x="368" y="96" width="150" height="26"/>
+    <line x1="418" y1="96" x2="418" y2="122" stroke-width="1"/>
+    <line x1="468" y1="96" x2="468" y2="122" stroke-width="1"/>
+    <rect x="364" y="404" width="170" height="46"/>
+    <rect x="372" y="380" width="44" height="20"/>
+    <line x1="372" y1="390" x2="416" y2="390" stroke-width="1"/>
+    <line x1="498" y1="298" x2="574" y2="298" stroke-width="2.4" stroke="#dc3545"/>
+    <line x1="502" y1="298" x2="502" y2="314" stroke-width="1.8" stroke="#dc3545"/>
+    <line x1="570" y1="298" x2="570" y2="314" stroke-width="1.8" stroke="#dc3545"/>
+  </g>
+
+  <!-- customer success -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="1.6">
+    <rect x="620" y="100" width="110" height="28" fill="url(#hatch)"/>
+    <rect x="700" y="420" width="70" height="42"/>
+    <rect x="716" y="404" width="26" height="16" rx="6"/>
+    <line x1="724" y1="420" x2="724" y2="404" stroke-width="1"/>
+  </g>
+
+  <!-- labels -->
+  <g fill="#1a1a1a" text-anchor="middle" font-size="15" letter-spacing="1">
+    <text x="150" y="232">PLATFORM</text>
+    <text x="150" y="252">ON-CALL</text>
+    <text x="460" y="222">RELEASE</text>
+    <text x="460" y="242">ENGINEERING</text>
+    <text x="722" y="232">CUSTOMER</text>
+    <text x="722" y="252">SUCCESS</text>
+  </g>
+  <g fill="#5a6069" font-size="12" text-anchor="middle">
+    <text x="150" y="494">incident ticket open</text>
+    <text x="449" y="474">shared inbox + the three releases</text>
+    <text x="722" y="494">handover board, phone</text>
+    <text x="290" y="184">the SLA clock: 17:00</text>
+    <text x="452" y="150">2.3.9&#160;&#160;&#160;2.4.0&#160;&#160;&#160;2.4.1</text>
+  </g>
+  <text x="600" y="272" font-size="14" fill="#dc3545" font-weight="600">LOCKED</text>
+
+  <!-- title block -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="1.4">
+    <rect x="596" y="536" width="264" height="50"/>
+    <line x1="596" y1="556" x2="860" y2="556" stroke-width="1"/>
+  </g>
+  <g fill="#1a1a1a" font-size="12">
+    <text x="606" y="551">THE 2.4.1 HOTFIX - office fit-out</text>
+    <text x="606" y="576">scale: not to scale&#160;&#160;&#160;&#160;rev A - 2026-11-16</text>
+  </g>
+</svg>

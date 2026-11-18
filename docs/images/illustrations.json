@@ -1,0 +1,219 @@
+{
+  "version": 2,
+  "generated": "2026-11-16",
+  "note": "Illustrations for the book. Each entry pairs a rendered PNG (the deliverable) with its editable SVG source. Two standing requirements: (1) the SVG base is drawn clean and precise - professional technical style, correct rooms, labels and layout - because it is the accurate version a reader could measure from; (2) when an image-generation credential is available, the rendered base passes through the image model with the sketch-pen style prompt (pipeline.stage2_prompt) plus the collected style references, producing <name>-hand.png: the same drawing, rendered as an organic hand-pen sketch. Stage 2 status per file is recorded below; the credential was rejected by the gateway as of 2026-11-16 (the OpenCode Go plan does not include the image model), so stage 2 is pending for the whole set. Colours follow the docs palette in docs/shared/doc-standards.md: success #d4edda/#28a745, warning #fff3cd/#ffc107, error #f8d7da/#dc3545, neutral #e2e3e5/#6c757d. Regenerate a PNG after editing its SVG with: rsvg-convert -w 1240 <file>.svg -o <file>.png",
+  "style": "clean technical base, hand-drawn ink sketch in the stage 2 pass, house palette colours, minimal hand-lettered labels",
+  "references": [
+    "https://www.collybird.com/assets/assets/projects/adventure/map.a65fe0e73a41.webp (grid dungeon map, labelled rooms, item icons)",
+    "https://i.redd.it/9oif6pt90g721.jpg (the 1976 Adventure working map, pencil on fan-fold paper)",
+    "http://bitwisebooks.com/wp-content/uploads/2019/12/AdventureGames-p19.png (beginner book page with a friendly four-room map diagram)",
+    "https://i.pinimg.com/736x/b7/1e/63/b71e634a14e70e4cfe0a4e3353cc1f9d.jpg (old-school RPG rulebook page: ink characters and rule text)",
+    "https://media.rightmove.co.uk/property-floorplan/d1f4df78e/773379850995457/d1f4df78e2568c8ec6630448c3a9d47d.png (technical floorplan with walls, door swings, furniture)"
+  ],
+  "pipeline": {
+    "stage1": "clean precise SVG source (the accurate version), rendered to PNG at 1240 px with rsvg-convert",
+    "stage2_prompt": "Redraw this exact diagram as a clean hand-drawn illustration in black sketch-pen style on white paper: keep every room, label, layout element, prop and their positions faithful to the original, but render all linework with an organic hand-pen stroke, slightly uneven like quick confident pen sketching. Very clean and legible, not messy. Keep the small colour accents where the original has them.",
+    "stage2_status": "done (2026-11-16) - all 14 subjects passed through Replicate google/nano-banana",
+    "stage2_route": "Replicate REST API, model google/nano-banana, driven by ~/bin/replicate-sketch.sh (token at ~/.config/replicate/token)"
+  },
+  "items": [
+    {
+      "file": "map-nightingale-floorplan.png",
+      "source": "map-nightingale-floorplan.svg",
+      "title": "Operation Nightingale, bunker floorplan",
+      "description": "The mission-impossible adventure drawn as a property floorplan: Briefing Room with desk, bulletin board and the keycard (success green); Service Corridor with the tall locker and fire extinguisher; Server Vault in error red with racks, the cased bomb on its pedestal, and the bold locked vault door with keycard reader. Title block bottom right, like a drawing sheet.",
+      "appears_in": "docs/MAPS.md (Operation Nightingale section) and docs/ADVENTURES.md section 2",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "map-nightingale-floorplan-hand.png"
+    },
+    {
+      "file": "map-hotfix-floorplan.png",
+      "source": "map-hotfix-floorplan.svg",
+      "title": "The 2.4.1 Hotfix, office floorplan",
+      "description": "The hotfix-2-4-1 adventure as an office fit-out plan: Platform On-call with standup board and the open incident ticket; Release Engineering with shared inbox, the shelf of releases 2.3.9 / 2.4.0 / 2.4.1 and the red release gate barrier; Customer Success behind a locked door, with handover board and phone. The wall clock in warning amber reads five o'clock: the SLA deadline.",
+      "appears_in": "docs/MAPS.md (The 2.4.1 Hotfix section)",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "map-hotfix-floorplan-hand.png"
+    },
+    {
+      "file": "map-nightingale-working-sketch.png",
+      "source": "map-nightingale-working-sketch.svg",
+      "title": "A player's working map, Nightingale",
+      "description": "The map as a player actually keeps it: the three rooms with contents (keycard in success green, locker, the cased bomb in the error-red vault), labelled N/S route arrows, the locked door marked in red, a numbered player-notes panel walking the gold path, and the two goals DISARM and RECOVER in success-green pills. Stats line: 3 rooms, 14 objects, 4 doors, 19 verbs.",
+      "appears_in": "docs/MAPS.md intro or docs/ADVENTURES.md section 3 worked examples",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "map-nightingale-working-sketch-hand.png"
+    },
+    {
+      "file": "characters-sheet-sketch.png",
+      "source": "characters-sheet-sketch.svg",
+      "title": "The cast of the book",
+      "description": "Four-column character sheet in the house palette: the Field Operative (Nightingale's player, success-green keycard), the On-Call Engineer (Hotfix's player, warning-amber headset and mug - the SLA expires at 17:00), THE AGENT (the cube robot with the red lens that plays the same commands through the same loop), and the Puzzle Architect seen from behind, drawing the world.",
+      "appears_in": "docs/proposal.md or experiments/README.md opening",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "characters-sheet-sketch-hand.png"
+    },
+    {
+      "file": "scene-briefing-room-sketch.png",
+      "source": "scene-briefing-room-sketch.svg",
+      "title": "Turn one: the briefing room",
+      "description": "The opening moment of Operation Nightingale: the operative under a single hanging lamp reads the mission brief pinned to the neutral-grey cork board; the photo of the booby-trapped case is crossed out in error red; the keycard waits on the desk in success green. Caption: discover the rest by exploring.",
+      "appears_in": "docs/ADVENTURES.md or the userguide's first-steps section",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "scene-briefing-room-sketch-hand.png"
+    },
+    {
+      "file": "scene-wire-choice-sketch.png",
+      "source": "scene-wire-choice-sketch.svg",
+      "title": "The wire choice",
+      "description": "The book's memorable beat: gloved hands with cutters at the opened bomb (error-red tint), three literal-coloured wires (red, blue, yellow), the defusal manual open beside it with 'SAFE WIRE: YELLOW' highlighted in warning amber, and a drop of sweat. The manual is the only way the book discloses the fact, which is the hard gate the gold path walks through.",
+      "appears_in": "docs/ADVENTURES.md section 3 worked examples",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "scene-wire-choice-sketch-hand.png"
+    },
+    {
+      "file": "diagram-agent-view-gap-sketch.png",
+      "source": "diagram-agent-view-gap-sketch.svg",
+      "title": "Experiment 02: the gap",
+      "description": "The idea of exp-02 as one picture: the full little world (rooms in neutral grey, props, one goal-green room) on the left, the agent's dark terminal with its three-line view on the right, a magnifying lens with an eye between them, and the words 'the gap' in error red with an arrow into the terminal.",
+      "appears_in": "experiments/exp-02-what-the-agent-sees/README.md",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "diagram-agent-view-gap-sketch-hand.png"
+    },
+    {
+      "file": "diagram-matrix-tally-sketch.png",
+      "source": "diagram-matrix-tally-sketch.svg",
+      "title": "Experiment 05: the matrix as tallies",
+      "description": "The measurement idea as a hand-drawn tally grid on light grey: rows for the two adventures, columns for runs, tally marks for wins, X marks for failures, one failing cell in error red with 'why?' and an arrow. Amber pencil on the corner, coffee ring on the page. One number is an anecdote; a cell of a matrix is a result.",
+      "appears_in": "experiments/exp-05-the-matrix/README.md",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "diagram-matrix-tally-sketch-hand.png"
+    },
+    {
+      "file": "six-words-sketch.png",
+      "source": "six-words-sketch.svg",
+      "title": "The six words the design rests on (SPEC 0.3)",
+      "description": "Six numbered tiles, one per concept, each with a small icon and the Nightingale example: ROOM (a place - the Service Corridor), OBJECT (a thing - the cutters, the manual, the keycard in success green), DOOR (open, closed or locked - the vault door), ACTION (one command - take keycard), GOAL (a condition that must become true - disarm, recover; tile in success green), and TURN (one action and its consequences - the game's only unit of time).",
+      "appears_in": "SPEC.md section 0.3 or docs/docs-guide.md onboarding",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "six-words-sketch-hand.png"
+    },
+    {
+      "file": "failure-taxonomy-sketch.png",
+      "source": "failure-taxonomy-sketch.svg",
+      "title": "Experiment 04: the failure classifier",
+      "description": "The nine failure categories as a 3x3 drawer cabinet, one labelled drawer each: F1 Parsing, F2 Hallucination, F3 Planning (repeated a failed action), F4 Ordering/precondition, F5 Exploration failure, F6 Lethal trap (detonated the bomb) in error red, F7 Budget exhaustion, F8 Provider error in neutral grey, F9 Abstention (declared itself stuck) in warning amber. Exactly one category per failed run, computed from the transcript alone.",
+      "appears_in": "experiments/exp-04-why-it-failed/README.md",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "failure-taxonomy-sketch-hand.png"
+    },
+    {
+      "file": "hash-chain-sketch.png",
+      "source": "hash-chain-sketch.svg",
+      "title": "The journal is tamper-evident (kernel T0.4)",
+      "description": "Three journal event blocks (agent.moved, door.unlocked, agent.moved) each carrying prev-hash and hash in monospace, linked by prev-hash arrows; a red annotation shows someone editing tick 15 to rewrite history, and the chain breaks: every later hash disagrees. A canonical-JSON strip below shows the keys-sorted form that makes the hash stable across machines.",
+      "appears_in": "docs/ARCHITECTURE.md or experiments/exp-01-the-game/README.md",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "hash-chain-sketch-hand.png"
+    },
+    {
+      "file": "turn-loop-sketch.png",
+      "source": "turn-loop-sketch.svg",
+      "title": "One turn (kernel T0.5 - T0.7)",
+      "description": "The loop that is the game's only unit of time, drawn as four stations on a circle: command in ('take keycard'), parser (verb + target resolved), pure reducer (world changes, or a fair refusal), observation (what the player now sees), then out to the renderer + goals + hints in success green. The human CLI and the agent harness are shown as two dashed feeders into the identical loop - that is what makes their runs comparable.",
+      "appears_in": "docs/ARCHITECTURE.md or experiments/exp-01-the-game/README.md",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "turn-loop-sketch-hand.png"
+    },
+    {
+      "file": "phase-roadmap-sketch.png",
+      "source": "phase-roadmap-sketch.svg",
+      "title": "The road the book walks (the phase plan)",
+      "description": "The phase plan from docs/MAPS.md as a winding road with numbered milestone pins: T0 Kernel (types, DSL, reducer, hash chain, parser), T1 Adventure (adventure data, gold path, BFS oracle), T2 Human CLI (play loop, transcript), T3 Agent harness (policies, budgets, context strategies), T4 Measurement (metrics, failure classifier, replay), T5 Web + server, T6 Results (matrix, write-up), and a dashed stretch branch to the generality probe and engine comparison.",
+      "appears_in": "docs/MAPS.md (the flow) or docs/docs-guide.md",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "phase-roadmap-sketch-hand.png"
+    },
+    {
+      "file": "replay-reproducibility-sketch.png",
+      "source": "replay-reproducibility-sketch.svg",
+      "title": "Replay: same events, same world, every time (T4.4 - T6.2)",
+      "description": "One recorded event tape (seed 4821) feeds two replay runs - a fresh process and a next-day other-machine run - and both produce byte-identical transcripts ending in the same hash, badged in success green. Beside them, the counter-case in error red: a torn history fails closed, never 'probably fine'. Determinism is part of the fiction.",
+      "appears_in": "docs/TESTING.md or experiments/exp-05-the-matrix/README.md",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "replay-reproducibility-sketch-hand.png"
+    },
+    {
+      "file": "exp03-agent-playing-sketch.png",
+      "source": "exp03-agent-playing-sketch.svg",
+      "title": "Experiment 03: the agent plays",
+      "description": "A model can drive a state machine, given a clean loop and a fair error message: the model cloud proposes actions down to the agent at its terminal, the clean loop (observation - action - repeat) feeds it, the world answers in two colours - the world moves in success green, the world refuses in error red - and both are answers the agent learns from. Annotates exp-03; the matrix has been run against live providers.",
+      "appears_in": "experiments/exp-03-the-agent-plays/README.md",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "exp03-agent-playing-sketch-hand.png"
+    },
+    {
+      "file": "budget-envelope-sketch.png",
+      "source": "budget-envelope-sketch.svg",
+      "title": "Runner, budgets, guards (T3.6)",
+      "description": "Every run carries an envelope: turns, token cap and cost cap, reserved before the run and refunded if unused, drawn as an amber envelope with a progress bar. Each step spends from it; the red guard refuses overspend before it happens - a guard that says no before the money burns is cheaper than a postmortem after.",
+      "appears_in": "docs/ARCHITECTURE.md (runner section) or experiments/exp-03 README",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "budget-envelope-sketch-hand.png"
+    },
+    {
+      "file": "hints-true-and-vague-sketch.png",
+      "source": "hints-true-and-vague-sketch.svg",
+      "title": "Hints: true and vague (T0.7)",
+      "description": "The hint discipline as three real note cards from the adventure (h1 maintenance lockers are usually not locked; h2 a defusal manual would say which wire to cut; h3 the vault needs a keycard, not a code), the rule band - a hint must be true and vague: never the object, never the order, never the solution - and the side-by-side: a hint in success green versus a spoiler struck through in error red. Every use is recorded as hintsUsed.",
+      "appears_in": "docs/ADVENTURES.md section 5 (Hints)",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "hints-true-and-vague-sketch-hand.png"
+    },
+    {
+      "file": "context-suitcase-sketch.png",
+      "source": "context-suitcase-sketch.svg",
+      "title": "Context strategies (T3.5)",
+      "description": "What goes in the window is a decision, not an accident: the whole world on the left (drowning the agent buries the signal), three pluggable strategies in the middle (current room + exits; goal + key facts; recent turns, trimmed), and the agent's dark window on the right packed with exactly what fits - goal, room, exits, objects held, last refusal. The suitcase is small on purpose: what the agent sees decides what the agent can think.",
+      "appears_in": "docs/ARCHITECTURE.md (context strategies) or experiments/exp-02 README",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "context-suitcase-sketch-hand.png"
+    },
+    {
+      "file": "exp06-organisation-sketch.png",
+      "source": "exp06-organisation-sketch.svg",
+      "title": "Experiment 06: an organisation",
+      "description": "The adventure vocabulary has to survive contact with a real organisation - or the whole idea was a metaphor that does not pay. The owner delegates a mission, an envelope and a boundary to two worker agents; the six words (rooms, objects, doors, actions, goals, turns) appear unchanged on both org desks; both report back through the same receipt: evidence, not vibes.",
+      "appears_in": "experiments/exp-06-an-organisation/README.md",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "exp06-organisation-sketch-hand.png"
+    },
+    {
+      "file": "exp08-engine-comparison-sketch.png",
+      "source": "exp08-engine-comparison-sketch.svg",
+      "title": "Experiment 08: the engine comparison",
+      "description": "A stretch probe as one honest seesaw: the same agent (same policies, budgets, commands) runs against our engine - the vocabulary it was taught - and against another engine where the same vocabulary lives in someone else's world. Read the two scores side by side: good here and bad there means the engine carried it; good in both means the vocabulary travelled.",
+      "appears_in": "experiments/exp-08-the-engine-comparison/README.md",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "exp08-engine-comparison-sketch-hand.png"
+    },
+    {
+      "file": "architecture-boundary-sketch.png",
+      "source": "architecture-boundary-sketch.svg",
+      "title": "Architecture boundary (T0.8)",
+      "description": "The kernel behind its wall: pure functions only (types + DSL, pure reducer, hash chain, canonical JSON), no clock, no network, no screen, no secrets, fully deterministic. The red boundary wall marks one narrow port - actions in, observations out, the only traffic - with the human CLI, the agent harness and the web client on the far side, none able to reach into the kernel.",
+      "appears_in": "docs/ARCHITECTURE.md or experiments/exp-01 README",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "architecture-boundary-sketch-hand.png"
+    },
+    {
+      "file": "metrics-gauges-sketch.png",
+      "source": "metrics-gauges-sketch.svg",
+      "title": "Measurement (T4.1): the gauges that matter",
+      "description": "Four honest instruments, each readable in one glance: the success-rate dial (the headline, and the least informative), the hallucination-rate dial in error red (the number that separates luck from sense), tokens and cost counted per run, turns to finish and wall clock - plus the strip reminding that every failure lands in exactly one drawer (experiment 04).",
+      "appears_in": "docs/TESTING.md or experiments/exp-05-the-matrix/README.md",
+      "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
+      "final": "metrics-gauges-sketch-hand.png"
+    }
+  ]
+}

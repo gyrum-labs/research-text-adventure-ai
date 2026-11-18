@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Inter,'Helvetica Neue',Arial,sans-serif">
+  <rect width="960" height="620" fill="#ffffff"/>
+  <text x="480" y="42" font-size="20" font-weight="600" fill="#1a1a1a" text-anchor="middle">experiment 04 - the failure classifier</text>
+  <text x="480" y="66" font-size="13" fill="#5a6069" text-anchor="middle" font-style="italic">"it failed" is not a finding; the category is - exactly one category per failed run, computed from the transcript alone</text>
+
+  <!-- 3 x 3 drawer grid -->
+  <g stroke="#1a1a1a" fill="#f8f9fa" stroke-width="1.8">
+    <rect x="70"  y="96"  width="260" height="140" rx="10"/>
+    <rect x="350" y="96"  width="260" height="140" rx="10"/>
+    <rect x="630" y="96"  width="260" height="140" rx="10"/>
+    <rect x="70"  y="256" width="260" height="140" rx="10"/>
+    <rect x="350" y="256" width="260" height="140" rx="10"/>
+    <rect x="630" y="256" width="260" height="140" rx="10" fill="#f8d7da" stroke="#dc3545"/>
+    <rect x="70"  y="416" width="260" height="140" rx="10"/>
+    <rect x="350" y="416" width="260" height="140" rx="10" fill="#fff3cd" stroke="#ffc107"/>
+    <rect x="630" y="416" width="260" height="140" rx="10"/>
+  </g>
+  <!-- drawer handles -->
+  <g stroke="#6c757d" fill="none" stroke-width="2" stroke-linecap="round">
+    <rect x="185" y="112" width="30" height="8" rx="3"/><rect x="465" y="112" width="30" height="8" rx="3"/><rect x="745" y="112" width="30" height="8" rx="3"/>
+    <rect x="185" y="272" width="30" height="8" rx="3"/><rect x="465" y="272" width="30" height="8" rx="3"/><rect x="745" y="272" width="30" height="8" rx="3" stroke="#dc3545"/>
+    <rect x="185" y="432" width="30" height="8" rx="3"/><rect x="465" y="432" width="30" height="8" rx="3" stroke="#ffc107"/><rect x="745" y="432" width="30" height="8" rx="3"/>
+  </g>
+
+  <g fill="#1a1a1a" font-size="14" font-weight="600">
+    <text x="86" y="150">F1 - PARSING</text>
+    <text x="86" y="172" font-size="12" font-weight="400" fill="#5a6069">could not produce a command</text>
+    <text x="86" y="190" font-size="12" font-weight="400" fill="#5a6069">the parser accepted</text>
+    <text x="366" y="150">F2 - HALLUCINATION</text>
+    <text x="366" y="172" font-size="12" font-weight="400" fill="#5a6069">referenced objects that are not</text>
+    <text x="366" y="190" font-size="12" font-weight="400" fill="#5a6069">in the room or the inventory</text>
+    <text x="646" y="150">F3 - PLANNING</text>
+    <text x="646" y="172" font-size="12" font-weight="400" fill="#5a6069">repeated a failed action</text>
+    <text x="86" y="310">F4 - ORDERING</text>
+    <text x="86" y="332" font-size="12" font-weight="400" fill="#5a6069">acted before discovering the</text>
+    <text x="86" y="350" font-size="12" font-weight="400" fill="#5a6069">fact the action needed</text>
+    <text x="366" y="310">F5 - EXPLORATION</text>
+    <text x="366" y="332" font-size="12" font-weight="400" fill="#5a6069">never found a required fact</text>
+    <text x="366" y="350" font-size="12" font-weight="400" fill="#5a6069">inside the budget</text>
+    <text x="646" y="310" fill="#dc3545">F6 - LETHAL TRAP</text>
+    <text x="646" y="332" font-size="12" font-weight="400" fill="#5a6069">detonated the bomb</text>
+    <text x="86" y="470">F7 - BUDGET</text>
+    <text x="86" y="492" font-size="12" font-weight="400" fill="#5a6069">ran out of turns with nothing</text>
+    <text x="86" y="510" font-size="12" font-weight="400" fill="#5a6069">more specific to say</text>
+    <text x="366" y="470" fill="#5a6069">F8 - PROVIDER ERROR</text>
+    <text x="366" y="492" font-size="12" font-weight="400" fill="#5a6069">the API failed, not the agent</text>
+    <text x="646" y="470" fill="#5a6069">F9 - ABSTENTION</text>
+    <text x="646" y="492" font-size="12" font-weight="400" fill="#5a6069">declared itself stuck or</text>
+    <text x="646" y="510" font-size="12" font-weight="400" fill="#5a6069">stopped early</text>
+  </g>
+
+  <text x="480" y="592" font-size="14" fill="#5a6069" text-anchor="middle" font-style="italic">the drawer a run lands in is more useful to know than "it produced a bad command"</text>
+</svg>

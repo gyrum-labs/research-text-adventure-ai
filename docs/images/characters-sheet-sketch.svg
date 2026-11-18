@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Inter,'Helvetica Neue',Arial,sans-serif">
+  <rect width="960" height="620" fill="#ffffff"/>
+  <text x="480" y="46" font-size="20" font-weight="600" fill="#1a1a1a" text-anchor="middle">the cast of the book</text>
+  <line x1="80" y1="60" x2="880" y2="60" stroke="#1a1a1a" stroke-width="1.4"/>
+
+  <g stroke="#e2e2e2" stroke-width="1">
+    <line x1="260" y1="80" x2="260" y2="480"/>
+    <line x1="470" y1="80" x2="470" y2="480"/>
+    <line x1="680" y1="80" x2="680" y2="480"/>
+  </g>
+
+  <!-- 1. field operative - success green accents -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2.4" stroke-linecap="round">
+    <circle cx="170" cy="150" r="22"/>
+    <path d="M148 210 C 148 176 192 176 192 210 L192 260 L148 260 Z" fill="#d4edda"/>
+    <path d="M148 218 L124 268 M192 218 L216 266" stroke-width="2.6"/>
+    <path d="M154 260 L150 330 M186 260 L192 330" stroke-width="2.6"/>
+    <path d="M148 330 L140 330 M192 330 L200 330" stroke-width="3"/>
+    <rect x="206" y="236" width="24" height="14" transform="rotate(-10 218 243)" fill="#d4edda" stroke="#28a745" stroke-width="1.4"/>
+    <path d="M192 232 C 200 236 204 238 208 242" stroke-width="1.6"/>
+  </g>
+  <g fill="#1a1a1a" font-size="15" font-weight="600" text-anchor="middle">
+    <text x="170" y="368">FIELD OPERATIVE</text>
+  </g>
+  <g fill="#5a6069" font-size="12" text-anchor="middle">
+    <text x="170" y="390">Nightingale - two goals,</text>
+    <text x="170" y="406">one keycard</text>
+  </g>
+
+  <!-- 2. on-call engineer - warning amber accents -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2.4" stroke-linecap="round">
+    <circle cx="380" cy="150" r="22"/>
+    <path d="M358 144 C 356 126 404 126 402 144" stroke-width="1.8"/>
+    <path d="M402 138 C 418 136 422 150 412 156" stroke-width="1.8"/>
+    <circle cx="414" cy="158" r="4.5" stroke-width="1.4" fill="#fff3cd" stroke="#ffc107"/>
+    <path d="M358 210 C 358 176 402 176 402 210 L402 260 L358 260 Z" fill="#fff3cd"/>
+    <path d="M364 182 L372 206 L368 222" stroke-width="1.6"/>
+    <rect x="356" y="188" width="10" height="30" stroke-width="1.4"/>
+    <path d="M364 260 L360 330 M396 260 L402 330" stroke-width="2.6"/>
+    <path d="M358 330 L350 330 M402 330 L410 330" stroke-width="3"/>
+    <path d="M346 236 C 334 240 330 248 330 254" stroke-width="1.8"/>
+    <rect x="322" y="254" width="16" height="18" rx="5" fill="#fff3cd" stroke="#ffc107" stroke-width="1.4"/>
+    <path d="M330 254 C 328 246 336 244 338 250" stroke-width="1.4"/>
+  </g>
+  <g fill="#1a1a1a" font-size="15" font-weight="600" text-anchor="middle">
+    <text x="380" y="368">ON-CALL ENGINEER</text>
+  </g>
+  <g fill="#5a6069" font-size="12" text-anchor="middle">
+    <text x="380" y="390">Hotfix - the SLA expires</text>
+    <text x="380" y="406">at 17:00</text>
+  </g>
+
+  <!-- 3. the agent -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2.4" stroke-linecap="round">
+    <rect x="546" y="128" width="90" height="76" rx="12" fill="#e2e3e5"/>
+    <circle cx="591" cy="164" r="17" stroke-width="2.6"/>
+    <circle cx="591" cy="164" r="6" fill="#dc3545" stroke="none"/>
+    <path d="M556 148 L566 158 M626 148 L616 158" stroke-width="1.6"/>
+    <rect x="560" y="216" width="62" height="40" rx="4"/>
+    <line x1="568" y1="230" x2="614" y2="230" stroke-width="1.2"/>
+    <line x1="568" y1="240" x2="606" y2="240" stroke-width="1.2"/>
+    <rect x="546" y="272" width="90" height="36" rx="4" stroke-width="1.8"/>
+    <path d="M556 284 L626 284 M556 294 L616 294" stroke-width="1.2"/>
+  </g>
+  <g fill="#1a1a1a" font-size="15" font-weight="600" text-anchor="middle">
+    <text x="570" y="368">THE AGENT</text>
+  </g>
+  <g fill="#5a6069" font-size="12" text-anchor="middle">
+    <text x="570" y="390">plays the same commands</text>
+    <text x="570" y="406">through the same loop</text>
+  </g>
+
+  <!-- 4. the puzzle architect -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2.4" stroke-linecap="round">
+    <circle cx="800" cy="140" r="22"/>
+    <path d="M790 122 C 796 114 806 114 812 122" stroke-width="1.6"/>
+    <path d="M778 200 C 778 172 822 172 822 200 L822 244 L778 244 Z" fill="#e2e3e5"/>
+    <rect x="738" y="244" width="160" height="60" stroke-width="1.8" fill="#ffffff"/>
+    <path d="M756 276 L796 274 L798 288 L758 290 Z" stroke-width="1.4"/>
+    <line x1="812" y1="266" x2="868" y2="264" stroke-width="1.2"/>
+    <line x1="812" y1="280" x2="860" y2="278" stroke-width="1.2"/>
+    <path d="M838 232 L876 196" stroke-width="2"/>
+    <path d="M876 196 L872 188 L880 192 Z" fill="#1a1a1a" stroke="none"/>
+    <path d="M784 270 L806 262 L810 270" stroke-width="1.4"/>
+  </g>
+  <g fill="#1a1a1a" font-size="15" font-weight="600" text-anchor="middle">
+    <text x="826" y="368">THE PUZZLE ARCHITECT</text>
+  </g>
+  <g fill="#5a6069" font-size="12" text-anchor="middle">
+    <text x="826" y="390">draws the world</text>
+    <text x="826" y="406">both players walk</text>
+  </g>
+
+  <text x="480" y="470" font-size="13" fill="#5a6069" text-anchor="middle" font-style="italic">one world, two kinds of player, one command surface - drawn from the shipped adventures</text>
+</svg>

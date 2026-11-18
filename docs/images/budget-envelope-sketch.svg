@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Inter,'Helvetica Neue',Arial,sans-serif">
+  <rect width="960" height="620" fill="#ffffff"/>
+  <text x="480" y="46" font-size="20" font-weight="600" fill="#1a1a1a" text-anchor="middle">runner, budgets, guards (T3.6)</text>
+  <text x="480" y="70" font-size="13" fill="#5a6069" text-anchor="middle" font-style="italic">every run carries an envelope: turns, tokens and cost - the guard refuses overspend before it happens</text>
+
+  <!-- the envelope -->
+  <g stroke="#1a1a1a" fill="#fff3cd" stroke-width="2.4">
+    <rect x="330" y="150" width="300" height="180" rx="10"/>
+    <path d="M330 160 L480 250 L630 160" stroke-width="2"/>
+  </g>
+  <text x="480" y="200" font-size="15" fill="#1a1a1a" text-anchor="middle" font-weight="600">this run's budget</text>
+  <text x="480" y="228" font-size="13" fill="#1a1a1a" text-anchor="middle">50 turns - token cap - cost cap</text>
+  <rect x="400" y="248" width="160" height="14" rx="7" fill="#ffffff" stroke="#1a1a1a" stroke-width="1.2"/>
+  <rect x="400" y="248" width="96" height="14" rx="7" fill="#28a745"/>
+  <text x="480" y="308" font-size="12" fill="#5a6069" text-anchor="middle">reserved before the run - refunded if unused</text>
+
+  <!-- the guard -->
+  <g stroke="#dc3545" fill="#f8d7da" stroke-width="2.4">
+    <circle cx="480" cy="400" r="44"/>
+  </g>
+  <g stroke="#dc3545" stroke-width="3" stroke-linecap="round">
+    <line x1="452" y1="372" x2="508" y2="428"/>
+    <line x1="508" y1="372" x2="452" y2="428"/>
+  </g>
+  <text x="480" y="478" font-size="14" fill="#dc3545" text-anchor="middle" font-weight="600">the guard</text>
+
+  <!-- flows -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2">
+    <path d="M180 240 C 240 240 270 220 326 200" marker-end="url(#arrm)"/>
+    <path d="M634 240 C 690 250 720 300 724 356" marker-end="url(#arrm)"/>
+    <path d="M330 400 C 280 400 240 390 200 380" marker-end="url(#arrm)" stroke="#dc3545"/>
+  </g>
+  <g fill="#1a1a1a" font-size="13">
+    <text x="130" y="228">the runner opens</text>
+    <text x="130" y="246">the envelope</text>
+    <text x="736" y="290">each step spends</text>
+    <text x="736" y="308">from it</text>
+  </g>
+  <text x="120" y="392" font-size="13" fill="#dc3545" font-weight="600">empty envelope = stop,</text>
+  <text x="120" y="410" font-size="13" fill="#dc3545" font-weight="600">not a punishment</text>
+
+  <text x="480" y="560" font-size="14" fill="#5a6069" text-anchor="middle" font-style="italic">a guard that says no before the money burns is cheaper than a postmortem after</text>
+  <defs>
+    <marker id="arrm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#1a1a1a"/>
+    </marker>
+  </defs>
+</svg>

@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Inter,'Helvetica Neue',Arial,sans-serif">
+  <rect width="920" height="620" fill="#ffffff"/>
+  <rect width="920" height="620" fill="#ffffff"/>
+
+  <!-- the bomb, panel open -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="3" stroke-linecap="round">
+    <rect x="360" y="250" width="200" height="170" rx="18" fill="#f8d7da"/>
+    <rect x="384" y="228" width="152" height="60" rx="8" stroke-width="2.2" fill="#ffffff"/>
+    <circle cx="460" cy="335" r="30" stroke-width="2.2" fill="#ffffff"/>
+    <text x="460" y="341" font-size="12" fill="#dc3545" stroke="none" text-anchor="middle" font-weight="bold">ARMED</text>
+    <path d="M430 250 C 424 190 400 160 372 148" stroke="#dc3545" stroke-width="5"/>
+    <path d="M460 250 C 460 180 460 158 460 140" stroke="#1d5fad" stroke-width="5"/>
+    <path d="M490 250 C 498 186 520 160 548 148" stroke="#e3a008" stroke-width="5"/>
+    <circle cx="372" cy="148" r="5" fill="#dc3545" stroke="none"/>
+    <circle cx="460" cy="140" r="5" fill="#1d5fad" stroke="none"/>
+    <circle cx="548" cy="148" r="5" fill="#e3a008" stroke="none"/>
+  </g>
+
+  <!-- gloved hands with cutters -->
+  <g stroke="#20242b" fill="none" stroke-width="2.6" stroke-linecap="round">
+    <path d="M120 96 C 150 84 186 86 212 102 L204 138 C 176 128 148 126 128 132 Z" fill="#ffffff" stroke-width="2.4"/>
+    <path d="M204 138 L238 120" stroke-width="2"/>
+    <path d="M672 78 C 700 66 736 66 760 82 L748 116 C 722 108 696 106 678 112 Z" fill="#ffffff" stroke-width="2.4"/>
+    <path d="M678 112 L648 126" stroke-width="2"/>
+    <path d="M238 120 L540 142" stroke-width="3"/>
+    <path d="M648 126 L562 146" stroke-width="3"/>
+    <path d="M540 142 L562 146" stroke-width="4"/>
+    <circle cx="420" cy="118" r="7" stroke-width="2"/>
+    <circle cx="600" cy="132" r="7" stroke-width="2"/>
+  </g>
+
+  <!-- the open defusal manual -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2.4" stroke-linejoin="round">
+    <path d="M250 470 L450 456 L450 540 L250 556 Z" fill="#ffffff"/>
+    <path d="M450 456 L650 470 L650 556 L450 540 Z" fill="#ffffff"/>
+    <line x1="450" y1="456" x2="450" y2="540" stroke-width="1.6"/>
+  </g>
+  <rect x="516" y="486" width="104" height="22" fill="#fff3cd" stroke="#ffc107" stroke-width="1.2"/>
+  <text x="352" y="512" font-size="15" fill="#1a1a1a" text-anchor="middle">DEFUSAL PROCEDURE.</text>
+  <text x="352" y="534" font-size="14" fill="#1a1a1a" text-anchor="middle">do not cut the others.</text>
+  <text x="568" y="502" font-size="15" fill="#1a1a1a" text-anchor="middle" font-weight="bold">SAFE WIRE: YELLOW</text>
+
+  <path d="M676 220 C 682 232 686 240 686 246 A 10 10 0 1 1 666 246 C 666 240 670 232 676 220 Z" fill="#9ec3e8" opacity="0.65" stroke="#20242b" stroke-width="1.4"/>
+  <text x="460" y="600" font-size="14" fill="#5a6069" text-anchor="middle" font-style="italic">one verb, one wire, one wrong answer: the memorable beat the manual makes fair</text>
+</svg>

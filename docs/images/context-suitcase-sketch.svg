@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Inter,'Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <marker id="arrc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#1a1a1a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="620" fill="#ffffff"/>
+  <text x="480" y="46" font-size="20" font-weight="600" fill="#1a1a1a" text-anchor="middle">context strategies (T3.5)</text>
+  <text x="480" y="70" font-size="13" fill="#5a6069" text-anchor="middle" font-style="italic">what goes in the window is a decision, not an accident</text>
+
+  <!-- the whole world -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2">
+    <rect x="70" y="120" width="250" height="360" rx="8" fill="#f8f9fa"/>
+  </g>
+  <text x="195" y="150" font-size="14" font-weight="600" fill="#1a1a1a" text-anchor="middle">the whole world</text>
+  <g fill="#5a6069" font-size="12">
+    <text x="90" y="180">every room, every object</text>
+    <text x="90" y="200">every door, every verb</text>
+    <text x="90" y="220">the full event journal</text>
+    <text x="90" y="240">all prose, all hints</text>
+    <text x="90" y="268">= far more than any</text>
+    <text x="90" y="288">context window should hold</text>
+  </g>
+  <g stroke="#dc3545" fill="none" stroke-width="1.6">
+    <rect x="90" y="310" width="210" height="46" rx="4"/>
+  </g>
+  <text x="195" y="338" font-size="12" fill="#dc3545" text-anchor="middle">drowning the agent in this</text>
+  <text x="195" y="356" font-size="12" fill="#dc3545" text-anchor="middle">buries the signal</text>
+
+  <!-- strategies -->
+  <g stroke="#1a1a1a" fill="#f8f9fa" stroke-width="2">
+    <rect x="380" y="150" width="210" height="70" rx="8"/>
+    <rect x="380" y="250" width="210" height="70" rx="8"/>
+    <rect x="380" y="350" width="210" height="70" rx="8"/>
+  </g>
+  <g fill="#1a1a1a" font-size="13" font-weight="600" text-anchor="middle">
+    <text x="485" y="180">current room + exits</text>
+    <text x="485" y="280">goal + key facts</text>
+    <text x="485" y="380">recent turns, trimmed</text>
+  </g>
+  <g fill="#5a6069" font-size="11" text-anchor="middle">
+    <text x="485" y="198">what is here, what is possible</text>
+    <text x="485" y="298">what winning means, what you know</text>
+    <text x="485" y="398">enough memory, not the whole diary</text>
+  </g>
+  <g stroke="#28a745" fill="#d4edda" stroke-width="1.8">
+    <rect x="380" y="450" width="210" height="52" rx="8"/>
+  </g>
+  <text x="485" y="472" font-size="13" fill="#1a1a1a" text-anchor="middle" font-weight="600">the strategy is pluggable</text>
+  <text x="485" y="490" font-size="11" fill="#5a6069" text-anchor="middle">swap it without touching the engine</text>
+
+  <!-- the packed window -->
+  <g stroke="#1a1a1a" fill="none" stroke-width="2.4">
+    <rect x="700" y="150" width="200" height="240" rx="8" fill="#1a1a1a"/>
+  </g>
+  <text x="800" y="186" font-size="13" fill="#ffffff" text-anchor="middle">the agent's window</text>
+  <g fill="#d4edda" font-size="12" font-family="'DejaVu Sans Mono',monospace">
+    <text x="716" y="216">goal: disarm</text>
+    <text x="716" y="240">room: corridor</text>
+    <text x="716" y="264">exits: briefing, vault(locked)</text>
+    <text x="716" y="288">objects: locker, extinguisher</text>
+    <text x="716" y="312">you hold: keycard</text>
+    <text x="716" y="336">last: unlock failed</text>
+  </g>
+  <path d="M590 185 C 640 185 660 190 696 195" stroke="#1a1a1a" fill="none" stroke-width="1.8" marker-end="url(#arrc)"/>
+  <path d="M590 285 C 640 265 656 245 696 225" stroke="#1a1a1a" fill="none" stroke-width="1.8" marker-end="url(#arrc)"/>
+  <path d="M590 385 C 640 380 660 360 696 330" stroke="#1a1a1a" fill="none" stroke-width="1.8" marker-end="url(#arrc)"/>
+
+  <text x="480" y="560" font-size="14" fill="#5a6069" text-anchor="middle" font-style="italic">the suitcase is small on purpose: what the agent sees decides what the agent can think</text>
+</svg>

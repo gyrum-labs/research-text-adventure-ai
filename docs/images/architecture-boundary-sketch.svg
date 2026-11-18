@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Inter,'Helvetica Neue',Arial,sans-serif">
+  <defs>
+    <marker id="arrb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#1a1a1a"/>
+    </marker>
+  </defs>
+  <rect width="960" height="620" fill="#ffffff"/>
+  <text x="480" y="46" font-size="20" font-weight="600" fill="#1a1a1a" text-anchor="middle">architecture boundary (T0.8)</text>
+  <text x="480" y="70" font-size="13" fill="#5a6069" text-anchor="middle" font-style="italic">the kernel knows nothing about screens, sockets or keyboards - and that is why everything else can exist</text>
+
+  <!-- the kernel side: pure -->
+  <g stroke="#1a1a1a" fill="#f8f9fa" stroke-width="2">
+    <rect x="80" y="120" width="330" height="380" rx="10"/>
+  </g>
+  <text x="245" y="152" font-size="15" font-weight="600" fill="#1a1a1a" text-anchor="middle">the kernel</text>
+  <g fill="#5a6069" font-size="12">
+    <text x="100" y="182">pure functions only:</text>
+    <text x="100" y="204">state in, state out</text>
+  </g>
+  <g stroke="#1a1a1a" fill="#e2e3e5" stroke-width="1.8">
+    <rect x="100" y="224" width="130" height="40" rx="6"/>
+    <rect x="250" y="224" width="130" height="40" rx="6"/>
+    <rect x="100" y="280" width="130" height="40" rx="6"/>
+    <rect x="250" y="280" width="130" height="40" rx="6"/>
+  </g>
+  <g fill="#1a1a1a" font-size="12" text-anchor="middle">
+    <text x="165" y="249">types + DSL</text>
+    <text x="315" y="249">pure reducer</text>
+    <text x="165" y="305">hash chain</text>
+    <text x="315" y="305">canonical JSON</text>
+  </g>
+  <text x="245" y="360" font-size="12" fill="#5a6069" text-anchor="middle">no clock, no network,</text>
+  <text x="245" y="380" font-size="12" fill="#5a6069" text-anchor="middle">no screen, no secrets</text>
+  <g stroke="#28a745" fill="#d4edda" stroke-width="1.6">
+    <rect x="100" y="404" width="280" height="60" rx="6"/>
+  </g>
+  <text x="245" y="428" font-size="12" fill="#1a1a1a" text-anchor="middle" font-weight="600">fully deterministic:</text>
+  <text x="245" y="446" font-size="12" fill="#1a1a1a" text-anchor="middle">same events, same world, every time</text>
+
+  <!-- the boundary wall -->
+  <g stroke="#dc3545" fill="none" stroke-width="4">
+    <line x1="450" y1="110" x2="450" y2="510"/>
+  </g>
+  <g stroke="#dc3545" stroke-width="2.4" stroke-linecap="round">
+    <line x1="438" y1="130" x2="462" y2="154"/>
+    <line x1="438" y1="166" x2="462" y2="190"/>
+    <line x1="438" y1="202" x2="462" y2="226"/>
+    <line x1="438" y1="238" x2="462" y2="262"/>
+    <line x1="438" y1="274" x2="462" y2="298"/>
+    <line x1="438" y1="310" x2="462" y2="334"/>
+    <line x1="438" y1="346" x2="462" y2="370"/>
+    <line x1="438" y1="382" x2="462" y2="406"/>
+    <line x1="438" y1="418" x2="462" y2="442"/>
+    <line x1="438" y1="454" x2="462" y2="478"/>
+  </g>
+  <text x="450" y="536" font-size="13" fill="#dc3545" text-anchor="middle" font-weight="600">the boundary: one narrow port</text>
+
+  <!-- the interfaces side -->
+  <g stroke="#1a1a1a" fill="#e2e3e5" stroke-width="2">
+    <rect x="550" y="120" width="330" height="110" rx="10"/>
+    <rect x="550" y="260" width="330" height="110" rx="10"/>
+    <rect x="550" y="400" width="330" height="110" rx="10"/>
+  </g>
+  <g fill="#1a1a1a" font-size="14" font-weight="600">
+    <text x="715" y="152" text-anchor="middle">human CLI</text>
+    <text x="715" y="292" text-anchor="middle">agent harness</text>
+    <text x="715" y="432" text-anchor="middle">web client + server</text>
+  </g>
+  <g fill="#5a6069" font-size="12" text-anchor="middle">
+    <text x="715" y="176">keys a person types, text a person reads</text>
+    <text x="715" y="216">JSON actions, JSON observations, receipts</text>
+    <text x="715" y="456">sessions, replays, shared worlds</text>
+    <text x="715" y="176" dy="24" text-anchor="middle"></text>
+  </g>
+  <g fill="#5a6069" font-size="12" text-anchor="middle">
+    <text x="715" y="200">nothing behind this line can reach into the kernel</text>
+  </g>
+
+  <!-- the one port -->
+  <g stroke="#28a745" fill="none" stroke-width="2">
+    <path d="M410 460 C 470 460 470 460 540 460" stroke-dasharray="6 5" marker-end="url(#arrb)"/>
+    <path d="M540 470 C 470 470 470 470 404 470" stroke-dasharray="6 5" marker-end="url(#arrb)"/>
+  </g>
+  <g stroke="#28a745" fill="#d4edda" stroke-width="1.8">
+    <rect x="390" y="440" width="60" height="36" rx="6"/>
+  </g>
+  <text x="420" y="462" font-size="11" fill="#1a1a1a" text-anchor="middle" font-weight="600">port</text>
+  <text x="480" y="448" font-size="11" fill="#5a6069" text-anchor="middle">actions in, observations out - the only traffic</text>
+</svg>
