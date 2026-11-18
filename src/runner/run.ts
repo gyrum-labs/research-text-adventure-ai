@@ -96,6 +96,54 @@ export interface RunOptions {
    * records exactly what the agent was shown.
    */
   maskLegalActions?: boolean;
+  /**
+   * The world to start from, instead of the adventure's first.
+   *
+   * A run resumed after a pause continues the mission it was paused in, so it
+   * starts from the state the pause left behind. Everything else about the
+   * run is ordinary: the same reducer, the same guards, the same caps.
+   */
+  initial?: GameState;
+  /**
+   * The turn the run resumes from.
+   *
+   * A pause spends turns, and the caps apply to the whole lineage rather than
+   * to each piece of it, so a resumed run counts from here.
+   */
+  startingTurn?: number;
+  /**
+   * What a pause left behind, when this run continues one.
+   *
+   * The runner keeps more than the world in its head: what the agent has
+   * seen, what it did, how its loop guard reads the run. A resume that
+   * omitted any of these would hand the agent a different run.
+   */
+  resume?: RunResumeState;
+}
+
+/** Everything a pause must carry for the run it stopped to continue as itself. */
+export interface RunResumeState {
+  /** What the agent has seen, in order. The memory a resume must restore. */
+  history: Observation[];
+  /** What the agent did, in order. */
+  commands: string[];
+  /** The run's events so far, for one transcript across the pause. */
+  events: Event[];
+  /** What the agent was last told, so it does not read a stale view. */
+  messages: string[];
+  /** The loop guard's reading of the run so far. */
+  loop: { lastSituation: string; repeats: number };
+  /** The counters that cap attempts: errors, hints, and how turns were spent. */
+  counters: {
+    parseErrors: number;
+    invalidActions: number;
+    hintsUsed: number;
+    transientErrors: number;
+    unparsableResponses: number;
+    extractionRoutes: Record<string, number>;
+  };
+  /** What the policy itself remembers, when it keeps a ledger. */
+  policyCommands?: Array<{ raw: string; observationIndex: number }>;
 }
 
 export interface RunResult {
@@ -116,6 +164,8 @@ export interface RunResult {
   extractionRoutes: Record<string, number>;
   /** The hash of the prompt used on the last turn. */
   promptHash: string;
+  /** What a pause left behind; present only when the outcome is paused. */
+  pause?: RunResumeState;
 }
 
 /**
@@ -152,20 +202,22 @@ export async function run(options: RunOptions): Promise<RunResult> {
     if (delay > 0) await sleepOrAbort(delay, sleep, options.signal);
   };
 
-  let state: GameState = structuredClone(adventure.initial);
+  let state: GameState = structuredClone(options.initial ?? adventure.initial);
   let hash = hashInitial(state);
-  const events: Event[] = [];
-  const commands: string[] = [];
-  const history: Observation[] = [];
-  let lastSituation = situationKey(state);
-  let repeats = 1;
-  let messages: string[] = [];
-  let parseErrors = 0;
-  let invalidActions = 0;
-  let hintsUsed = 0;
-  let transientErrors = 0;
-  let unparsableResponses = 0;
-  let extractionRoutes: Record<string, number> = {};
+  const continueFrom = options.resume;
+  const events: Event[] = continueFrom ? [...continueFrom.events] : [];
+  const commands: string[] = continueFrom ? [...continueFrom.commands] : [];
+  const history: Observation[] = continueFrom ? [...continueFrom.history] : [];
+  let lastSituation = continueFrom?.loop.lastSituation ?? situationKey(state);
+  let repeats = continueFrom?.loop.repeats ?? 1;
+  let messages: string[] = continueFrom ? [...continueFrom.messages] : [];
+  let parseErrors = continueFrom?.counters.parseErrors ?? 0;
+  let invalidActions = continueFrom?.counters.invalidActions ?? 0;
+  let hintsUsed = continueFrom?.counters.hintsUsed ?? 0;
+  let transientErrors = continueFrom?.counters.transientErrors ?? 0;
+  let unparsableResponses = continueFrom?.counters.unparsableResponses ?? 0;
+  let extractionRoutes: Record<string, number> =
+    continueFrom ? { ...continueFrom.counters.extractionRoutes } : {};
   let promptHash = '';
   let tokensUsed = 0;
   let inputTokens = 0;
@@ -208,6 +260,10 @@ export async function run(options: RunOptions): Promise<RunResult> {
   };
 
   const interrupted = (turn: number): RunResult | undefined => {
+    // A pause is an operator's request, not a failure: it comes before every
+    // other reading of the signal, and it ends nothing.
+    if (options.signal?.aborted && options.signal.reason instanceof Error &&
+        options.signal.reason.name === 'PauseError') return pauseRun(turn);
     if (clock() - startedAt >= budgets.maxWallClockMs ||
         (options.signal?.aborted && options.signal.reason instanceof Error && options.signal.reason.name === 'TimeoutError')) {
       return finish(
@@ -220,7 +276,47 @@ export async function run(options: RunOptions): Promise<RunResult> {
     return undefined;
   };
 
-  for (let turn = 0; turn < budgets.maxTurns && state.status === 'running'; turn += 1) {
+  /** What a pause leaves behind: the run, exactly as it stood, to continue later. */
+  const pauseRun = (turn: number): RunResult => {
+    options.transcript?.write({ type: 'paused', turn });
+    return {
+      outcome: 'paused',
+      reason: 'The run was paused.',
+      state,
+      turns: turn,
+      hash,
+      events,
+      commands,
+      parseErrors,
+      invalidActions,
+      tokensUsed,
+      unparsableResponses,
+      extractionRoutes,
+      promptHash,
+      pause: {
+        history: [...history],
+        commands: [...commands],
+        events: [...events],
+        messages: [...messages],
+        loop: { lastSituation, repeats },
+        counters: {
+          parseErrors, invalidActions, hintsUsed, transientErrors, unparsableResponses,
+          extractionRoutes: { ...extractionRoutes },
+        },
+        ...(policyLedger() === undefined ? {} : { policyCommands: policyLedger() }),
+      },
+    };
+  };
+
+  /** What the policy itself remembers, when it keeps a ledger a resume needs. */
+  const policyLedger = (): Array<{ raw: string; observationIndex: number }> | undefined => {
+    const keeper = policy as Partial<{ ledger: () => Array<{ raw: string; observationIndex: number }> }>;
+    return typeof keeper.ledger === 'function' ? keeper.ledger() : undefined;
+  };
+
+  const startingTurn = options.startingTurn ?? 0;
+  if (continueFrom !== undefined) options.transcript?.write({ type: 'resumed', turn: startingTurn });
+  for (let turn = startingTurn; turn < startingTurn + budgets.maxTurns && state.status === 'running'; turn += 1) {
     const stopped = interrupted(turn);
     if (stopped !== undefined) return stopped;
 

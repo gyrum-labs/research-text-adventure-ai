@@ -254,4 +254,5 @@ export type RunOutcome =
   | 'budget_exhausted'
   | 'loop_detected'
   | 'provider_error'
-  | 'provider_stopped';
+  | 'provider_stopped'
+  | 'paused';

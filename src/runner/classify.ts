@@ -257,6 +257,8 @@ export function classifyFailure(
   adventure: Adventure,
 ): Classification | null {
   if (run.outcome === 'success') return null;
+  // A paused run has not ended, so there is nothing to classify yet.
+  if (run.outcome === 'paused') return null;
 
   if (run.outcome === 'failure') {
     return {
