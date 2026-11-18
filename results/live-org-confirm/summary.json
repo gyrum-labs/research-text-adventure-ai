@@ -1,0 +1,77 @@
+{
+  "generatedFrom": "runs/live-org-confirm",
+  "models": [
+    {
+      "id": "live-frontier",
+      "label": "claude sonnet 4.5 (openrouter)",
+      "provider": "openai",
+      "model": "anthropic/claude-sonnet-4.5",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "apiKeyEnv": "OPENROUTER_API_KEY"
+    }
+  ],
+  "conditions": [
+    "D"
+  ],
+  "seeds": 10,
+  "cells": [
+    {
+      "model": "live-frontier",
+      "condition": "D",
+      "expected": 10,
+      "runs": 10,
+      "complete": true,
+      "successes": 0,
+      "interval": {
+        "estimate": 0,
+        "lower": 0,
+        "upper": 0.2775327998628892
+      },
+      "medianTurns": 28,
+      "costPerSolve": 0,
+      "tokensUsed": 254871,
+      "tokensPerSolve": 0,
+      "failures": {
+        "F2": 9,
+        "F3": 1
+      }
+    }
+  ],
+  "failures": {
+    "F2": 9,
+    "F3": 1
+  },
+  "costPerSolvedMission": 0,
+  "hypotheses": [
+    {
+      "id": "H1",
+      "hypothesis": "A capable LLM agent solves the mission ≥ 80% of runs within a 30-turn budget",
+      "verdict": "falsified",
+      "reason": "The pooled success rate across every cell is 0.0%, including the no-history control, against a threshold of 80%."
+    },
+    {
+      "id": "H2",
+      "hypothesis": "Masking the action space to legal commands raises the success rate",
+      "verdict": "untested",
+      "reason": "One of the two cells produced no runs."
+    },
+    {
+      "id": "H3",
+      "hypothesis": "A structured observation beats prose for multi-step reasoning",
+      "verdict": "untested",
+      "reason": "One of the two cells produced no runs."
+    },
+    {
+      "id": "H4",
+      "hypothesis": "Most failures are not parsing failures but reasoning/ordering failures",
+      "verdict": "falsified",
+      "reason": "9 of the 10 failures were malformed output and 1 were reasoning, ordering or planning failures."
+    },
+    {
+      "id": "H5",
+      "hypothesis": "Full transcript history causes context dilution versus a structured memory summary",
+      "verdict": "untested",
+      "reason": "One of the two cells produced no runs."
+    }
+  ]
+}
