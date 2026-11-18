@@ -30,6 +30,16 @@ export interface ModelPrice {
  * them is one table.
  */
 export const PRICES: Record<string, ModelPrice> = {
+  // OpenRouter models API, checked 2026-11-16; estimates, not billing authority.
+  'openrouter/anthropic/claude-opus-5.5': { input: 4, output: 20 },
+  'openrouter/anthropic/claude-sonnet-5.5': { input: 2, output: 10 },
+  'openrouter/anthropic/claude-haiku-5.5': { input: 0.1, output: 0.5 },
+  'openrouter/openai/gpt-4.1': { input: 2, output: 8 },
+  'openrouter/openai/gpt-4.1-mini': { input: 0.4, output: 1.6 },
+  'openrouter/z-ai/glm-5.3-flash': { input: 0.15, output: 0.5 },
+  'openrouter/deepseek/deepseek-v4.1-flash': { input: 0.14, output: 0.42 },
+  'openrouter/deepseek/deepseek-v4-flash': { input: 0.09, output: 0.18 },
+  'openrouter/google/gemini-2.5-flash': { input: 0.3, output: 2.5 },
   // OpenRouter models API, 2026-11-12; estimates, not billing authority.
   'openrouter/deepseek/deepseek-chat': { input: 0.32, output: 0.89 },
   'anthropic/claude-sonnet-4.5': { input: 3, output: 15 },

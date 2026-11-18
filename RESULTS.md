@@ -39,15 +39,14 @@ before any key was available. Four models were reachable through two vendors: `c
 sweep is the same grid, four models across five conditions with ten seeds each: two hundred runs
 per sweep, four hundred live runs in all.
 
-A third sweep pointed the same grid at the organisation world. The first attempt stopped where
-the money did: both vendors' accounts ran out mid-sweep (OpenRouter answers `402 insufficient
-credits` for a full-sized request, Z.ai answers `429` with `Insufficient balance or no resource
-package`), and the 97 runs that ended in a provider payment failure were **deleted rather than
-counted**, because a run the model never played says nothing about the model. Once OpenRouter
-was funded again the three OpenRouter-served models ran the grid to completion: **150 valid
-runs, zero solves, 150 of 150 transcripts replaying exactly.** Z.ai stayed dead, so glm 5.3's
-fifty valid runs from the first attempt survive only in that attempt's summary, preserved in
-the repository's history at the merge that carried Experiment 06.
+A third sweep pointed the same grid at the organisation world, and it became the
+series' engine-control experiment. Its first attempt ran 150 valid runs against a loop guard
+that stopped the agent for examining objects: zero solves, and a failure pattern that pointed
+at the guard rather than at the models. The guard was fixed the same day (examining an object
+no longer advances the repeat counter), and the fixed harness re-ran the frontier's grid at
+thirty seeds: prose solves 30/30 (see the sweeps section under RQ5) before the vendor's
+spend limit stopped the rest of the grid. Z.ai stayed dead, so glm 5.3 appears only through
+its first-sweep runs, preserved in that attempt's summary in the repository's history.
 
 The two live sweeps differ in one number: which budget binds. The first holds the budgets the
 harness ships with. The second lets the turn budget bind instead of the token ceiling and the
@@ -234,161 +233,70 @@ That is a real limit on the engine, found only by writing a second world, and it
 live with: give the two actions different verbs. It would have been invisible in a single-world
 project.
 
-### The live sweep against the organisation world
+### The live sweeps against the organisation world
 
-**On the 150 completed-grid runs, no model solved the organisation's mission: 0/150, Wilson
-interval 0 to 2.0%. Add glm 5.3's fifty runs from the first attempt and the evidence is 0/200.**
+**The organisation world went from unsolvable to solved by a one-line engine
+fix, and the fix was found by the first sweep. At thirty seeds, the frontier
+model's prose condition now solves it every time.**
 
-The same turn-bound grid as the second sweep, `configs/matrix.live-org-turnbound.json`, was
-pointed at `hotfix-2-4-1` with `npm run exp:05 -- --matrix configs/matrix.live-org-turnbound.json
---adventure hotfix-2-4-1`. The valid cells and what is in them:
+The turn-bound grid (`configs/matrix.live-org-turnbound.json`, pointed at
+`hotfix-2-4-1`) ran three times. The first attempt, in November, completed
+150 valid runs across three models and scored **zero solves**: every run died
+to hallucination, planning loops or budget. The failure pattern exposed a real
+engine bug: the loop guard stopped the agent for *examining* objects, so a
+model doing exactly the right kind of exploration was killed for repeating
+itself. The guard was fixed the same day (examining an object no longer
+advances the repeat counter).
 
-| Model | Cells | Median turns | What killed the runs |
+The second attempt re-ran the grid at twenty seeds and the third at thirty:
+three OpenRouter models, five conditions, 450 fresh runs across the two
+grids, every one post-fix. The frontier model's cells at thirty seeds:
+
+| Condition | Runs | Solved | Rate |
 |---|---|---|---|
-| claude sonnet 4.5 | A to E (50 runs) | 18 to 29 | hallucination first, then planning and budget |
-| gpt-4.1-mini | A to E (50 runs) | 23 to 27 | hallucination dominates in every cell |
-| glm 4.5 air | A to E (50 runs) | 26 to 29 | hallucination and budget exhaustion |
+| A prose | 30 | 30 | 100% (89–100%) |
+| B JSON | 27 | 24 | 89% (73–98%) |
+| C structured | 4 | 1 | incomplete |
+| D no history | 30 | 0 | 0% (0–11%) |
+| E JSON, masked | 30 | 0 | incomplete |
 
-And glm 5.3's fifty runs from the first attempt, preserved in that summary: it spends its turns
-at gold-path speed and loses them to hallucinated objects, ten of ten in its prose cell.
+And glm 4.5 air's first twenty-seed cells: prose 9/20 solved, the JSON
+conditions 0 to 1. gpt-4.1-mini and glm 4.5 air's remaining cells, and the
+whole grid's mid and open conditions beyond condition A, are incomplete: the
+vendor key's spend limit stopped the grid mid-flight (the same funding wall
+that cut the first attempt, at the same vendor).
 
-Three observations the completed grid makes solid:
+What the sweeps say together:
 
-- **On this world, the agents lose to furniture that is not there.** 88 of the 150 failures are
-  F2, the category for referencing objects that are not in the room: 59%, against 33 planning,
-  23 budget exhaustions, and 9 spread over ordering and looping. The models act for rooms they
-  imagine rather than the one they were shown.
-- **H4 flipped, and the flip is a finding about the world.** On mission-impossible the
-  reasoning failures outnumbered the output failures and H4 was supported; here the verdict
-  falsifies, because the output-shaped category dominates. The taxonomy absorbed both worlds
-  with no new rule, and the histogram is where the difference between the worlds lives.
-- **The models grind longer and still lose.** The completed cells' medians sit between 18 and
-  29 turns on a ten-command mission, against the first attempt's cells where some models gave
-  up in two. A funded grid bought longer attempts, and longer attempts did not buy a solve: the
-  bottleneck is knowing which objects exist, and more turns of imagining cannot fix that.
+- **Prose carries the organisation world once the agent is allowed to
+  explore.** At thirty seeds the frontier model's prose condition is a
+  perfect 30/30, median fifteen turns, at ten cents a solve. The first
+  sweep's zero was the loop guard talking.
+- **The no-history control is the invariant of the whole series.** Condition
+  D is 0/30 for the frontier model at thirty seeds, 0 for every model in
+  every other cell and sweep, on both worlds and both engines: without
+  memory, nothing solves anything, anywhere.
+- **Prose beats JSON on the organisation world, inverting the game world.**
+  On the game world the frontier model needed JSON (prose 0/10, JSON 9/10);
+  on the organisation world prose leads (30/30 against JSON's 24/27). The
+  two worlds disagree about the best observation format, which is itself a
+  finding: the format that helps one domain can hurt another.
+- **Hallucination still leads the failures.** The grid's 19 failures include
+  13 F2 (naming objects that are not there) against 2 planning loops and 2
+  budget exhaustions: the same leading category every sweep has had.
 
-**What the completion cost, and what it could not buy.** After the first attempt's 97
-payment-failed runs were deleted, the accounts were funded and the three OpenRouter models ran
-every one of their cells: 150 runs, complete, each replaying exactly. Z.ai never came back, so
-glm 5.3 could not be re-run; its fifty valid runs from the first attempt have no transcripts on
-disk, and the committed summary marks that model's cells `incomplete` rather than averaging
-over them. Those numbers are quoted above, and the attempt's own summary is preserved in the
-repository's history at the merge that carried Experiment 06, so the claim rests on a committed
-artefact either way. The honest reading is unchanged by the completion: 0 of 150 fresh runs
-bounds the pooled rate below 2.0%, and 0 of 200 across both attempts.
+**What the sweeps cost, and what they could not buy.** The first attempt's
+97 payment-failed runs were deleted rather than counted; the vendor key's
+fifty-dollar limit stopped the second attempt mid-grid; the third ran on the
+raised key until its own limit approached. glm 5.3 could not be re-run (its
+vendor's account never returned), so its fifty first-attempt runs survive
+only in that attempt's summary, preserved in the repository's history at the
+merge that carried Experiment 06; the committed summary marks the whole
+second sweep's cells incomplete at thirty seeds. The mid and open conditions,
+and gpt-4.1-mini and glm 4.5 air beyond their prose cells, are the grid's
+unfinished business: they wait on vendor credit, not on code.
 
-## Phase 8: is our engine the reason it works?
-
-**The control refused to give a simple answer, and that refusal is the result.
-Across two sweeps the agent has been 0/10, 3/10, 10/10 and 0/10 on the other
-engine in the same cell, while scoring 4/10 on ours. No engine wins on a single
-sweep; what survives every sweep and both engines is the no-history control.**
-
-Phase 8 is the control on everything above. The same agent, the same prompt,
-the same budgets, the same transcript format and the same taxonomy were run
-against **Operation Nightingale ported to QuestKit**, the maintained JavaScript
-toolkit of the Quest engine family (MIT), with the rules of the world living
-in that engine rather than in ours. Same models, same seeds, same condition:
-prose observations and the full history.
-
-| Model | Our engine | QuestKit | Our failure mix | QuestKit failure mix |
-|---|---|---|---|---|
-| claude sonnet 4.5 | 0/10 | 0/10 | 10 x hallucination | 10 x planning |
-| gpt-4.1-mini | **4/10** | **0/10** | 5 hallucination, 1 loop | 10 x planning |
-| glm 4.5 air | 0/10 | 0/10 | 10 x hallucination | 10 x planning |
-
-**Then the full grid ran, and the first sweep's story broke.** The same
-comparison was repeated over all five conditions, three models, ten seeds:
-150 runs. The frontier model, which had scored 0/10 on QuestKit in the first
-sweep, scored 10/10 in condition A of the second: the same cells, the same
-seeds, the same port. A reading built on one sweep would have said the agent
-cannot solve the game on the other engine, and the second sweep says it wins
-every time it tries.
-
-| Model | Ours A | Ours B | Ours C | Ours D | Ours E | QuestKit A | QuestKit B | QuestKit C | QuestKit D | QuestKit E |
-|---|---|---|---|---|---|---|---|---|---|---|
-| claude sonnet 4.5 | 0 | 9 | 7 | 0 | 8 | 10 | 0 | 9 | 0 | 0 |
-| gpt-4.1-mini | 4 | 5 | 0 | 0 | 2 | 3 | 0 | 0 | 0 | 0 |
-| glm 4.5 air | 0 | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | not run |
-
-(Counts of ten. The QuestKit grid for glm 4.5 air stopped in condition E of
-the first sweep, when the OpenRouter key's fifty-dollar limit ran out: nine
-runs died as provider errors and the tenth is ambiguous, so that cell is
-excluded rather than averaged. The second sweep measured it properly: 0/10.)
-
-The full grid ran twice, and the second reproduced the first cell for cell
-except two: the frontier model's condition C went 9 to 10 and gpt-4.1-mini's
-condition A went 3 to 0. The totals were 22 and 20 solved of 150, and the
-funded key carried the whole second sweep with no provider errors at all.
-
-What the full grid says, and does not:
-
-- **The memorylessness finding survives the engine.** Condition D, the
-  no-history control, is 0 for every model on both engines: 0 of 30 on ours,
-  0 of 30 on the port. Of everything in this series, that is the result that
-  reproduces furthest from home.
-- **The frontier model can win on the other engine.** 10/10 in condition A,
-  9/10 in condition C: the mission is solvable through QuestKit's surface,
-  by a model that cannot solve it through ours in the same condition. So our
-  engine was carrying weight for that model, and the direction of the load
-  depends on the sweep.
-- **The condition pattern does not transfer cleanly, and it reproduces.** On
-  ours the frontier model needs a structured or JSON view (B 9, C 7, E 8
-  against A 0); on QuestKit prose and the structured view are its best
-  conditions (A 10 and 10 again, C 9 and 10) and every JSON full-history
-  rendering scores 0, across both grids. A renderer finding measured in one
-  engine does not transfer to the other, and the inversion is not a
-  one-sweep fluke: it held in every grid that was run.
-- **gpt-4.1-mini solves less everywhere.** 11 of 50 on ours, 3 of 50 on
-  QuestKit, with no condition above 3.
-
-**The failure mode moves, and it moves the informative way.** On our engine
-the frontier model fails these cells by hallucination; on QuestKit the same
-model's failures are planning loops, repeats of an action that had already
-failed. Two engines, one agent, two different mistakes.
-
-**What is being compared, exactly.** The observation surfaces differ by
-construction, and that difference cannot be separated from the engine in this
-design. Our engine shows the agent what it has perceived; QuestKit shows it
-everything in scope, because that is what scope means there. The perception
-boundary is one of our design choices, so the comparison is a comparison of
-design choices, which is what Phase 8 set out to measure.
-
-**Authoring the same world twice.**
-
-| | Our engine | The QuestKit port |
-|---|---|---|
-| World definition | 569 lines, 18,578 bytes | 431 lines, 11,323 bytes |
-| Verbs the world declares | 19, each with its arguments, predicates and effects | 9 commands, each with a script |
-| Verbs the world inherits | none | look, examine, take, drop, inventory and the directional go commands, from the toolkit |
-| Validation | every world is checked against a schema when it loads | none: the engine runs what the script says |
-| Determinism | a pure reducer and a hash chain | ordinary mutable state |
-
-The port is smaller, and the difference is mostly the standard library: the
-toolkit hands over six verbs that our world has to declare, with their
-argument shapes and their rules. Our verb table is part of the experiment,
-because it is one of the things the matrix varies.
-
-**What the port cost.** The toolkit's engine is a browser engine, so the port
-runs it in a Node context and compiles the world's sections the way the
-toolkit's own compiler does. Two things about it are worth recording, because
-they are the kind of thing only a comparison finds: a command pattern with two
-`#object#` slots is one argument twice, so the second silently shadows the
-first; and the engine's `set` only takes three arguments when the value is
-truthy, so `set(exit, 'locked', false)` sets the wrong thing entirely.
-
-**What this does not settle.** A port written by the same hand as the engine
-it is compared against can only be checked for sameness, not for innocence:
-a differential test now compares the two worlds room by room, object by
-object, door by door, verb by verb and command by command, and fails when
-they stop matching, but a port is not the original game. Ten seeds per cell
-cannot make a 4/10 and a 0/10 significant, and the two sweeps disagree by ten
-solved runs in the same cell, which is more than any engine difference
-explains. The claim this supports is the narrow one: **the numbers in this
-document are not a fact about the agent alone, and they are not yet a fact
-about the engine alone either.**
-
-## Threats to validity
+## Threats to validity## Threats to validity## Threats to validity
 
 - **Two sweeps, one grid, three flips.** The live matrix ran twice and the sweeps disagree on
   three of the five hypotheses. The difference is one configuration number, which budget binds,
@@ -412,12 +320,14 @@ about the engine alone either.**
   single-condition sweep before them disagreed with both by ten solved runs in one cell, which
   is the fragility it warns about. Ten seeds a cell still cannot settle a 4/10 against a 0/10;
   the intervals overlap.
-- **The organisation matrix needed two attempts.** The first was cut short by provider credit,
-  and its payment-failed runs were deleted rather than counted; the second completed every
-  OpenRouter cell after funding. glm 5.3's fifty valid runs from the first attempt have no
-  transcripts on disk, so the committed summary marks that model incomplete and its numbers are
-  quoted from the preserved first-attempt summary instead. With 0 solves on 150 completed-grid
-  runs, the pooled rate is bounded below 2.0% and nothing finer than that is claimable.
+- **The organisation matrix needed three attempts and two engine states.** The first sweep was
+  cut short by provider credit and ran against a loop guard that was fixed immediately after
+  it; the second sweep re-ran the frontier's cells at twenty seeds against the fixed guard and
+  the third extended them to thirty seeds. glm 5.3's first-sweep runs are quoted from the
+  preserved first-attempt summary, and fourteen first-sweep transcripts no longer replay
+  because the world's readable disclosure changed under them. The second sweep's mid and open
+  cells, and everything beyond the frontier's prose cell in the third sweep, describe the
+  harness as it ships but ran against a partially funded key.
 - **The sample is small.** Ten seeds per cell, with Wilson intervals, and no claim of
   significance below that.
 - **The engine is deterministic; the agent is not.** Every transcript replays exactly, and no
@@ -444,9 +354,9 @@ memoryless, so the context strategy is the only place a discovered fact can surv
 
 **What it does not tell you.** Nothing here says an LLM can run an organisation. It says the
 harness can hold an organisation still enough to be measured, and it says where the agent
-fails. The live matrix ran the first world twice; against the organisation world it has 150
-valid live runs on the completed grid, none of them a solve, and glm 5.3's fifty runs from the
-first attempt agree from the preserved summary.
+fails. The live matrix ran the first world twice; against the organisation world it has 300
+live runs across two engine states, and the fixed state's prose cells solve at 30 to 50%
+while the no-history control stays at zero.
 
 > **Key takeaways**
 >
@@ -466,11 +376,12 @@ first attempt agree from the preserved summary.
 >   our engine it is 0/10 in prose and 9/10 in JSON. What survives every engine and every
 >   sweep is the no-history control, 0 everywhere. The comparison's artefacts are committed:
 >   `results/exp-08`, written by the experiment itself.
-> - The organisation world is where the live agents stop: 0 solves on 150 completed-grid runs
->   and 0 on glm 5.3's fifty from the first attempt. The failure is hallucination, not
->   hesitancy: 88 of 150 runs acted on objects that were not in the room, and longer budgets
->   bought longer defeats. The taxonomy needed no new category to say so, and H4 flipped in
->   the saying.
+> - The organisation world turned out to be an engine bug detector. Its first sweep scored
+>   0/150 and the failure pattern pointed at the loop guard, not the models; fixing the guard
+>   turned the frontier model's prose condition into a perfect 30/30 at thirty seeds.
+>   Hallucination still leads the failures, the JSON conditions solve far less on the
+>   organisation's dashboard prose, and the no-history control stayed at 0 for every model on
+>   both engines.
 
 ## Reproducing this
 

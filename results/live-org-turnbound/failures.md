@@ -1,14 +1,35 @@
 # The failures
 
-  F2  ████████████████████ 88
-  F3  ████████ 33
+  F1   3
+  F2  ████████████████████ 171
+  F3  █████ 39
   F4   2
-  F5  █ 4
-  F7  █████ 23
+  F5  █ 11
+  F7  ████ 31
 
 ## Annotated transcripts
 
-## F2 — 88 run(s)
+## F1 — 3 run(s)
+
+### live-frontier / B / seed 16
+
+Commands: none
+
+Outcome: budget_exhausted — F1
+
+### live-mid / B / seed 16
+
+Commands: none
+
+Outcome: budget_exhausted — F1
+
+### live-open / A / seed 14
+
+Commands: none
+
+Outcome: budget_exhausted — F1
+
+## F2 — 171 run(s)
 
 ### live-frontier / A / seed 3
 
@@ -28,7 +49,7 @@ Commands: examine incident ticket · read incident ticket · examine on-call boa
 
 Outcome: budget_exhausted — F2
 
-## F3 — 33 run(s)
+## F3 — 39 run(s)
 
 ### live-frontier / A / seed 1
 
@@ -62,27 +83,27 @@ Commands: examine incident ticket · examine on-call board · read on-call board
 
 Outcome: budget_exhausted — F4
 
-## F5 — 4 run(s)
+## F5 — 11 run(s)
 
-### live-open / C / seed 4
+### live-frontier / C / seed 11
 
-Commands: read incident ticket · examine oncall_board · examine oncall_board · go north · examine release-2.4.1 · examine release-2.4.1 · examine release-2.4.1 · examine inbox · examine release gate · examine release-2.4.1 · examine release-2.4.1 · examine release-2.4.1 · examine release-2.4.1 · examine release-2.4.1 · examine inbox · examine release-2.4.1 · examine release-2.4.1 · examine release gate · examine release-2.4.1 · examine release-2.4.1 · examine release-2.4.1 · examine release-2.4.1 · examine release gate · examine release gate · examine release-2.4.1 · examine release-2.4.1 · examine release gate · examine release-2.4.1 · examine inbox · examine release-2.4.1
-
-Outcome: budget_exhausted — F5
-
-### live-open / C / seed 10
-
-Commands: read incident ticket · examine oncall_board · read oncall_board · go north · examine release-2.4.1 · examine inbox · examine release gate · examine release-2.4.1 · examine release-2.4.1 · examine inbox · examine shared inbox · examine release-2.4.1 · examine release-2.4.1 · examine release-2.4.1 · examine inbox · examine release-2.4.1 · examine release gate · examine release-2.4.1 · examine release-2.4.1 · examine release-2.4.1 · examine release-2.4.1 · examine release-2.4.1 · examine release-2.4.1 · examine shared inbox · examine release-2.4.1 · examine release_gate · examine release-2.4.1 · examine release-2.4.1 · examine release-2.4.1 · examine shared inbox
+Commands: read incident ticket · read on-call board · claim incident ticket · go north · examine release-2.4.1 · open shared inbox · examine shared inbox · examine shared inbox · examine inbox · examine inbox · examine inbox · examine shared inbox · examine inbox · examine inbox · examine inbox · examine inbox · examine shared inbox · examine inbox · examine inbox · examine shared inbox · look · examine shared inbox · examine inbox · examine inbox · look · examine shared inbox · examine shared inbox · examine inbox · look · examine inbox
 
 Outcome: budget_exhausted — F5
 
-### live-open / D / seed 1
+### live-frontier / C / seed 13
 
-Commands: read incident_ticket · read oncall_board · go north · examine release-2.4.1 · examine release-2.4.1 · examine release_2_4_1 · examine inbox · examine release_2_4_1 · examine release_2_4_1 · examine release-2.4.1 · examine inbox · examine release_2_4_1 · examine release-2.4.1 · examine release_2_4_1 · examine inbox · examine release_2_4_1 · examine inbox · examine release_2_4_1 · examine release_gate · examine release_2_4_1 · examine inbox · examine release_2_4_1 · examine release_2_4_1 · examine inbox · examine release-2.4.1 · examine release-2.4.1 · examine inbox · examine release_2_4_1
+Commands: read on-call board · examine incident ticket · claim incident ticket · go north · examine release-2.4.1 · open shared inbox · examine shared inbox · look · examine shared inbox · examine shared inbox · examine inbox · examine inbox · examine inbox · examine inbox · examine inbox · examine inbox · examine inbox · examine inbox · examine inbox · examine inbox · examine inbox · look · examine inbox · examine inbox · examine shared inbox · examine inbox · examine inbox · examine inbox · examine inbox · examine inbox
 
 Outcome: budget_exhausted — F5
 
-## F7 — 23 run(s)
+### live-frontier / C / seed 15
+
+Commands: read on-call board · claim incident ticket · go north · examine release-2.4.1 · open shared inbox · examine shared inbox · examine inbox · examine inbox · look · examine inbox · examine inbox · examine inbox · examine inbox · examine inbox · examine inbox · examine inbox · examine inbox · examine inbox · examine inbox · look · examine inbox · examine shared inbox · examine shared inbox · examine inbox · examine inbox
+
+Outcome: budget_exhausted — F5
+
+## F7 — 31 run(s)
 
 ### live-frontier / B / seed 1
 

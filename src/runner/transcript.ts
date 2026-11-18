@@ -30,6 +30,12 @@ export interface TranscriptRecord {
 
 export class Transcript {
   private readonly path: string;
+
+  /** Where the transcript is written. */
+  get file(): string {
+    return this.path;
+  }
+
   private readonly records: TranscriptRecord[] = [];
 
   constructor(path: string, header: TranscriptHeader) {

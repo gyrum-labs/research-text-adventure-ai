@@ -16,32 +16,22 @@ import { createReadStream, existsSync, statSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { Adventure } from '../kernel/types.js';
-import { buildObservation } from '../kernel/observation.js';
 import { ADVENTURES, findGoldPath } from '../adventures/index.js';
 import { InMemorySession } from '../session/in-memory.js';
 import type { SessionTurn } from '../session/types.js';
 import { ScriptedPolicy } from '../agents/scripted.js';
 import { RandomPolicy } from '../agents/random.js';
-import { run } from '../runner/run.js';
-import type { AgentPolicy } from '../agents/policy.js';
-import type { LiveAiDemo, LiveAiMetadata, LiveAiRun } from './live-ai.js';
-
-/** One streaming agent run the server is holding or has held. */
-interface HeldRun {
-  adventureId: string;
-  records: Array<Record<string, unknown>>;
-  finished: boolean;
-  listeners: Set<(record: Record<string, unknown>) => void>;
-  live?: LiveAiRun;
-  metadata?: LiveAiMetadata;
-  start?: () => boolean;
-  cancel?: () => void;
-}
+import type { LiveAiDemo, LiveAiMetadata } from './live-ai.js';
+import { aiConfigured, aiOffers, aiStateFrom, driveRun, pendingModelRun, streamRun,
+  type AiState, type HeldRun } from './ai-runs.js';
+import { SavedRunStore } from './saved-runs.js';
 
 /** Dependencies and content for the optional session and demo server. */
 export interface SessionServerOptions {
   /** Opt-in model configuration; absent by default and never serialized. */
   liveAi?: LiveAiDemo;
+  /** Several configured models, one per entry the watcher can offer. */
+  liveAis?: { demos: Map<string, LiveAiDemo>; models: LiveAiMetadata[] };
   /** The worlds a session can be opened against. Defaults to every shipped one. */
   adventures?: Record<string, Adventure>;
   /** The held sessions, injected so a test can look inside. */
@@ -50,6 +40,8 @@ export interface SessionServerOptions {
   staticRoot?: string;
   /** Where scripted runs find their command list, by world. */
   scriptedPathFor?: (adventureId: string) => string[] | undefined;
+  /** Where watched runs are kept. The default is `runs/watched`, next to the process. */
+  savedRunsRoot?: string;
 }
 
 /** A route pattern: method, segments with :params, and a handler. */
@@ -66,11 +58,12 @@ interface Route {
 
 /** Everything the handlers share. */
 interface ServerState {
-  liveAi?: LiveAiDemo;
-  activeAiId?: string;
+  /** The configured AI demos and the single active slot. Absent demos: no AI. */
+  ai: AiState;
   adventures: Record<string, Adventure>;
   sessions: Map<string, InMemorySession>;
   runs: Map<string, HeldRun>;
+  saved: SavedRunStore;
   staticRoot?: string;
   scriptedPathFor: (adventureId: string) => string[] | undefined;
 }
@@ -80,7 +73,8 @@ const ROUTES: Route[] = [
     method: 'GET',
     segments: ['api', 'health'],
     handle: async (_params, _request, response, state) => {
-      json(response, 200, { ok: true, adventures: Object.keys(state.adventures), ai: state.liveAi?.metadata ?? null });
+      json(response, 200, { ok: true, adventures: Object.keys(state.adventures),
+        ai: state.ai.models[0] ?? null, aiModels: state.ai.models });
     },
   },
   {
@@ -151,6 +145,7 @@ const ROUTES: Route[] = [
       const body = (await readJson(request)) as {
         adventureId?: string;
         policy?: 'scripted' | 'random' | 'llm';
+        model?: string;
         seed?: number;
       };
       const requested = body.policy ?? 'scripted';
@@ -162,9 +157,16 @@ const ROUTES: Route[] = [
         json(response, 403, { error: 'AI demos require a same-origin local request.' });
         return;
       }
-      if (requested === 'llm' && (state.liveAi === undefined || state.activeAiId !== undefined)) {
-        json(response, state.liveAi === undefined ? 503 : 409,
-          { error: state.liveAi === undefined ? 'AI is not configured on this server.' : 'An AI run is already active. Stop it before starting another.' });
+      if (requested === 'llm' && !aiConfigured(state.ai)) {
+        json(response, 503, { error: 'AI is not configured on this server.' });
+        return;
+      }
+      if (requested === 'llm' && body.model !== undefined && !aiOffers(state.ai, body.model)) {
+        json(response, 400, { error: `this server does not offer ${body.model}.` });
+        return;
+      }
+      if (requested === 'llm' && state.ai.activeAiId !== undefined) {
+        json(response, 409, { error: 'An AI run is already active. Stop it before starting another.' });
         return;
       }
       const adventure = adventureIn(state, body.adventureId ?? '');
@@ -174,7 +176,8 @@ const ROUTES: Route[] = [
       }
       if (requested === 'llm') {
         const id = randomUUID();
-        state.runs.set(id, pendingModelRun({ id, adventure, seed: body.seed ?? 1, state }));
+        const demo = body.model === undefined ? undefined : state.ai.demos?.get(body.model);
+        state.runs.set(id, pendingModelRun({ id, adventure, seed: body.seed ?? 1, runs: state.runs, ai: state.ai, saved: state.saved, demo }));
         json(response, 201, { id, adventureId: adventure.id, policy: 'llm' });
         return;
       }
@@ -188,6 +191,7 @@ const ROUTES: Route[] = [
       }
       const id = randomUUID();
       const held: HeldRun = {
+        id,
         adventureId: adventure.id,
         records: [],
         finished: false,
@@ -196,7 +200,7 @@ const ROUTES: Route[] = [
       state.runs.set(id, held);
 
       // The run happens on its own; the stream endpoint reads it as it goes.
-      void driveRun(held, adventure, policy);
+      void driveRun(held, adventure, policy, state.saved);
 
       json(response, 201, { id, adventureId: adventure.id, policy: policy.id });
     },
@@ -221,6 +225,42 @@ const ROUTES: Route[] = [
       streamRun(held, response);
     },
   },
+
+  {
+    method: 'GET',
+    segments: ['api', 'runs', 'saved'],
+    handle: async (_params, _request, response, state) => {
+      json(response, 200, { runs: state.saved.list() });
+    },
+  },
+  {
+    method: 'GET',
+    segments: ['api', 'runs', 'saved', ':id'],
+    handle: async (params, _request, response, state) => {
+      const saved = state.saved.open(params['id']!);
+      if (saved === null) {
+        json(response, 404, { error: `unknown saved run: ${params['id']}` });
+        return;
+      }
+      json(response, 200, saved);
+    },
+  },
+  {
+    method: 'POST',
+    segments: ['api', 'runs', 'saved', ':id', 'replay'],
+    handle: async (params, _request, response, state) => {
+      const replay = state.saved.replay(params['id']!);
+      if (replay === null) {
+        json(response, 404, { error: `unknown saved run: ${params['id']}` });
+        return;
+      }
+      if (replay.error !== undefined) {
+        json(response, 422, { error: replay.error });
+        return;
+      }
+      json(response, 200, replay);
+    },
+  },
   {
     method: 'DELETE', segments: ['api', 'runs', ':id'],
     handle: async (params, request, response, state) => {
@@ -239,123 +279,6 @@ function localModelRequest(request: IncomingMessage): boolean {
     if (site !== undefined && site !== 'same-origin' && site !== 'none') return false;
     return request.headers.origin === undefined || request.headers.origin === host.origin;
   } catch { return false; }
-}
-
-function pendingModelRun({ id, adventure, seed, state }: { id: string; adventure: Adventure; seed: number; state: ServerState }): HeldRun {
-  const held: HeldRun = { adventureId: adventure.id, records: [], finished: false, listeners: new Set(), metadata: state.liveAi!.metadata };
-  const expiry = setTimeout(() => { state.runs.delete(id); }, 30_000);
-  expiry.unref();
-  held.cancel = () => {
-    clearTimeout(expiry);
-    if (held.live !== undefined) held.live.cancel();
-    else { held.finished = true; state.runs.delete(id); }
-  };
-  held.start = () => {
-    if (state.activeAiId !== undefined) return false;
-    const live = state.liveAi!.create({ adventure, runId: id, seed });
-    clearTimeout(expiry);
-    held.live = live;
-    held.start = undefined;
-    state.activeAiId = id;
-    void driveRun(held, adventure, live.policy).finally(() => {
-      if (state.activeAiId === id) state.activeAiId = undefined;
-    });
-    return true;
-  };
-  return held;
-}
-
-/** Run the policy, pushing each record to whoever is listening. */
-async function driveRun(
-  held: HeldRun,
-  adventure: Adventure,
-  policy: AgentPolicy,
-): Promise<void> {
-  const push = (record: Record<string, unknown>): void => {
-    held.records.push(record);
-    for (const listener of held.listeners) listener(record);
-  };
-  const usage = (): void => { if (held.live !== undefined) push({ type: 'usage', data: held.live.usage() }); };
-
-  try {
-    if (held.metadata !== undefined) push({ type: 'run_started', data: held.metadata });
-    const result = await run({
-      adventure,
-      policy,
-      maxTurns: 30,
-      ...(held.live === undefined ? {} : { maxTurns: held.live.budgets.maxTurns,
-        budgets: held.live.budgets, signal: held.live.signal, transcript: held.live.transcript }),
-      onObservation: (observation) => {
-        push({ type: 'observation', turn: observation.turn, data: observation });
-        usage();
-      },
-      onMessage: (message) => {
-        push({ type: 'message', text: message });
-      },
-      onCommand: (command) => {
-        push({ type: 'command', ...command });
-        usage();
-      },
-    });
-    usage();
-    push({ type: 'observation', turn: result.turns, data: buildObservation(adventure, result.state) });
-    push({
-      type: 'run_ended',
-      data: { outcome: result.outcome, reason: result.reason, turns: result.turns, hash: result.hash },
-    });
-  } catch (error) {
-    push({
-      type: 'run_ended',
-      data: { outcome: 'failure', reason: held.live !== undefined ? 'The AI run could not finish.' : error instanceof Error ? error.message : 'the run crashed' },
-    });
-  } finally {
-    held.finished = true;
-    held.live?.close();
-    // The end marker is a record like the others, so a stream opened after
-    // the run finished still terminates.
-    push({ type: 'end' });
-  }
-}
-
-/** Write the run's records to the response as server-sent events. */
-function streamRun(held: HeldRun, response: ServerResponse): void {
-  response.writeHead(200, {
-    'content-type': 'text/event-stream',
-    'cache-control': 'no-cache',
-    connection: 'keep-alive',
-  });
-
-  let queue: Array<Record<string, unknown>> = [];
-  let flushing = false;
-
-  const flush = (): void => {
-    if (flushing) return;
-    flushing = true;
-    while (queue.length > 0) {
-      const record = queue.shift()!;
-      response.write(`data: ${JSON.stringify(record)}\n\n`);
-      if (record['type'] === 'end') {
-        response.end();
-        held.listeners.delete(listener);
-        return;
-      }
-    }
-    flushing = false;
-  };
-
-  const listener = (record: Record<string, unknown>): void => {
-    queue.push(record);
-    flush();
-  };
-  response.on('close', () => {
-    held.listeners.delete(listener);
-    if (!held.finished && held.listeners.size === 0) held.live?.cancel();
-  });
-
-  // Everything already happened is replayed first, then the live tail.
-  queue = [...held.records];
-  held.listeners.add(listener);
-  flush();
 }
 
 function json(response: ServerResponse, status: number, body: unknown): void {
@@ -417,10 +340,11 @@ function serveStatic(root: string, pathname: string, response: ServerResponse): 
 /** Build the server. It is not listening until start() is called. */
 export function createSessionServer(options: SessionServerOptions = {}): Server {
   const state: ServerState = {
-    liveAi: options.liveAi,
+    ai: aiStateFrom(options),
     adventures: options.adventures ?? ADVENTURES,
     sessions: options.sessions ?? new Map(),
     runs: new Map(),
+    saved: new SavedRunStore(options.savedRunsRoot ?? join(process.cwd(), 'runs', 'watched')),
     staticRoot: options.staticRoot,
     scriptedPathFor: options.scriptedPathFor ?? findGoldPath,
   };

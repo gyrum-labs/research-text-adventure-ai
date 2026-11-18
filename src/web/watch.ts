@@ -16,6 +16,8 @@ export interface WatchOptions {
   baseUrl: string;
   adventureId: string;
   policy: 'scripted' | 'random' | 'llm';
+  /** Which configured agent to watch, when the policy is llm. */
+  model?: string;
   seed?: number;
   signal?: AbortSignal;
   fetch?: FetchLike;
@@ -29,7 +31,8 @@ export async function watchAgent(options: WatchOptions): Promise<void> {
   const opened = await checkedResponse(await fetchLike(`${base}/api/runs`, {
     method: 'POST', signal: options.signal,
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ adventureId: options.adventureId, policy: options.policy, seed: options.seed ?? 1 }),
+    body: JSON.stringify({ adventureId: options.adventureId, policy: options.policy, seed: options.seed ?? 1,
+      ...(options.model === undefined ? {} : { model: options.model }) }),
   }));
   const body = await opened.json() as { id?: unknown };
   if (typeof body.id !== 'string' || body.id.length === 0) throw new Error('The demo server returned no run id.');
