@@ -60,7 +60,7 @@ function buildInput(): ContextInput {
   };
 }
 
-describe('the four context strategies', () => {
+describe('the five context strategies', () => {
   const input = buildInput();
 
   it('produce five different prompts from the same state', () => {

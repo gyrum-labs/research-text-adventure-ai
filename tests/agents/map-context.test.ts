@@ -69,6 +69,17 @@ describe('the map-and-ledger context', () => {
     expect(context).toContain('Service Corridor');
   });
 
+  it('shows an exit opened mid-mission as open once, never both ways', () => {
+    // The vault door is locked when first seen and opened by the keycard: the
+    // map must read as the state it is in now, not as the history of statuses.
+    const locked = contextFor(['take keycard', 'go corridor']);
+    expect(locked).toContain('north -> Server Vault (locked)');
+    const opened = contextFor(['take keycard', 'go corridor', 'unlock vault door with keycard']);
+    expect(opened).toContain('north -> Server Vault\n');
+    expect(opened).not.toContain('Server Vault (locked)');
+    expect(opened.split('north -> Server Vault').length - 1).toBe(1);
+  });
+
   it('totals the objects and their state', () => {
     const context = contextFor(['take keycard', 'go corridor', 'open locker']);
     expect(context).toContain('OBJECTS KNOWN:');

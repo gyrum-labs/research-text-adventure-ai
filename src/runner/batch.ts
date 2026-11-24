@@ -19,7 +19,7 @@ import type { LlmProvider } from '../agents/llm/provider.js';
 import type { RunBudgets } from './run.js';
 import { run } from './run.js';
 import { LlmPolicy } from '../agents/llm/policy.js';
-import type { ContextStrategy } from '../agents/context.js';
+import { CONTEXT_STRATEGIES, type ContextStrategy } from '../agents/context.js';
 import { Transcript, readTranscript } from './transcript.js';
 import { computeMetrics } from './metrics.js';
 import { replayTranscript } from './replay.js';
@@ -181,7 +181,17 @@ export function persistPlan(plan: BatchPlan, root: string): void {
 
 /** Read the plan back. */
 export function readPlan(root: string): BatchPlan {
-  return JSON.parse(readFileSync(join(root, 'plan.json'), 'utf8')) as BatchPlan;
+  const plan = JSON.parse(readFileSync(join(root, 'plan.json'), 'utf8')) as BatchPlan;
+  // Fail closed on the one field the runner casts: a plan is the record of a
+  // decision made before the run, so a strategy it cannot name is refused
+  // rather than guessed at. Plans written before the field existed all ran
+  // the structured context, and read as that.
+  const strategy = plan.strategy ?? 'structured';
+  if (!CONTEXT_STRATEGIES.includes(strategy as ContextStrategy)) {
+    throw new Error(`the plan on disk names an unknown context strategy "${plan.strategy}"`);
+  }
+  plan.strategy = strategy;
+  return plan;
 }
 
 /** Open the books for a plan: every cell outstanding, nothing spent, nothing held. */

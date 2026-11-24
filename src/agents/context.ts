@@ -95,19 +95,21 @@ function renderMap(input: ContextInput): string {
   const latest = input.observation;
 
   const lines: string[] = ['MAP:'];
-  const connections = new Map<string, string[]>();
+  // The map is a state, not a transcript: each exit keeps only its latest
+  // known status, so an exit seen locked and then opened reads as open, once.
+  const connections = new Map<string, Map<string, string>>();
   for (const observation of observations) {
     const room = observation.room.name;
-    const known = connections.get(room) ?? [];
+    const known = connections.get(room) ?? new Map<string, string>();
     for (const exit of observation.exits) {
-      const link = `${exit.direction} -> ${exit.toName}${exit.status === 'locked' ? ' (locked)' : ''}`;
-      if (!known.includes(link)) known.push(link);
+      known.set(exit.direction,
+        `${exit.direction} -> ${exit.toName}${exit.status === 'locked' ? ' (locked)' : ''}`);
     }
     connections.set(room, known);
   }
   for (const [room, links] of connections) {
     lines.push(`  ${room}${room === latest.room.name ? '  <- you are here' : ''}`);
-    for (const link of links) lines.push(`    ${link}`);
+    for (const link of links.values()) lines.push(`    ${link}`);
   }
 
   lines.push(`YOU ARE AT: ${latest.room.name}`);
