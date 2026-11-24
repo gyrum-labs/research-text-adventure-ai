@@ -49,6 +49,7 @@ const STRATEGY_NOTE: Record<ContextStrategy, string> = {
   full: 'the whole history of the mission: every command, every observation and every outcome.',
   window: 'the last five turns and the mission brief.',
   structured: 'a summary of what you know, the last two outcomes and the mission brief.',
+  map: 'a notepad of the world as you know it: every connection, object and told fact stated once, with one line per move.',
 };
 
 /** The verbs, with the shape each one takes. */

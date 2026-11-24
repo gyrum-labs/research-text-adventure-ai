@@ -16,7 +16,7 @@ import type { Observation } from '../kernel/types.js';
 import { buildKnownFacts } from '../kernel/observation.js';
 import { renderObservationWith } from '../kernel/render.js';
 
-export type ContextStrategy = 'none' | 'full' | 'window' | 'structured';
+export type ContextStrategy = 'none' | 'full' | 'window' | 'structured' | 'map';
 
 /** The strategies, in the order they are described in the specification. */
 export const CONTEXT_STRATEGIES: readonly ContextStrategy[] = [
@@ -24,6 +24,7 @@ export const CONTEXT_STRATEGIES: readonly ContextStrategy[] = [
   'full',
   'window',
   'structured',
+  'map',
 ];
 
 /** How many turns the window strategy keeps. */
@@ -76,7 +77,95 @@ export function buildContext(strategy: ContextStrategy, input: ContextInput): st
       return renderWindow(input, renderer);
     case 'structured':
       return renderStructured(input, renderer);
+    case 'map':
+      return renderMap(input);
   }
+}
+
+/**
+ * The map and the ledger: the world as the agent knows it, stated once.
+ *
+ * Connections, objects and facts are collected across every observation and
+ * deduplicated, so an agent re-reading its context reads a state rather than a
+ * transcript. The moves are one line each: what was tried, what came back.
+ */
+function renderMap(input: ContextInput): string {
+  const observations = [...input.turns.flatMap(turn =>
+    turn.before === undefined ? [turn.observation] : [turn.before, turn.observation]), input.observation];
+  const latest = input.observation;
+
+  const lines: string[] = ['MAP:'];
+  const connections = new Map<string, string[]>();
+  for (const observation of observations) {
+    const room = observation.room.name;
+    const known = connections.get(room) ?? [];
+    for (const exit of observation.exits) {
+      const link = `${exit.direction} -> ${exit.toName}${exit.status === 'locked' ? ' (locked)' : ''}`;
+      if (!known.includes(link)) known.push(link);
+    }
+    connections.set(room, known);
+  }
+  for (const [room, links] of connections) {
+    lines.push(`  ${room}${room === latest.room.name ? '  <- you are here' : ''}`);
+    for (const link of links) lines.push(`    ${link}`);
+  }
+
+  lines.push(`YOU ARE AT: ${latest.room.name}`);
+  lines.push(`CARRYING: ${latest.inventory.map(object => object.name).join(', ') || 'nothing'}`);
+
+  const objects = new Map<string, string>();
+  for (const observation of observations) {
+    for (const object of observation.visible) {
+      const bits: string[] = [object.name];
+      if (object.takeable === true) bits.push('takeable');
+      if (object.readable === true) bits.push('readable');
+      if (object.container !== undefined) {
+        bits.push(object.container.locked ? 'locked' : object.container.open ? 'open' : 'closed');
+      }
+      objects.set(object.id, bits.join(', '));
+    }
+    for (const object of observation.inventory) {
+      objects.set(object.id, `${object.name}, carried`);
+    }
+  }
+  lines.push('OBJECTS KNOWN:');
+  for (const described of objects.values()) lines.push(`  - ${described}`);
+
+  const goals = new Map<string, 'complete' | 'incomplete'>();
+  const told = new Set<string>();
+  for (const observation of observations) {
+    for (const goal of observation.goals) goals.set(goal.text, goal.status);
+    for (const message of observation.messages) {
+      for (const line of message.split('\n')) {
+        const trimmed = line.trim();
+        if (trimmed.length > 0) told.add(trimmed);
+      }
+    }
+  }
+  if (goals.size > 0) {
+    lines.push('OBJECTIVES:');
+    for (const [text, status] of goals) lines.push(`  - ${text} [${status === 'complete' ? 'done' : 'not done'}]`);
+  }
+  if (told.size > 0) {
+    lines.push('WHAT YOU HAVE BEEN TOLD:');
+    for (const fact of told) lines.push(`  - ${fact}`);
+  }
+
+  lines.push('MOVES:');
+  input.turns.forEach((turn, index) => {
+    const movedTo = turn.before === undefined || turn.before.room.id === turn.observation.room.id
+      ? undefined
+      : turn.observation.room.name;
+    const said = turn.observation.messages.join(' ').replace(/\s+/g, ' ').trim();
+    const outcome = movedTo !== undefined
+      ? `moved to ${movedTo}`
+      : said.length > 0 ? said.slice(0, 120) : 'no change';
+    lines.push(`  ${index + 1}. ${turn.command} -> ${outcome}`);
+  });
+
+  lines.push('NOW:');
+  lines.push(renderContextObservation(latest, input.renderer ?? 'text'));
+  return lines.join('\n\n');
 }
 
 /** Everything: the brief, every command, every observation, every outcome. */
