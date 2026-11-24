@@ -15,7 +15,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import type { Adventure } from '../kernel/types.js';
+import type { Adventure, GameState } from '../kernel/types.js';
 import { ADVENTURES, findGoldPath } from '../adventures/index.js';
 import { InMemorySession } from '../session/in-memory.js';
 import type { SessionTurn } from '../session/types.js';
@@ -24,6 +24,8 @@ import { RandomPolicy } from '../agents/random.js';
 import type { LiveAiDemo, LiveAiMetadata } from './live-ai.js';
 import { aiConfigured, aiOffers, aiStateFrom, driveRun, pendingModelRun, streamRun,
   type AiState, type HeldRun } from './ai-runs.js';
+import type { RunResumeState } from '../runner/run.js';
+import type { LiveAiUsage } from './live-ai.js';
 import { SavedRunStore } from './saved-runs.js';
 
 /** Dependencies and content for the optional session and demo server. */
@@ -60,12 +62,30 @@ interface Route {
 interface ServerState {
   /** The configured AI demos and the single active slot. Absent demos: no AI. */
   ai: AiState;
+  /** A paused AI run: nothing runs, nothing spends, and it waits for its operator. */
+  pausedAi?: PausedAi;
   adventures: Record<string, Adventure>;
   sessions: Map<string, InMemorySession>;
   runs: Map<string, HeldRun>;
   saved: SavedRunStore;
   staticRoot?: string;
   scriptedPathFor: (adventureId: string) => string[] | undefined;
+}
+
+/** A paused AI run and everything a resume continues from. */
+interface PausedAi {
+  id: string;
+  adventure: Adventure;
+  seed: number;
+  /** The world as the pause left it. */
+  world: GameState;
+  /** The runner's bundle, to hand back to the continuation. */
+  resume: RunResumeState;
+  /** What the lineage has spent: turns, wall clock, and the policy's tokens. */
+  turns: number;
+  elapsedMs: number;
+  tokens: { inputTokens: number; outputTokens: number };
+  usage: LiveAiUsage;
 }
 
 const ROUTES: Route[] = [
@@ -176,8 +196,18 @@ const ROUTES: Route[] = [
       }
       if (requested === 'llm') {
         const id = randomUUID();
+        const seed = body.seed ?? 1;
         const demo = body.model === undefined ? undefined : state.ai.demos?.get(body.model);
-        state.runs.set(id, pendingModelRun({ id, adventure, seed: body.seed ?? 1, runs: state.runs, ai: state.ai, saved: state.saved, demo }));
+        state.runs.set(id, pendingModelRun({ id, adventure, seed,
+          runs: state.runs, ai: state.ai, saved: state.saved, demo,
+          onPaused: paused => {
+            state.pausedAi = {
+              id: paused.id, adventure, seed,
+              world: paused.world, resume: paused.resume, turns: paused.turns,
+              elapsedMs: paused.elapsedMs, tokens: paused.tokens, usage: paused.usage,
+            };
+          },
+        }));
         json(response, 201, { id, adventureId: adventure.id, policy: 'llm' });
         return;
       }
@@ -193,6 +223,7 @@ const ROUTES: Route[] = [
       const held: HeldRun = {
         id,
         adventureId: adventure.id,
+        seed: 1,
         records: [],
         finished: false,
         listeners: new Set(),
@@ -265,8 +296,46 @@ const ROUTES: Route[] = [
     method: 'DELETE', segments: ['api', 'runs', ':id'],
     handle: async (params, request, response, state) => {
       if (!localModelRequest(request)) { json(response, 403, { error: 'A local request is required.' }); return; }
+      // Stopping a paused run discards it: that is what stopping means.
+      if (state.pausedAi?.id === params['id']) state.pausedAi = undefined;
       state.runs.get(params['id']!)?.cancel?.();
       json(response, 200, { stopped: true });
+    },
+  },
+  {
+    method: 'POST', segments: ['api', 'runs', ':id', 'pause'],
+    handle: async (params, request, response, state) => {
+      if (!localModelRequest(request)) { json(response, 403, { error: 'A local request is required.' }); return; }
+      const held = state.runs.get(params['id']!);
+      if (held === undefined || held.live === undefined || state.ai.activeAiId !== held.id) {
+        json(response, 409, { error: 'Only a running AI run can be paused. A paused run is already holding still.' });
+        return;
+      }
+      held.live.pause();
+      json(response, 200, { pausing: true });
+    },
+  },
+  {
+    method: 'POST', segments: ['api', 'runs', ':id', 'resume'],
+    handle: async (params, request, response, state) => {
+      if (!localModelRequest(request)) { json(response, 403, { error: 'A local request is required.' }); return; }
+      if (state.pausedAi === undefined || state.pausedAi.id !== params['id']) {
+        json(response, 404, { error: 'No paused run with this id. A paused run waits only in this server; stopping or a restart lets it go.' });
+        return;
+      }
+      if (state.ai.activeAiId !== undefined) {
+        json(response, 409, { error: 'An AI run is already active. It must end before the paused one resumes.' });
+        return;
+      }
+      const paused = state.pausedAi;
+      state.pausedAi = undefined;
+      state.runs.set(params['id']!, pendingModelRun({
+        id: params['id']!, adventure: paused.adventure, seed: paused.seed,
+        runs: state.runs, ai: state.ai, saved: state.saved,
+        continuation: { world: paused.world, resume: paused.resume, turns: paused.turns,
+          elapsedMs: paused.elapsedMs, tokens: paused.tokens },
+      }));
+      json(response, 201, { id: paused.id, adventureId: paused.adventure.id, resumed: true });
     },
   },
 ];

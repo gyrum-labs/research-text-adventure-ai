@@ -43,6 +43,19 @@ export interface LlmPolicyOptions {
    * is recorded as the parse error it is.
    */
   parseCheck?: (candidate: string) => boolean;
+  /**
+   * What a pause left behind, when this policy continues a run.
+   *
+   * The ledger of issued commands carries observation indexes into the
+   * history the runner restores, so the resumed prompt shows the same
+   * recent actions as the paused one did. The token counts carry too, so
+   * the cap continues from where the pause found it.
+   */
+  resume?: {
+    commands: Array<{ raw: string; observationIndex: number }>;
+    inputTokens: number;
+    outputTokens: number;
+  };
 }
 
 export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
@@ -58,7 +71,7 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
   private readonly parseCheck: ((candidate: string) => boolean) | undefined;
 
   /** The commands this policy has issued, in order. */
-  private readonly commands: Array<{ raw: string; observationIndex: number }> = [];
+  private readonly commands: Array<{ raw: string; observationIndex: number }>;
 
   private lastTurn: PolicyTurnOutcome = 'stopped';
   private unparsableResponses = 0;
@@ -79,7 +92,16 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
     this.temperature = options.temperature;
     this.maxOutputTokens = options.maxOutputTokens;
     this.parseCheck = options.parseCheck;
+    this.commands = [...(options.resume?.commands ?? [])];
+    this.inputTokens = options.resume?.inputTokens ?? 0;
+    this.outputTokens = options.resume?.outputTokens ?? 0;
+    this.tokensUsed = this.inputTokens + this.outputTokens;
     this.id = `llm:${options.provider.id}/${options.provider.model}`;
+  }
+
+  /** The ledger a pause needs, so a resumed policy remembers what it did. */
+  ledger(): Array<{ raw: string; observationIndex: number }> {
+    return [...this.commands];
   }
 
   async next(context: PolicyContext): Promise<string | null> {

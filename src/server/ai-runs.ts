@@ -19,7 +19,7 @@ import { run } from '../runner/run.js';
 import type { AgentPolicy } from '../agents/policy.js';
 import { Transcript, readTranscript } from '../runner/transcript.js';
 import type { SavedRunStore } from './saved-runs.js';
-import type { LiveAiDemo, LiveAiMetadata, LiveAiRun } from './live-ai.js';
+import type { LiveAiDemo, LiveAiMetadata, LiveAiRun, LiveAiUsage } from './live-ai.js';
 
 /** The models this server can watch, and the run holding the active slot. */
 export interface AiState {
@@ -53,6 +53,7 @@ export const aiOffers = (ai: AiState, model: string): boolean => ai.demos?.has(m
 export interface HeldRun {
   id: string;
   adventureId: string;
+  seed: number;
   records: Array<Record<string, unknown>>;
   finished: boolean;
   listeners: Set<(record: Record<string, unknown>) => void>;
@@ -62,6 +63,20 @@ export interface HeldRun {
   cancel?: () => void;
 }
 
+/** What a continuation hands back to a run a pause stopped. */
+export interface RunContinuation {
+  /** The world as the pause left it. */
+  world: import('../kernel/types.js').GameState;
+  /** The runner's bundle: memory, loop guard, counters. */
+  resume: import('../runner/run.js').RunResumeState;
+  /** Turns the lineage has already spent. */
+  turns: number;
+  /** Wall-clock the lineage already spent. */
+  elapsedMs: number;
+  /** What the policy has already counted. */
+  tokens: { inputTokens: number; outputTokens: number };
+}
+
 /**
  * A run waiting for someone to watch it.
  *
@@ -69,7 +84,7 @@ export interface HeldRun {
  * nobody watches never calls a model. The slot expires unopened, because a
  * pending run nobody claimed is a leak, not a reservation.
  */
-export function pendingModelRun({ id, adventure, seed, runs, ai, saved, demo }: {
+export function pendingModelRun({ id, adventure, seed, runs, ai, saved, demo, continuation, onPaused }: {
   id: string;
   adventure: Adventure;
   seed: number;
@@ -79,9 +94,13 @@ export function pendingModelRun({ id, adventure, seed, runs, ai, saved, demo }: 
   saved: SavedRunStore;
   /** The demo a named model selects; absent means the first configured one. */
   demo?: LiveAiDemo;
+  /** What a pause left behind, when this run continues one. */
+  continuation?: RunContinuation;
+  /** Called once, if the run pauses again: the server records the held run. */
+  onPaused?: (paused: RunContinuation & { id: string; usage: LiveAiUsage }) => void;
 }): HeldRun {
   const live = demo ?? ai.demos?.get([...ai.demos.keys()][0]!);
-  const held: HeldRun = { id, adventureId: adventure.id, records: [], finished: false, listeners: new Set(), metadata: live?.metadata };
+  const held: HeldRun = { id, adventureId: adventure.id, seed, records: [], finished: false, listeners: new Set(), metadata: live?.metadata };
   const expiry = setTimeout(() => { runs.delete(id); }, 30_000);
   expiry.unref();
   held.cancel = () => {
@@ -91,12 +110,15 @@ export function pendingModelRun({ id, adventure, seed, runs, ai, saved, demo }: 
   };
   held.start = () => {
     if (ai.activeAiId !== undefined || live === undefined) return false;
-    const liveRun = live.create({ adventure, runId: id, seed });
+    const liveRun = live.create({ adventure, runId: id, seed,
+      ...(continuation === undefined ? {} : { resume: {
+        state: continuation.resume, turns: continuation.turns,
+        elapsedMs: continuation.elapsedMs, tokens: continuation.tokens } }) });
     clearTimeout(expiry);
     held.live = liveRun;
     held.start = undefined;
     ai.activeAiId = id;
-    void driveRun(held, adventure, liveRun.policy, saved).finally(() => {
+    void driveRun(held, adventure, liveRun.policy, saved, continuation, onPaused).finally(() => {
       if (ai.activeAiId === id) ai.activeAiId = undefined;
     });
     return true;
@@ -110,12 +132,18 @@ export async function driveRun(
   adventure: Adventure,
   policy: AgentPolicy,
   saved: SavedRunStore,
+  /** What a pause left behind, when this run continues one. */
+  continuation?: RunContinuation,
+  /** Called once, if the run pauses again: the server records the held run. */
+  onPaused?: (paused: RunContinuation & { id: string; usage: LiveAiUsage }) => void,
 ): Promise<void> {
   const push = (record: Record<string, unknown>): void => {
     held.records.push(record);
     for (const listener of held.listeners) listener(record);
   };
   const usage = (): void => { if (held.live !== undefined) push({ type: 'usage', data: held.live.usage() }); };
+  const segmentStartedAt = Date.now();
+  let paused = false;
 
   // Every watched run is evidence, whatever its policy: write the transcript
   // the replay route can re-apply, in the format replay already reads.
@@ -135,7 +163,15 @@ export async function driveRun(
   });
 
   try {
-    if (held.metadata !== undefined) push({ type: 'run_started', data: held.metadata });
+    if (held.metadata === undefined) {
+      // nothing: free runs carry no model description
+    } else if (continuation === undefined) {
+      push({ type: 'run_started', data: held.metadata });
+    } else {
+      // A resumed run keeps its identity: same mission, same memory, and the
+      // usage already accounted, rather than a fresh start.
+      push({ type: 'resumed', data: { usage: held.live?.usage(), budgets: held.metadata.budgets } });
+    }
     const result = await run({
       adventure,
       policy,
@@ -143,6 +179,8 @@ export async function driveRun(
       transcript: held.live === undefined ? transcript : held.live.transcript,
       ...(held.live === undefined ? {} : { maxTurns: held.live.budgets.maxTurns,
         budgets: held.live.budgets, signal: held.live.signal }),
+      ...(continuation === undefined ? {} : {
+        initial: continuation.world, startingTurn: continuation.turns, resume: continuation.resume }),
       onObservation: (observation) => {
         push({ type: 'observation', turn: observation.turn, data: observation });
         usage();
@@ -155,6 +193,23 @@ export async function driveRun(
         usage();
       },
     });
+    if (result.outcome === 'paused' && held.live !== undefined && result.pause !== undefined) {
+      // A paused run spends nothing and runs nothing: it steps out of the
+      // active slot and waits, holding everything a resume continues from.
+      paused = true;
+      const usage = held.live.usage();
+      push({ type: 'usage', data: usage });
+      push({ type: 'paused', data: { usage, budgets: held.metadata?.budgets } });
+      onPaused?.({
+        id: held.id, world: result.state, resume: result.pause, turns: result.turns,
+        elapsedMs: (continuation?.elapsedMs ?? 0) + (Date.now() - segmentStartedAt),
+        tokens: { inputTokens: usage.inputTokens, outputTokens: usage.outputTokens },
+        usage,
+      });
+      held.finished = true;
+      push({ type: 'end' });
+      return;
+    }
     usage();
     push({ type: 'observation', turn: result.turns, data: buildObservation(adventure, result.state) });
     push({
@@ -167,29 +222,31 @@ export async function driveRun(
       data: { outcome: 'failure', reason: held.live !== undefined ? 'The AI run could not finish.' : error instanceof Error ? error.message : 'the run crashed' },
     });
   } finally {
-    held.finished = true;
-    // The live transcript is closed before it is copied, so the copy reads a
-    // finished file rather than depending on how the writer buffers.
-    held.live?.close();
-    // A live run writes its own transcript, which carries the prompt evidence
-    // the replay does not need; keep a copy of it in the store so a reader can
-    // revisit the same evidence. An unreadable transcript is not a reason to
-    // lose the run.
-    try {
-      if (held.live !== undefined) {
-        saved.save(held.id, readTranscript(held.live.transcriptPath()));
+    if (!paused) {
+      held.finished = true;
+      // The live transcript is closed before it is copied, so the copy reads a
+      // finished file rather than depending on how the writer buffers.
+      held.live?.close();
+      // A live run writes its own transcript, which carries the prompt evidence
+      // the replay does not need; keep a copy of it in the store so a reader can
+      // revisit the same evidence. An unreadable transcript is not a reason to
+      // lose the run.
+      try {
+        if (held.live !== undefined) {
+          saved.save(held.id, readTranscript(held.live.transcriptPath()));
+        }
+      } catch (error) {
+        // A copy that fails leaves the store holding a run with no commands, so
+        // say so there rather than leaving a bare header to look like evidence.
+        const reason = error instanceof Error ? error.message : String(error);
+        transcript.write({ type: 'copy_failed', reason });
+        console.error(`saved run ${held.id}: the live transcript could not be copied: ${reason}`);
       }
-    } catch (error) {
-      // A copy that fails leaves the store holding a run with no commands, so
-      // say so there rather than leaving a bare header to look like evidence.
-      const reason = error instanceof Error ? error.message : String(error);
-      transcript.write({ type: 'copy_failed', reason });
-      console.error(`saved run ${held.id}: the live transcript could not be copied: ${reason}`);
+      transcript.close();
+      // The end marker is a record like the others, so a stream opened after
+      // the run finished still terminates.
+      push({ type: 'end' });
     }
-    transcript.close();
-    // The end marker is a record like the others, so a stream opened after
-    // the run finished still terminates.
-    push({ type: 'end' });
   }
 }
 

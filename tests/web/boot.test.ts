@@ -50,7 +50,7 @@ function page(options: { withWatch?: boolean } = {}): {
   let panel: StubElement | undefined;
   if (options.withWatch !== false) {
     panel = stub('watch', 'section');
-    for (const className of ['watch-start', 'watch-stop', 'watch-note', 'watch-output', 'watch-log', 'watch-status', 'watch-usage', 'watch-limits', 'saved-runs', 'saved-open', 'saved-replay', 'watch-saved']) {
+    for (const className of ['watch-start', 'watch-stop', 'watch-pause', 'watch-resume', 'watch-note', 'watch-output', 'watch-log', 'watch-status', 'watch-usage', 'watch-limits', 'saved-runs', 'saved-open', 'saved-replay', 'watch-saved']) {
       panel.appendChild(classed(className));
     }
     const policy = classed('watch-policy', 'select');

@@ -83,13 +83,14 @@ graph TD
   p1 --> a1
   a2[("results/failures.md")]
   a3[("results/live")]
-  a4[("results/live-org-sweep3")]
-  a5[("results/live-org-turnbound")]
-  a6[("results/live-turnbound")]
-  a7[("results/summary.json")]
-  a8[("results/summary.md")]
-  a9[("results/transfer.json")]
-  a10[("results/transfer.md")]
+  a4[("results/live-org-confirm")]
+  a5[("results/live-org-sweep3")]
+  a6[("results/live-org-turnbound")]
+  a7[("results/live-turnbound")]
+  a8[("results/summary.json")]
+  a9[("results/summary.md")]
+  a10[("results/transfer.json")]
+  a11[("results/transfer.md")]
 ```
 
 The phases and their cards, as the plan records them:
@@ -167,6 +168,7 @@ The artefacts the series has produced:
 - `results/exp-08`
 - `results/failures.md`
 - `results/live`
+- `results/live-org-confirm`
 - `results/live-org-sweep3`
 - `results/live-org-turnbound`
 - `results/live-turnbound`

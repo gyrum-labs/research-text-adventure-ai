@@ -248,20 +248,20 @@ model doing exactly the right kind of exploration was killed for repeating
 itself. The guard was fixed the same day (examining an object no longer
 advances the repeat counter).
 
-The second attempt re-ran the grid at twenty seeds and the third at thirty:
-three OpenRouter models, five conditions, 450 fresh runs across the two
-grids, every one post-fix. The frontier model's cells at thirty seeds:
+The second attempt re-ran the grid at twenty seeds (300 valid runs) and the
+third at thirty (62 valid runs): three OpenRouter models, five conditions,
+every run post-fix. The frontier model's cells at thirty seeds:
 
 | Condition | Runs | Solved | Rate |
 |---|---|---|---|
 | A prose | 30 | 30 | 100% (89–100%) |
-| B JSON | 27 | 24 | 89% (73–98%) |
+| B JSON | 27 | 12 | 44% (28–63%) |
 | C structured | 4 | 1 | incomplete |
-| D no history | 30 | 0 | 0% (0–11%) |
-| E JSON, masked | 30 | 0 | incomplete |
+| D no history | 10 | 0 | 0% (0–28%) |
+| E JSON, masked | 0 | 0 | not run |
 
 And glm 4.5 air's first twenty-seed cells: prose 9/20 solved, the JSON
-conditions 0 to 1. gpt-4.1-mini and glm 4.5 air's remaining cells, and the
+conditions 0 to 2. gpt-4.1-mini and glm 4.5 air's remaining cells, and the
 whole grid's mid and open conditions beyond condition A, are incomplete: the
 vendor key's spend limit stopped the grid mid-flight (the same funding wall
 that cut the first attempt, at the same vendor).
@@ -273,12 +273,16 @@ What the sweeps say together:
   perfect 30/30, median fifteen turns, at ten cents a solve. The first
   sweep's zero was the loop guard talking.
 - **The no-history control is the invariant of the whole series.** Condition
-  D is 0/30 for the frontier model at thirty seeds, 0 for every model in
+  D is 0/20 for the frontier model at twenty seeds, 0 for every model in
   every other cell and sweep, on both worlds and both engines: without
-  memory, nothing solves anything, anywhere.
+  memory, nothing solves anything, anywhere. The thirty-seed grid never
+  reached D or E at full depth: the vendor key ran dry after the frontier
+  model's A, B and C cells. The D row above is a ten-seed confirmation on
+  the same turn-bound configuration: 0/10, nine hallucination deaths and
+  one planning death, median twenty-eight turns, agreeing with the sweep.
 - **Prose beats JSON on the organisation world, inverting the game world.**
   On the game world the frontier model needed JSON (prose 0/10, JSON 9/10);
-  on the organisation world prose leads (30/30 against JSON's 24/27). The
+  on the organisation world prose leads (30/30 against JSON's 12/27). The
   two worlds disagree about the best observation format, which is itself a
   finding: the format that helps one domain can hurt another.
 - **Hallucination still leads the failures.** The grid's 19 failures include

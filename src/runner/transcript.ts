@@ -38,11 +38,15 @@ export class Transcript {
 
   private readonly records: TranscriptRecord[] = [];
 
-  constructor(path: string, header: TranscriptHeader) {
+  constructor(path: string, header?: TranscriptHeader) {
     this.path = path;
     mkdirSync(dirname(path), { recursive: true });
-    writeFileSync(path, '');
-    this.write(header as unknown as TranscriptRecord);
+    // Without a header the transcript continues one a pause left behind:
+    // append, never restart. The earlier half is already on disk.
+    if (header !== undefined) {
+      writeFileSync(path, '');
+      this.write(header as unknown as TranscriptRecord);
+    }
   }
 
   write(record: TranscriptRecord): void {
