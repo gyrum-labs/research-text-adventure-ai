@@ -227,25 +227,18 @@ graph LR
 
 | Verb | Also | Takes |
 |---|---|---|
-| `look` | , l, look around |  |
-| `inventory` | , i, inv, carrying |  |
-| `help` | , ? |  |
-| `wait` | , z |  |
-| `hint` | , h |  |
-| `examine` | , x, inspect, look at | target |
-| `read` | , study | target |
-| `read` | , study | target |
-| `take` | , get, grab, pick up | target |
+| `look` | l, look around |  |
+| `inventory` | carrying, i, inv |  |
+| `help` | ? |  |
+| `wait` | z |  |
+| `hint` | h |  |
+| `examine` | inspect, look at, x | target |
+| `read` | study | target |
+| `take` | get, grab, pick up | target |
 | `open` |  | target |
 | `unlock` |  | target, with |
-| `unlock` |  | target, with |
-| `cut` | , snip | target, with |
-| `cut` | , snip | target, with |
-| `cut` | , snip | target, with |
-| `go` | , walk, move, head | target |
-| `go` | , walk, move, head | target |
-| `go` | , walk, move, head | target |
-| `go` | , walk, move, head | target |
+| `cut` | snip | target, with |
+| `go` | head, move, walk | target |
 
 ### The goals
 
@@ -306,25 +299,18 @@ graph LR
 
 | Verb | Also | Takes |
 |---|---|---|
-| `look` | , l, look around |  |
-| `inventory` | , i, inv, carrying, context |  |
-| `help` | , ? |  |
-| `wait` | , z |  |
-| `hint` | , h |  |
-| `examine` | , x, inspect, look at | target |
-| `claim` | , take, get, pick up | target |
-| `read` | , study | target |
-| `read` | , study | target |
+| `look` | l, look around |  |
+| `inventory` | carrying, context, i, inv |  |
+| `help` | ? |  |
+| `wait` | z |  |
+| `hint` | h |  |
+| `examine` | inspect, look at, x | target |
+| `claim` | get, pick up, take | target |
+| `read` | study | target |
 | `open` |  | target |
 | `unlock` |  | target, with |
-| `unlock` |  | target, with |
-| `deploy` | , ship, release | target, with |
-| `deploy` | , ship, release | target, with |
-| `deploy` | , ship, release | target, with |
-| `go` | , walk, move, head | target |
-| `go` | , walk, move, head | target |
-| `go` | , walk, move, head | target |
-| `go` | , walk, move, head | target |
+| `deploy` | release, ship | target, with |
+| `go` | head, move, walk | target |
 
 ### The goals
 

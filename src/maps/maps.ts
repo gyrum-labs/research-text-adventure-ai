@@ -59,12 +59,21 @@ function pathTable(adventureId: string): string {
   return ['| # | Command |', '|---|---|', ...rows].join('\n');
 }
 
-/** The verbs one world answers to, as a table. */
+/** The verbs one world answers to, as a table: one row per verb, however
+ *  many movement rules share it - synonyms and arguments merged, duplicates
+ *  collapsed, no stray commas. */
 function verbTable(adventure: (typeof ADVENTURES)[string]): string {
-  const rows = adventure.actions.map((action) => {
-    const synonyms = (action.synonyms ?? []).length === 0 ? '' : `, ${(action.synonyms ?? []).join(', ')}`;
-    const args = action.args.map((arg) => arg.name).join(', ');
-    return `| \`${action.verb}\` | ${synonyms} | ${args} |`;
+  const byVerb = new Map<string, { synonyms: Set<string>; args: Set<string> }>();
+  for (const action of adventure.actions) {
+    const entry = byVerb.get(action.verb) ?? { synonyms: new Set<string>(), args: new Set<string>() };
+    for (const synonym of action.synonyms ?? []) entry.synonyms.add(synonym);
+    for (const arg of action.args) entry.args.add(arg.name);
+    byVerb.set(action.verb, entry);
+  }
+  const rows = [...byVerb.entries()].map(([verb, { synonyms, args }]) => {
+    const also = [...synonyms].sort().join(', ');
+    const takes = [...args].join(', ');
+    return `| \`${verb}\` | ${also} | ${takes} |`;
   });
   return ['| Verb | Also | Takes |', '|---|---|---|', ...rows].join('\n');
 }
