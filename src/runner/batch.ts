@@ -19,6 +19,7 @@ import type { LlmProvider } from '../agents/llm/provider.js';
 import type { RunBudgets } from './run.js';
 import { run } from './run.js';
 import { LlmPolicy } from '../agents/llm/policy.js';
+import type { ContextStrategy } from '../agents/context.js';
 import { Transcript, readTranscript } from './transcript.js';
 import { computeMetrics } from './metrics.js';
 import { replayTranscript } from './replay.js';
@@ -65,6 +66,8 @@ export interface BatchPlan {
   /** One cell per world and seed, in the order they will run. */
   cells: Array<{ world: string; seed: number }>;
   model: { provider: string; model: string };
+  /** The context strategy every arm of the plan reads. */
+  strategy: string;
   temperature: number;
   promptVersion: string;
   promptHash: string;
@@ -116,6 +119,7 @@ export interface BatchPlanInput {
   worlds: Adventure[];
   runsPerWorld: number;
   model: { provider: string; model: string };
+  strategy: string;
   temperature: number;
   promptVersion: string;
   promptHash: string;
@@ -154,6 +158,7 @@ export function buildPlan(input: BatchPlanInput): BatchPlan {
   return {
     createdAt: new Date().toISOString(),
     sourceRevision: input.sourceRevision,
+    strategy: input.strategy,
     worldVersions: input.worlds.map(world => ({ id: world.id, version: world.version })),
     cells,
     model: input.model,
@@ -287,7 +292,7 @@ export async function runBatch(
     const adventure = options.adventureFor(record.world);
     const provider = options.providerFor(record);
     const policy = new LlmPolicy({
-      adventure, provider, strategy: 'structured', renderer: 'json',
+      adventure, provider, strategy: plan.strategy as ContextStrategy, renderer: 'json',
       thinking: false, temperature: plan.temperature,
       maxOutputTokens: plan.budgets.maxOutputTokensPerTurn,
     });
@@ -296,6 +301,7 @@ export async function runBatch(
     const transcript = new Transcript(transcriptPath, {
       type: 'header', runId, adventure: adventure.id, adventureVersion: adventure.version,
       adventureHash: plan.promptHash, policy: policy.id, provider: provider.id, model: provider.model,
+      strategy: plan.strategy,
       seed: record.seed, maxTurns: plan.budgets.maxTurns,
       startedAt: (options.now ?? ((): number => Date.now()))().toString(),
       engineVersion: '0.1.0',

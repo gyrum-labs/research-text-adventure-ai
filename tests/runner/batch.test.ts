@@ -48,6 +48,7 @@ function planInput() {
     worlds: [mission, hotfix] as Adventure[],
     runsPerWorld: 10,
     model: { provider: 'openrouter', model: 'deepseek/deepseek-chat' },
+    strategy: 'structured',
     temperature: 0 as const,
     promptVersion: 'llm-prompt-v4',
     promptHash: 'sha256:prompt',
