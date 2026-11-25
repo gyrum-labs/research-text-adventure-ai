@@ -59,13 +59,20 @@ function pathTable(adventureId: string): string {
   return ['| # | Command |', '|---|---|', ...rows].join('\n');
 }
 
+/** What the verb table reads of an action rule. */
+export interface VerbSource {
+  verb: string;
+  synonyms?: string[];
+  args: { name: string }[];
+}
+
 /** The verbs one world answers to, as a table: one row per verb, however
  *  many movement rules share it. Synonyms and argument names are merged
  *  across those rules in the order the author wrote them, with repeats and
  *  empty entries dropped, so no cell opens with a stray comma. */
-function verbTable(adventure: (typeof ADVENTURES)[string]): string {
+export function verbTable(actions: VerbSource[]): string {
   const byVerb = new Map<string, { synonyms: string[]; args: string[] }>();
-  for (const action of adventure.actions) {
+  for (const action of actions) {
     const entry = byVerb.get(action.verb) ?? { synonyms: [], args: [] };
     for (const synonym of action.synonyms ?? []) {
       if (synonym && !entry.synonyms.includes(synonym)) entry.synonyms.push(synonym);
@@ -197,10 +204,14 @@ export function buildMaps(root: string = process.cwd()): string {
 
   for (const adventure of Object.values(ADVENTURES)) {
     const path = goldPathFor(adventure.id);
+    // Several rules can share one verb (every `go` is its own rule), so the
+    // header counts the verbs the table will list and says how many rules
+    // stand behind them, rather than calling the rules verbs.
+    const verbs = new Set(adventure.actions.map((action) => action.verb)).size;
     parts.push(`## ${adventure.title}`);
     parts.push('');
     parts.push(
-      `\`${adventure.id}\` · ${Object.keys(adventure.rooms).length} rooms · ${Object.keys(adventure.objects).length} objects · ${Object.keys(adventure.doors).length} doors · ${adventure.actions.length} verbs · ${path.length}-command gold path`,
+      `\`${adventure.id}\` · ${Object.keys(adventure.rooms).length} rooms · ${Object.keys(adventure.objects).length} objects · ${Object.keys(adventure.doors).length} doors · ${verbs} verbs (${adventure.actions.length} rules) · ${path.length}-command gold path`,
     );
     parts.push('');
     parts.push(adventure.brief);
@@ -217,7 +228,7 @@ export function buildMaps(root: string = process.cwd()): string {
     parts.push('');
     parts.push('### The verbs');
     parts.push('');
-    parts.push(verbTable(adventure));
+    parts.push(verbTable(adventure.actions));
     parts.push('');
     parts.push('### The goals');
     parts.push('');

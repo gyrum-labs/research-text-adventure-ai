@@ -39,7 +39,7 @@
       "file": "map-nightingale-working-sketch.png",
       "source": "map-nightingale-working-sketch.svg",
       "title": "A player's working map, Nightingale",
-      "description": "The map as a player actually keeps it: the three rooms with contents (keycard in success green, locker, the cased bomb in the error-red vault), labelled N/S route arrows, the locked door marked in red, a numbered player-notes panel walking the gold path, and the two goals DISARM and RECOVER in success-green pills. Stats line: 3 rooms, 14 objects, 4 doors, 19 verbs.",
+      "description": "The map as a player actually keeps it: the three rooms with contents (keycard in success green, locker, the cased bomb in the error-red vault), labelled N/S route arrows, the locked door marked in red, a numbered player-notes panel walking the gold path, and the two goals DISARM and RECOVER in success-green pills. Stats line: 3 rooms, 14 objects, 4 doors, 12 verbs.",
       "appears_in": "docs/MAPS.md intro or docs/ADVENTURES.md section 3 worked examples",
       "stage2": "done - via Replicate google/nano-banana (2026-11-16)",
       "final": "map-nightingale-working-sketch-hand.png"
