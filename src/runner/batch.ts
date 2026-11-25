@@ -67,7 +67,7 @@ export interface BatchPlan {
   cells: Array<{ world: string; seed: number }>;
   model: { provider: string; model: string };
   /** The context strategy every arm of the plan reads. */
-  strategy: string;
+  strategy: ContextStrategy;
   temperature: number;
   promptVersion: string;
   promptHash: string;
@@ -144,6 +144,13 @@ export function worstCaseCost(budgets: RunBudgets, prices: PriceEvidence): numbe
 
 /** Build the plan. Nothing here runs anything. */
 export function buildPlan(input: BatchPlanInput): BatchPlan {
+  // The plan is the record of a decision made before the run, so a strategy
+  // it cannot name is refused here, where the plan is made, and not cast
+  // later, where the plan is used.
+  if (!CONTEXT_STRATEGIES.includes(input.strategy as ContextStrategy)) {
+    throw new Error(`unknown context strategy "${input.strategy}". Known strategies: ${CONTEXT_STRATEGIES.join(', ')}`);
+  }
+  const strategy = input.strategy as ContextStrategy;
   const budgets = input.budgets;
   const worstCasePerRunUsd = worstCaseCost(budgets, input.prices);
   if (worstCasePerRunUsd > input.maxPerRunUsd) {
@@ -158,7 +165,7 @@ export function buildPlan(input: BatchPlanInput): BatchPlan {
   return {
     createdAt: new Date().toISOString(),
     sourceRevision: input.sourceRevision,
-    strategy: input.strategy,
+    strategy,
     worldVersions: input.worlds.map(world => ({ id: world.id, version: world.version })),
     cells,
     model: input.model,
@@ -190,7 +197,7 @@ export function readPlan(root: string): BatchPlan {
   if (!CONTEXT_STRATEGIES.includes(strategy as ContextStrategy)) {
     throw new Error(`the plan on disk names an unknown context strategy "${plan.strategy}"`);
   }
-  plan.strategy = strategy;
+  plan.strategy = strategy as ContextStrategy;
   return plan;
 }
 
@@ -302,7 +309,7 @@ export async function runBatch(
     const adventure = options.adventureFor(record.world);
     const provider = options.providerFor(record);
     const policy = new LlmPolicy({
-      adventure, provider, strategy: plan.strategy as ContextStrategy, renderer: 'json',
+      adventure, provider, strategy: plan.strategy, renderer: 'json',
       thinking: false, temperature: plan.temperature,
       maxOutputTokens: plan.budgets.maxOutputTokensPerTurn,
     });

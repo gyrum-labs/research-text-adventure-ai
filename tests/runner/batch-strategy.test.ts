@@ -54,6 +54,8 @@ describe('the context strategy as the experiment variable', () => {
       .toThrow(/unknown context strategy "napkin"/);
     // The default is the context every recorded batch ran before the field existed.
     expect(planFor(options, PRICES).strategy).toBe('structured');
+    // And the plan itself refuses what it cannot name, where it is made.
+    expect(() => planWith('napkin')).toThrow(/unknown context strategy "napkin"/);
   });
 
   it('hands the plan\'s strategy to the policy that builds the prompt', async () => {

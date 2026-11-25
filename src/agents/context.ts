@@ -85,9 +85,11 @@ export function buildContext(strategy: ContextStrategy, input: ContextInput): st
 /**
  * The map and the ledger: the world as the agent knows it, stated once.
  *
- * Connections, objects and facts are collected across every observation and
- * deduplicated, so an agent re-reading its context reads a state rather than a
- * transcript. The moves are one line each: what was tried, what came back.
+ * Connections and objects are collected across every observation and kept
+ * current, so an agent re-reading its context reads a state rather than a
+ * transcript. What the world said is kept once per distinct line and never
+ * withdrawn: a fact the agent has been told is not retracted when it acts on
+ * it. The moves are one line each: what was tried, what came back.
  */
 function renderMap(input: ContextInput): string {
   const observations = [...input.turns.flatMap(turn =>

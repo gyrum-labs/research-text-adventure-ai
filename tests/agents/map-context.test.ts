@@ -56,6 +56,40 @@ describe('the map-and-ledger context', () => {
     }
   });
 
+  it('shows every objective the world reports, with its status, from the first turn', () => {
+    // The objectives come from the observation the kernel builds, so they are
+    // on the notepad before the first move.
+    const context = contextFor([]);
+    const goals = buildObservation(mission, mission.initial).goals;
+    expect(goals.length).toBeGreaterThan(0);
+    expect(context).toContain('OBJECTIVES:');
+    for (const goal of goals) {
+      expect(context).toContain(`- ${goal.text} [${goal.status === 'complete' ? 'done' : 'not done'}]`);
+    }
+  });
+
+  it('traces every line it was told to the move that produced it', () => {
+    // A told line is a message the world gave, and every message belongs to a
+    // turn. The latest observation is the last turn's own, so nothing can be
+    // told without a move to account for it.
+    const commands = ['take keycard', 'go corridor', 'open locker', 'read manual'];
+    const history = played(commands);
+    const context = contextFor(commands);
+    expect(history.turns.at(-1)?.observation).toBe(history.observation);
+
+    const said = new Set<string>();
+    for (const turn of history.turns) {
+      for (const message of turn.observation.messages) {
+        for (const line of message.split('\n')) if (line.trim().length > 0) said.add(line.trim());
+      }
+    }
+    const told = context.split('WHAT YOU HAVE BEEN TOLD:')[1]?.split('MOVES:')[0] ?? '';
+    const lines = told.split('\n').map(line => line.trim()).filter(line => line.startsWith('- ')).map(line => line.slice(2));
+    expect(lines.length).toBeGreaterThan(0);
+    for (const line of lines) expect(said.has(line)).toBe(true);
+    commands.forEach((command, index) => expect(context).toContain(`${index + 1}. ${command} ->`));
+  });
+
   it('gains a told section once something has been read', () => {
     const context = contextFor(['take keycard', 'go corridor', 'open locker', 'read manual']);
     expect(context).toContain('WHAT YOU HAVE BEEN TOLD:');
