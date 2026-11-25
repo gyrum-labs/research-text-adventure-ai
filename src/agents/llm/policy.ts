@@ -142,6 +142,7 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
         system: bundle.system,
         messages: bundle.messages,
         ...(allowance === undefined ? {} : { maxOutputTokens: allowance }),
+        ...(attempt === 0 ? {} : { cutOffRetry: attempt }),
         ...(this.temperature === undefined ? {} : { temperature: this.temperature }),
       });
       attempts.push({

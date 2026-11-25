@@ -133,13 +133,15 @@ describe('the real-model demo', () => {
     } finally { await started.close(); }
   });
 
-  it('holds a request to the run\'s own allowance, however much it asks for', async () => {
+  it('gives a first request the run\'s allowance and a retry twice the room, however much is asked', async () => {
     // The guard is tried as itself here, and not through the policy. The
     // policy always asks for the right amount, so a guard that let more
-    // through would never be seen through it. A server that lowers a run's
-    // allowance lowers the ceiling with it: a request may have the allowance,
-    // doubled once for every retry on a cut-off reply, and no more.
-    const requests: { max_tokens: number }[] = [];
+    // through would never be seen through it. A run given a smaller allowance
+    // has a smaller ceiling. The server does not take the policy's word for
+    // which retry a request is: a request that does not say is a first
+    // request, and gets the allowance. A retry says which it is, and gets the
+    // allowance doubled once for every retry before it.
+    const requests: Record<string, unknown>[] = [];
     modelFetch(async init => {
       requests.push(JSON.parse(String(init.body)));
       return Response.json({ choices: [{ message: { content: 'COMMAND: look' }, finish_reason: 'stop' }],
@@ -148,23 +150,35 @@ describe('the real-model demo', () => {
     const budgets = { ...LIVE_AI_BUDGETS, maxOutputTokensPerTurn: 500 };
     const guarded = guardedProvider({ apiKey: secret, model: 'deepseek/deepseek-chat' },
       new AbortController().signal, { maxPromptBytes: 16_000, budgets });
-    const ask = async (maxOutputTokens?: number): Promise<number> => {
-      await guarded.provider.complete({ system: 'system', messages: [{ role: 'user', content: 'go' }],
-        ...(maxOutputTokens === undefined ? {} : { maxOutputTokens }) });
-      return requests.at(-1)!['max_tokens'];
+    const ask = async (said: { maxOutputTokens?: number; cutOffRetry?: number } = {}): Promise<number> => {
+      await guarded.provider.complete({ system: 'system', messages: [{ role: 'user', content: 'go' }], ...said });
+      return requests.at(-1)!['max_tokens'] as number;
     };
 
-    // Far more than the allowance, a little more than it, and nothing named.
-    expect(await ask(50_000)).toBe(2_000);
-    expect(await ask(600)).toBe(600);
+    // A first request: the allowance, and no more, though it asks for far more.
+    expect(await ask({ maxOutputTokens: 50_000 })).toBe(500);
+    expect(await ask({ maxOutputTokens: 600 })).toBe(500);
+    expect(await ask({ maxOutputTokens: 300 })).toBe(300);
     expect(await ask()).toBe(500);
+    // The first retry gets twice the allowance, and the second twice that.
+    expect(await ask({ maxOutputTokens: 50_000, cutOffRetry: 1 })).toBe(1_000);
+    expect(await ask({ maxOutputTokens: 600, cutOffRetry: 1 })).toBe(600);
+    expect(await ask({ maxOutputTokens: 50_000, cutOffRetry: 2 })).toBe(2_000);
+    // Past the bound is no more than the last retry. Nonsense is a first request.
+    expect(await ask({ maxOutputTokens: 50_000, cutOffRetry: 9 })).toBe(2_000);
+    expect(await ask({ maxOutputTokens: 50_000, cutOffRetry: -1 })).toBe(500);
+    expect(await ask({ maxOutputTokens: 50_000, cutOffRetry: 1.5 })).toBe(500);
+    // What a request said about itself is for the guard, and never leaves it.
+    expect(requests.some(request => 'cutOffRetry' in request)).toBe(false);
   });
 
   it('keeps a lowered allowance through the whole path, on a first request and on a retry', async () => {
     // The same lowered allowance, watched through the page. The policy asks
-    // for it, and for twice it on a retry, and the guard passes exactly that.
-    // On its own this would also pass with a guard that let more through,
-    // because the policy is well behaved. The test above holds the guard.
+    // for it, and for twice it on a retry, and says which request is the
+    // retry. The guard passes exactly that. So this holds the two together:
+    // if the policy stopped saying which request is a retry, the guard would
+    // hold that request to the allowance, and the second number below would
+    // be 500.
     const requests: { max_tokens: number }[] = [];
     let call = 0;
     modelFetch(async init => {

@@ -5,8 +5,9 @@
  * say how much work one run may do. Every way into the page game that a model
  * plays takes them from here: the batch that records runs, and the live page a
  * person watches. A free run on that page, which no model plays, takes the
- * runner's own defaults instead. The specification's section on limits says the
- * same.
+ * runner's own defaults instead. Those share the page game's output allowance,
+ * and neither its turns nor its tokens. The specification's section on limits
+ * says the same.
  *
  * They changed on 25 November 2026, at the owner's decision (warp#23474),
  * after the records showed the old numbers spending a run's budget before the
@@ -30,11 +31,17 @@ export const PAGE_GAME_LIMITS = Object.freeze({
 });
 
 /**
- * The most output tokens one request of a run can come to ask for: the run's
- * own allowance, doubled once for every retry on a cut-off reply.
+ * The output tokens one request of a run may come to ask for: the run's own
+ * allowance, doubled once for every retry on a cut-off reply that came before
+ * it. A turn's first request gets the allowance itself.
  */
+export function outputTokensForRequest(allowance: number, retriesBefore = 0): number {
+  return allowance * 2 ** retriesBefore;
+}
+
+/** The most output tokens one request of a run can come to ask for, after every retry on a cut-off reply the runner will make. */
 export function mostOutputTokensInOneRequest(allowance: number): number {
-  return allowance * 2 ** CUT_OFF_RETRIES;
+  return outputTokensForRequest(allowance, CUT_OFF_RETRIES);
 }
 
 /** The page game's: the most output tokens one request can come to ask for, after every retry on a cut-off reply. */

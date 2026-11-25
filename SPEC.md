@@ -1199,17 +1199,22 @@ and the reasoning count. The reply's own tokens are the difference. A turn that
 gets no reply, because the run stopped while it waited for one, has no reply
 record. The record that says how the run stopped, or was paused, follows it.
 
-**What the server allows.** On the live page the server keeps each request
-within that ceiling and within what the run has left, whatever the policy asks
-for. The ceiling is taken from the run's own allowance and not from the page
-game's, so a run given a smaller allowance has a smaller ceiling.
+**What the server allows.** On the live page the server keeps each request to
+what the run's allowance gives it and to what the run has left, whatever the
+policy asks for. A turn's first request gets the allowance. A retry on a
+cut-off reply gets twice the room of the request before it. The policy says
+which retry a request is, and a request that does not say is held to the
+allowance, as a first request is. The numbers are taken from the run's own
+budgets and not from the page game's, so a run given a smaller allowance has a
+smaller ceiling.
 
 **A run that does not change the world.** The runner notes when a turn leaves the
 world as it found it. A look, a refused command and a reply with no command all
 leave it. The longest such streak, and the number of streaks that reached three,
 are in the run's final metrics. Each streak is written to the transcript as a
-`freeze` record, on the turn where it reached three. They end nothing. The
-turns are the limit.
+`freeze` record, on the turn where it reached three, and written once: a pause
+that splits the turn the streak is counted on does not write it again. They end
+nothing. The turns are the limit.
 
 **History.** Until 25 November 2026 the limits were 20 turns, 30,000 tokens and
 300 output tokens per request, and the third turn in an unchanged state ended the
@@ -1220,9 +1225,12 @@ which it was.
 ### 11.2.1 The runner's own defaults
 
 A caller that names none of the limits above gets these. A free run on the live
-page is one (11.2). They are not the page game's limits: both ways into the page game that a model
-plays pass the table above. Until 25 November 2026 a request was allowed 500
-output tokens by default, and the third unchanged turn ended the run.
+page is one (11.2). One of them is the page game's: the output allowance, 3,000,
+because a model that reasons before it answers needs it wherever it plays. The
+others are not. A run of the page game that a model plays gets 25 turns and
+40,000 tokens, and both ways into it pass the table above rather than this one.
+Until 25 November 2026 a request was allowed 500 output tokens by default, and
+the third unchanged turn ended the run.
 
 Loop detection compares consecutive gameplay states, including each object's string
 state, flags, position and remaining hints. It excludes the turn counter. A first

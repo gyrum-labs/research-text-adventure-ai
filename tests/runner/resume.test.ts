@@ -126,6 +126,32 @@ describe('resuming a run', () => {
     expect(second.freezes).toBe(1);
   });
 
+  it('writes a freeze into the transcript once, when the pause lands after it was counted', async () => {
+    // Three quiet turns, and then the pause arrives inside the next turn. The
+    // count taken as that turn began is where the streak of three is noted and
+    // written down. The resumed run takes the turn again and counts it again,
+    // and must not write the same freeze a second time. The transcript is the
+    // evidence, so it is read here, and not only the final count (review 11 of
+    // PR #52, which found the record written twice).
+    const path = join('runs', 'resume-freeze-test.jsonl');
+    if (existsSync(path)) unlinkSync(path);
+    const transcript = new Transcript(path, header(0));
+    const waiting = waitingPolicy(3);
+    const first = await run({
+      adventure, policy: waiting.policy as never, maxTurns: 6, signal: waiting.policy.signal, transcript,
+    });
+    expect(first.outcome).toBe('paused');
+    expect(first.pause?.counters.freezes).toBe(0);
+    const second = await run({
+      adventure, policy: { id: 'stub', async next() { return 'wait'; } } as never,
+      initial: first.state, startingTurn: first.turns, resume: first.pause, maxTurns: 1, transcript,
+    });
+    transcript.close();
+    expect(second.freezes).toBe(1);
+    const freezes = readTranscript(path).filter(record => record.type === 'freeze');
+    expect(freezes.map(record => [record.turn, record.streak])).toEqual([[2, 3]]);
+  });
+
   it('a resumed run carries its error counters across the pause', async () => {
     // A policy that issues one unparsable command before the pause, then
     // behaves: the resumed run must still remember the parse error.

@@ -27,8 +27,10 @@ import { adventure } from '../../src/adventures/mission-impossible/adventure.js'
 import { adventure as hotfix } from '../../src/adventures/hotfix-2-4-1/adventure.js';
 import { BATCH_BUDGETS, buildPlan, openLedger, summarise } from '../../src/runner/batch.js';
 import { computeMetrics } from '../../src/runner/metrics.js';
-import { MOST_OUTPUT_TOKENS_IN_ONE_REQUEST, PAGE_GAME_LIMITS, mostOutputTokensInOneRequest } from '../../src/runner/limits.js';
-import { DEFAULT_MAX_TURNS, run, RunBudgetExceeded } from '../../src/runner/run.js';
+import {
+  MOST_OUTPUT_TOKENS_IN_ONE_REQUEST, PAGE_GAME_LIMITS, mostOutputTokensInOneRequest, outputTokensForRequest,
+} from '../../src/runner/limits.js';
+import { DEFAULT_BUDGETS, DEFAULT_MAX_TURNS, run, RunBudgetExceeded } from '../../src/runner/run.js';
 import { readTranscript, Transcript } from '../../src/runner/transcript.js';
 import { driveRun, type HeldRun } from '../../src/server/ai-runs.js';
 import { LIVE_AI_BUDGETS } from '../../src/server/live-ai.js';
@@ -97,6 +99,9 @@ describe('the limits, stated once', () => {
     // has a smaller ceiling, and the page game's is only the page game's.
     expect(mostOutputTokensInOneRequest(500)).toBe(2_000);
     expect(MOST_OUTPUT_TOKENS_IN_ONE_REQUEST).toBe(mostOutputTokensInOneRequest(ALLOWANCE));
+    // Said once, for a turn's first request and for each retry after it.
+    expect([0, 1, CUT_OFF_RETRIES].map((retries) => outputTokensForRequest(500, retries))).toEqual([500, 1_000, 2_000]);
+    expect(mostOutputTokensInOneRequest(500)).toBe(outputTokensForRequest(500, CUT_OFF_RETRIES));
   });
 
   it('are carried whole by the batch and by the live page', () => {
@@ -104,9 +109,22 @@ describe('the limits, stated once', () => {
     expect(LIVE_AI_BUDGETS).toMatchObject(PAGE_GAME_LIMITS);
   });
 
+  it('share their output allowance with the runner\'s defaults, and nothing else', () => {
+    // A caller that names no limits gets the runner's defaults. They take the
+    // page game's output allowance, because a model that reasons before it
+    // answers needs it wherever it plays. They take neither its turns nor its
+    // tokens (SPEC.md 11.2.1).
+    expect(DEFAULT_BUDGETS.maxOutputTokensPerTurn).toBe(PAGE_GAME_LIMITS.maxOutputTokensPerTurn);
+    expect(DEFAULT_BUDGETS.maxTurns).toBe(DEFAULT_MAX_TURNS);
+    expect(DEFAULT_BUDGETS.maxTurns).not.toBe(PAGE_GAME_LIMITS.maxTurns);
+    expect(DEFAULT_BUDGETS.maxTotalTokens).not.toBe(PAGE_GAME_LIMITS.maxTotalTokens);
+  });
+
   // A free run is one a person starts on the live page with the random or the
   // scripted policy. No model plays it, so it does not take the page game's
-  // limits, which say how much a model may spend. It takes the runner's own.
+  // limits, which say how much a model may spend. It takes the runner's own
+  // defaults, which share the page game's output allowance and neither its
+  // turns nor its tokens.
   // The run itself is read, not only the transcript's header: a header could
   // claim a limit the run did not have.
   it('are not a free run\'s, which takes the runner defaults instead', async () => {
@@ -166,6 +184,9 @@ describe('a reply cut off by its allowance', () => {
     expect(command).toBeNull();
     expect(provider.calls).toBe(1 + CUT_OFF_RETRIES);
     expect(provider.requests.map((request) => request.maxOutputTokens)).toEqual([3_000, 6_000, 12_000]);
+    // Each retry says which retry it is, and a turn's first request says
+    // nothing, so that a guard can hold a first request to less than a retry.
+    expect(provider.requests.map((request) => request.cutOffRetry)).toEqual([undefined, 1, 2]);
     expect(policy.metrics().lastReply).toMatchObject({ cutOff: true, command: false });
     expect(policy.metrics().lastReply?.attempts).toHaveLength(3);
     expect(policy.metrics().unparsableResponses).toBe(1);

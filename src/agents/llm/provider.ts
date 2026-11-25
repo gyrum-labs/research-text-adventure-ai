@@ -23,6 +23,13 @@ export interface LlmRequest {
   system: string;
   messages: ChatMessage[];
   maxOutputTokens?: number;
+  /**
+   * Which retry on a cut-off reply this request is: 1 for the first, 2 for the
+   * second. A turn's first request leaves it out. A guard can then hold a first
+   * request to a smaller allowance than a retry, without trusting the policy
+   * for which is which.
+   */
+  cutOffRetry?: number;
   temperature?: number;
   /** Provider-specific extra body. */
   extra?: Record<string, unknown>;

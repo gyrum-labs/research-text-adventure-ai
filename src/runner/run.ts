@@ -138,8 +138,8 @@ export interface RunResumeState {
   events: Event[];
   /** What the agent was last told, so it does not read a stale view. */
   messages: string[];
-  /** The loop guard's reading of the run so far. */
-  loop: { lastSituation: string; repeats: number };
+  /** The loop guard's reading of the run so far. `freezeWritten` says the count the interrupted turn took had written its freeze record. */
+  loop: { lastSituation: string; repeats: number; freezeWritten?: boolean };
   /** The counters that cap attempts: errors, hints, and how turns were spent. */
   counters: {
     parseErrors: number;
@@ -268,12 +268,19 @@ export async function run(options: RunOptions): Promise<RunResult> {
    * counted once.
    */
   let countedTurn = -1;
-  let countBefore = { lastSituation, repeats, freezes, longestUnchangedTurns };
+  let countBefore = { lastSituation, repeats, freezes, longestUnchangedTurns, freezeWritten: false };
 
-  /** Note a freeze, on the turn where the streak of unchanged turns reached the run's threshold. It is written down. It ends nothing. */
-  const countFreeze = (turn: number): void => {
+  /**
+   * Note a freeze, on the turn where the streak of unchanged turns reached the
+   * run's threshold. It is written down, and it ends nothing. It is written
+   * once: a count that is taken again after a pause finds its record already
+   * in the transcript, and only counts.
+   */
+  const countFreeze = (turn: number, writtenBefore = false): void => {
     if (repeats !== budgets.maxRepeatedStates) return;
     freezes += 1;
+    if (writtenBefore) return;
+    countBefore.freezeWritten = true;
     options.transcript?.write({ type: 'freeze', turn, streak: repeats });
   };
 
@@ -403,7 +410,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
         events: [...events],
         messages: [...messages],
         loop: countedTurn === turn
-          ? { lastSituation: countBefore.lastSituation, repeats: countBefore.repeats }
+          ? { lastSituation: countBefore.lastSituation, repeats: countBefore.repeats, freezeWritten: countBefore.freezeWritten }
           : { lastSituation, repeats },
         counters: {
           parseErrors, invalidActions, hintsUsed, transientErrors, unparsableResponses,
@@ -432,11 +439,16 @@ export async function run(options: RunOptions): Promise<RunResult> {
     // Whether the last turn left the world as it found it. It is counted. It
     // is never a reason to stop: the turns are the limit.
     const situationAtStart = situationKey(state);
-    countBefore = { lastSituation, repeats, freezes, longestUnchangedTurns };
+    // A resumed run takes first the turn the pause interrupted. Its count was
+    // taken before the pause, so it is taken again here. If that count noted a
+    // freeze, the record of it is already in the transcript, and is not
+    // written again.
+    const retaken = turn === startingTurn && continueFrom?.loop.freezeWritten === true;
+    countBefore = { lastSituation, repeats, freezes, longestUnchangedTurns, freezeWritten: retaken };
     repeats = situationAtStart === lastSituation ? repeats + 1 : 0;
     // The count is taken as this turn begins, and covers the turns before it.
     // So a streak that has just reached three did so on the turn before.
-    countFreeze(turn - 1);
+    countFreeze(turn - 1, retaken);
     lastSituation = situationAtStart;
     longestUnchangedTurns = Math.max(longestUnchangedTurns, repeats);
     countedTurn = turn;
