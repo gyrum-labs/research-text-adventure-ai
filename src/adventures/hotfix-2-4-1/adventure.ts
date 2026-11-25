@@ -49,7 +49,7 @@ function objectState(at: string | null, flags: Record<string, boolean> = {}): Ga
 export const adventure: Adventure = {
   id: 'hotfix-2-4-1',
   title: 'The 2.4.1 Hotfix',
-  version: '1.0.5',
+  version: '1.0.6',
 
   brief:
     'The customer SLA expires at 17:00 and the 2.4.1 hotfix is not shipped. Two objectives: ' +
@@ -142,6 +142,7 @@ export const adventure: Adventure = {
       aliases: ['incident-ticket', 'INC-4471', 'ticket'],
       description: 'INC-4471, printed on a single sheet of paper.',
       takeable: true,
+      readable: true,
     },
     oncall_board: {
       id: 'oncall_board',
@@ -296,9 +297,30 @@ export const adventure: Adventure = {
     {
       verb: 'read',
       synonyms: ['study'],
-      args: [{ name: 'target', role: 'object-in-room' }],
+      args: [{ name: 'target', role: 'object' }],
       requires: [
-        { op: 'arg_in_room', arg: 'target' },
+        { op: 'arg_within_reach', arg: 'target' },
+        { op: 'arg_flag', arg: 'target', key: 'readable', value: true },
+        { op: 'arg_equals', arg: 'target', value: 'incident_ticket' },
+      ],
+      effects: [{ op: 'set_flag', key: 'ticket_read', value: true }],
+      text: {
+        // What an incident record holds: its reference, how bad it is, what
+        // is broken, the deadline, and what closes it. It says nothing about
+        // which move to make.
+        success:
+          'You read the incident ticket.\n\n' +
+          'INC-4471. Severity 1. The 2.4.1 hotfix has not shipped, and the customer SLA expires at 17:00. ' +
+          'Two things close this incident: the hotfix shipped, and the customer told.',
+        failure: 'There is nothing written on the {target}.',
+      },
+    },
+    {
+      verb: 'read',
+      synonyms: ['study'],
+      args: [{ name: 'target', role: 'object' }],
+      requires: [
+        { op: 'arg_within_reach', arg: 'target' },
         { op: 'arg_flag', arg: 'target', key: 'readable', value: true },
         { op: 'arg_equals', arg: 'target', value: 'runbook' },
       ],
@@ -314,9 +336,9 @@ export const adventure: Adventure = {
     {
       verb: 'read',
       synonyms: ['study'],
-      args: [{ name: 'target', role: 'object-in-room' }],
+      args: [{ name: 'target', role: 'object' }],
       requires: [
-        { op: 'arg_in_room', arg: 'target' },
+        { op: 'arg_within_reach', arg: 'target' },
         { op: 'arg_flag', arg: 'target', key: 'readable', value: true },
         { op: 'arg_equals', arg: 'target', value: 'oncall_board' },
       ],

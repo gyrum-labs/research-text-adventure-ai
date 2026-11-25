@@ -21,6 +21,7 @@ const predicate = z.discriminatedUnion('op', [
   z.object({ op: z.literal('in_room'), room: id }).strict(),
   z.object({ op: z.literal('object_in_room'), object: id, room: id }).strict(),
   z.object({ op: z.literal('arg_in_room'), arg: id }).strict(),
+  z.object({ op: z.literal('arg_within_reach'), arg: id }).strict(),
   z.object({ op: z.literal('carrying'), object: id }).strict(),
   z.object({ op: z.literal('flag'), key: id, value: z.boolean() }).strict(),
   z.object({ op: z.literal('object_flag'), object: id, key: id, value: z.boolean() }).strict(),

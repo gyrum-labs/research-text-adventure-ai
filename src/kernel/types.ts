@@ -210,6 +210,8 @@ export type Predicate =
   | { op: 'object_in_room'; object: Id; room: Id }
   /** The object bound to `arg` is in the player's current room. */
   | { op: 'arg_in_room'; arg: string }
+  /** The object bound to `arg` is within reach: in the player's current room, or carried. */
+  | { op: 'arg_within_reach'; arg: string }
   /** This named object is in the player's inventory. */
   | { op: 'carrying'; object: Id }
   /** A world-level fact. */

@@ -26,6 +26,8 @@ export const DESCRIBE_VERBS = ['look', 'inventory', 'help'] as const;
  */
 export const NOT_VISIBLE_PREFIX = "You can't see anything called";
 export const NOT_CARRYING_PREFIX = "You aren't carrying anything called";
+/** A command named something the player is carrying, which that command does not take. */
+export const CARRIED_PREFIX = 'You are carrying the';
 
 const CONNECTIVES = [' with ', ' on ', ' to '];
 
@@ -95,7 +97,7 @@ export function parseCommand(
       args[spec.name] = value;
       continue;
     }
-    const resolved = resolveArgument(adventure, state, spec, value);
+    const resolved = resolveArgument(adventure, state, spec, value, verb);
     if ('error' in resolved) {
       return { ok: false, message: `${resolved.error}\nUse: ${commandSyntax(first)}.` };
     }
@@ -192,6 +194,7 @@ function resolveArgument(
   state: GameState,
   spec: ArgSpec,
   value: string,
+  verb: string,
 ): Resolved {
   const needle = value.trim().toLowerCase();
   if (needle.length === 0) {
@@ -221,6 +224,13 @@ function resolveArgument(
 
   if (spec.role === 'object-in-inventory') {
     return { error: `${NOT_CARRYING_PREFIX} "${value}".\n${carryingList(matches)}` };
+  }
+  // The thing may be in the pocket. Then it is not out of sight, and saying
+  // so would be untrue: it is carried, and this command takes only what is
+  // in the room. The refusal says that.
+  const carried = Object.values(adventure.objects).filter((object) => state.inventory.includes(object.id));
+  if (carried.some((object) => matchesName(object, needle) || partiallyMatches(object, needle))) {
+    return { error: `${CARRIED_PREFIX} "${value}", and "${verb}" only works on something in the room.\n${carryingList(carried)}` };
   }
   return { error: `${NOT_VISIBLE_PREFIX} "${value}" here.\n${visibleList(matches)}` };
 }
