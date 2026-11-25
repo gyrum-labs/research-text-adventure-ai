@@ -322,15 +322,21 @@ Prose: `SPEC.md` §10.4.
 
 Every way a run can end, and what each one means.
 
+Until 25 November 2026 the third turn in the same state ended a run as `loop_detected`.
+It is counted now, and ends nothing (`SPEC.md` 11.2, warp#23474). A reply cut off by
+its allowance is asked for again in the same turn, with the room doubled. That is not
+a way a run ends, so it is not drawn.
+
 ```mermaid
 flowchart TD
     T["turn"] --> B1{"turns used<br/>≥ maxTurns?"}
     B1 -- yes --> E1["budget_exhausted"]
     B1 -- no --> B2{"tokens used<br/>≥ ceiling?"}
     B2 -- yes --> E1
-    B2 -- no --> B3{"same state hash<br/>3 turns running?"}
-    B3 -- yes --> E2["loop_detected"]
+    B2 -- no --> B3{"did the last turn leave<br/>the world as it found it?"}
+    B3 -- yes --> C1["counted: the streak is<br/>one longer. It ends nothing"]
     B3 -- no --> B4{"provider errors<br/>≥ 3?"}
+    C1 --> B4
     B4 -- yes --> E3["provider_error"]
     B4 -- no --> B5{"parse errors<br/>≥ 10?"}
     B5 -- yes --> E4["budget_exhausted"]

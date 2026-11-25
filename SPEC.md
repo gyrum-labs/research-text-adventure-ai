@@ -246,7 +246,7 @@ Terms used throughout this document, in the order a newcomer meets them.
 | **Canonical JSON** | A JSON representation with sorted keys and no incidental whitespace, so two equal states always produce identical bytes. |
 | **Policy** | Whatever is choosing the agent's next command. The human, a script, a random picker and the model are all policies. The runner cannot tell them apart. |
 | **Budget** | A limit on turns, tokens, cost or wall-clock time. Every run has them, so a confused agent cannot run up a bill. |
-| **Guard** | A rule that stops a run early. A repeated state, too many provider errors, a blown budget. |
+| **Guard** | A rule that stops a run early: too many provider errors, a blown budget. Until 25 November 2026 a repeated state was one (11.2). |
 | **Transcript** | The JSONL record of a run: every observation, command, event and state hash. |
 | **Replay** | Re-running a transcript's commands through the engine and checking the hashes match. Proves the environment is deterministic. |
 | **Context strategy** | What the model is allowed to remember: the whole history, a recent window, a summary of what it has seen, or nothing. An experimental variable. See §10.4. |
@@ -1130,28 +1130,67 @@ loop:
   record events + new state hash
   if transition indicates terminal failure → finish(failure)
 guards:
-  if turn >= maxTurns            → finish(budget_exhausted)
-  if repeatedStateHashes >= 3    → finish(loop_detected)
-  if cost/token ceiling exceeded → finish(budget_exhausted)
+  if turn >= maxTurns             → finish(budget_exhausted)
+  if token ceiling exceeded       → finish(budget_exhausted)
+  if wall clock exceeded          → finish(budget_exhausted)
   if provider transient error x3  → finish(provider_error)
+  a reply cut off by its allowance → asked again, same turn, room doubled, at most twice
+  a turn that left the world as it found it → counted. It ends nothing (§11.2)
 ```
 
-### 11.2 Budgets (defaults, all overridable by CLI flag)
+### 11.2 The page game's limits, stated once
+
+The page game is the project's measuring instrument. These four numbers say how
+much work one of its runs may do. They are stated here, and in one place in the
+code (`src/runner/limits.ts`), which both ways into the page game take them from:
+the batch that records runs, and the live page a person watches.
+
+| Limit | Value | Why |
+|---|---|---|
+| Turns a run may take | 25 | The shortest route is 10 moves. Solves were arriving at 16 to 17 turns against a cap of 20, and 19 of 21 runs that used all 20 had one of two objectives done and were still changing the world |
+| Tokens a run may spend, reasoning included | 40,000 | In step with 25 turns. A 16 or 17 turn run used 22,000 to 27,000 |
+| Output tokens a request asks for | 3,000 | A cap of 300 paid for a model's hidden reasoning before any reply. A reply cut off by it is asked for again with the room doubled |
+| Wall-clock time a run may take | 120 seconds | Unchanged. The longest recorded run is 56 seconds |
+
+**A reply that is cut off.** The provider says when the allowance ended a reply
+before the model had finished. On that, the same question is asked for again with
+twice the room, at most twice more, so one request can come to ask for at most
+12,000 output tokens. The turn is still one turn. Every attempt is written to the
+transcript with its allowance, how the reply ended, and how many tokens were
+reasoning and how many were the reply.
+
+**A run that does not change the world.** The runner notes when a turn leaves the
+world as it found it. A look, a refused command and a reply with no command all
+leave it. The longest such streak, and the number of streaks that reached three,
+are in the run's final metrics. They end nothing. The turns are the limit.
+
+**History.** Until 25 November 2026 the limits were 20 turns, 30,000 tokens and
+300 output tokens per request, and the third turn in an unchanged state ended the
+run as `loop_detected` (warp#23474). A result recorded under those limits is never
+pooled with a result recorded under these, and every document that cites one says
+which it was.
+
+### 11.2.1 The runner's own defaults
+
+A caller that names none of the limits above gets these. They are not the page
+game's limits: both ways into the page game pass the table above.
 
 Loop detection compares consecutive gameplay states, including each object's string
 state, flags, position and remaining hints. It excludes the turn counter. A first
 inspection that sets `examined` counts as progress; repeating an inspection after
-that state is set does not. Three identical consecutive situations still stop the run.
+that state is set does not. Three identical consecutive situations are counted as a
+freeze. They do not stop the run.
 
 | Budget | Default | Rationale |
 |---|---|---|
 | `maxTurns` | 30 | Gold path is 10; 3× is generous but still bounded |
 | `maxHints` | 3 | Prevents unbounded flailing; hints are recorded and counted |
-| `maxOutputTokensPerTurn` | 500 | Bounds cost per turn |
+| `maxOutputTokensPerTurn` | 3,000 | The page game's. A model that reasons before it answers needs it (11.2) |
 | `maxTotalTokens` | 20 000 | Hard cost ceiling per run |
 | `maxWallClockMs` | 300 000 | Protects CI |
 | `maxTransientProviderErrors` | 3 | Then fail the run cleanly |
 | `maxParseErrors` | 10 | Then fail the run cleanly |
+| `maxRepeatedStates` | 3 | A streak this long is counted as a freeze. It ends nothing (11.2) |
 
 ### 11.3 Cost control (C3)
 

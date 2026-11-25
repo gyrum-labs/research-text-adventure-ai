@@ -357,6 +357,41 @@ incident record says and nothing about which move to make. Results recorded befo
 pooled with results recorded after. Other commands still take only what is in the room; only their
 refusals changed. The rulebook has eleven predicates.
 
+### ADR-018: The page game's limits give room to think, and a streak ends nothing
+
+**Status:** Accepted, 25 November 2026, at the project owner's direction (warp#23474).
+
+**Context.** The page game is the measuring instrument. Its limits were 20 turns,
+30,000 tokens, 300 output tokens per request and 120 seconds, and a guard ended a
+run on its third turn in an unchanged state. The records of 25 November showed
+three of them spending a run's budget before the model could use it. A cap of 300
+output tokens pays for a model's hidden reasoning before it pays for any reply:
+one model lost 43 per cent of its turns to replies that arrived with nothing in
+them, and with the cap alone raised it solved 10 of 10 where it had solved 1 of
+10. The guard counted a look as an unchanged turn and gave an agent two quiet
+turns after every move. It ended 9 of 10 of another model's runs, in one case one
+turn after the world had said "It wants the incident ticket." And of 21 runs that
+used all 20 turns, 19 had one of two objectives done and 19 were still changing
+the world in their last three turns.
+
+**Decision.** The limits are stated once, in `src/runner/limits.ts`, and the batch
+and the live page take them from there: 25 turns, 40,000 tokens a run, 3,000
+output tokens a request, 120 seconds. A reply the provider cut off is asked for
+again in the same turn with the room doubled, at most twice, and every attempt is
+written to the transcript with how it ended and how many tokens were reasoning.
+The guard no longer ends a run. It counts the longest streak of turns that left
+the world as they found it, and the streaks that reached three, and the run's
+final metrics carry both. The batch's report gives the solve rate, then the solved
+runs by fewest turns, then every unsolved run with why it ended.
+
+**Consequences.** A model that reasons before it answers can answer. A model that
+looks before it acts is no longer ended for looking. Every page-game number
+recorded before this date belongs to the old limits, is never pooled with a number
+recorded after, and every document that cites one says so. The kernel's
+`loop_detected` outcome stays in its type because recorded runs carry it, and the
+runner no longer produces it. The sandbox sets no output cap and had no guard.
+Its shift length follows separately.
+
 ## 5. Open decisions for the implementing agent
 
 Per `SPEC.md` §19, these have documented defaults. An implementer who changes one must record an

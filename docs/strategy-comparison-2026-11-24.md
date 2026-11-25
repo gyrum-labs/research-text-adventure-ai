@@ -1,5 +1,9 @@
 # Context strategies on the fixed engine, like for like
 
+> Recorded under the limits as they were before 25 November 2026: 20 turns, 30,000 tokens and
+> 300 output tokens per request, with a guard that ended a run on its third unchanged turn.
+> Not to be pooled with any result recorded under the current limits (`SPEC.md` 11.2, warp#23474).
+
 warp#23366 · roadmap step six (EPIC warp#22704) · recorded 2026-11-25 at
 revision `1480db6`, and read here from the record that survived
 

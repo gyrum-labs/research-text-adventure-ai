@@ -1,5 +1,9 @@
 # Repeatability batch, 2026-11-13
 
+> Recorded under the limits as they were before 25 November 2026: 20 turns, 30,000 tokens and
+> 300 output tokens per request, with a guard that ended a run on its third unchanged turn.
+> Not to be pooled with any result recorded under the current limits (`SPEC.md` 11.2, warp#23474).
+
 Twenty runs, ten per world, one plan, one model, one set of limits. This is the
 first measurement the roadmap has produced, and it answers a narrower question
 than it might look like it answers: how the same model does on the two worlds
