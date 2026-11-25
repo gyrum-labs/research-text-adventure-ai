@@ -540,13 +540,14 @@ Enforced by `tests/architecture.test.ts` (C4), and by a lint rule that keeps the
 
 ### 5.1 The specification DSL (kernel vocabulary)
 
-The kernel understands exactly these ten predicates and ten effects. Nothing else.
+The kernel understands exactly these eleven predicates and ten effects. Nothing else.
 
 ```ts
 type Predicate =
   | { op: 'in_room'; room: Id }                                 // the player is here
   | { op: 'object_in_room'; object: Id; room: Id }              // a named object is there
   | { op: 'arg_in_room'; arg: string }                         // the bound object is here
+  | { op: 'arg_within_reach'; arg: string }                   // the bound object is here or carried
   | { op: 'carrying'; object: Id }                              // a named object is carried
   | { op: 'flag'; key: string; value: boolean }                 // a world fact
   | { op: 'object_flag'; object: Id; key: string; value: boolean }
@@ -865,7 +866,7 @@ Action text can insert the public list with `{commands}`.
 | `take` | `get`, `grab`, `pick up` | `target: object-in-room` | |
 | `drop` |. | `target: object-in-inventory` | |
 | `open` |. | `target: object-in-room` | Containers |
-| `read` |. | `target: object-in-room` | Readables |
+| `read` |. | `target: object` | Readables, in the room or carried. What you hold, you can read |
 | `unlock` |. | `target: object-in-room`, `with: text` | Key object **or** numeric code |
 | `cut` |. | `target: object-in-room`, `with: object-in-inventory` | Tool must be carried |
 | `use` |. | `tool: object-in-inventory`, `on: object-in-room` | Generic two-arg form |
@@ -885,6 +886,9 @@ connective (`on` / `with` / `to`) and splits accordingly.
 5. Resolve object arguments against: current room contents → inventory → doors (by label).
    Resolution is exact alias match first, then case-insensitive prefix match if unambiguous.
 6. Unresolvable argument → `parse_error` with a message naming the failure.
+   A named object that is carried, under a command that takes only what is in the room, is refused
+   with the truth: that it is carried, and that the command works only on the room. It is never
+   reported as out of sight (`tests/kernel/interface-honesty.test.ts` walks the whole interface).
 7. Unknown verb → `parse_error` listing the valid verbs.
 
 **Rationale for no LLM parsing:** it keeps the cost of an invalid agent action attributable to the

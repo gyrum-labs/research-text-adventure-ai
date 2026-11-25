@@ -333,6 +333,30 @@ question rather than an engineering problem.
 
 ---
 
+### ADR-017: Anything carried can be read, and a refusal is never untrue
+
+**Status:** Accepted, 25 November 2026, at the project owner's direction.
+
+**Context.** Every read rule accepted only objects in the room, so nothing in the pocket could be
+read. And the parser answered any command that named a carried object with "You can't see anything
+called ... here", which is false. In a matrix of 833 probes across both shipped worlds, all 198
+refusals of that shape were said about something the agent was holding. Recorded runs show agents
+believing the refusal and repeating the command until the run ended. Nine of ten runs of one model
+on the hotfix world stalled on its incident ticket.
+
+**Decision.** Three things. The rulebook gains `arg_within_reach`, the bound object is in the room
+or carried, and every read rule uses it: what you hold, you can read. The parser tells the truth
+when a command does not take what the player is carrying. It names the object as carried and says
+the command works only on the room. And the interface is tested as a whole: a walk of every world,
+every step of its solution, everything in view or in the pocket, and every listed command fails on
+any refusal that claims a thing within reach cannot be seen. A change to the interface is compared
+against the recorded matrix, which is how a change shows that nothing else moved.
+
+**Consequences.** The hotfix world is 1.0.6. Its incident ticket is readable, and says what an
+incident record says and nothing about which move to make. Results recorded before are never
+pooled with results recorded after. Other commands still take only what is in the room; only their
+refusals changed. The rulebook has eleven predicates.
+
 ## 5. Open decisions for the implementing agent
 
 Per `SPEC.md` §19, these have documented defaults. An implementer who changes one must record an

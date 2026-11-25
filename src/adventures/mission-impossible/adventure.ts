@@ -280,9 +280,9 @@ export const adventure: Adventure = {
     {
       verb: 'read',
       synonyms: ['study'],
-      args: [{ name: 'target', role: 'object-in-room' }],
+      args: [{ name: 'target', role: 'object' }],
       requires: [
-        { op: 'arg_in_room', arg: 'target' },
+        { op: 'arg_within_reach', arg: 'target' },
         { op: 'arg_flag', arg: 'target', key: 'readable', value: true },
         { op: 'arg_equals', arg: 'target', value: 'manual' },
       ],
@@ -298,9 +298,9 @@ export const adventure: Adventure = {
     {
       verb: 'read',
       synonyms: ['study'],
-      args: [{ name: 'target', role: 'object-in-room' }],
+      args: [{ name: 'target', role: 'object' }],
       requires: [
-        { op: 'arg_in_room', arg: 'target' },
+        { op: 'arg_within_reach', arg: 'target' },
         { op: 'arg_flag', arg: 'target', key: 'readable', value: true },
         { op: 'arg_equals', arg: 'target', value: 'bulletin' },
       ],

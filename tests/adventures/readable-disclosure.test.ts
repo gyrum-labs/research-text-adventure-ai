@@ -50,27 +50,26 @@ describe('what a world advertises as readable', () => {
   });
 
   it('would catch the world that advertises a read it refuses', () => {
-    // The hotfix world as it shipped: the ticket promised a read the world
-    // refused, and ten batch runs died repeating it. Restoring that shape
-    // here is how the check shows it still sees the defect.
+    // The hotfix world as it first shipped: the ticket was marked readable,
+    // and no rule could read it. Ten batch runs died repeating the command.
+    // Restoring that shape here, by taking the ticket's rule away again, is
+    // how the check shows it still sees the defect.
     const asShipped: Adventure = {
       ...hotfix,
-      objects: {
-        ...hotfix.objects,
-        incident_ticket: { ...hotfix.objects['incident_ticket']!, readable: true },
-      },
+      actions: hotfix.actions.filter(rule =>
+        !(rule.verb === 'read' && JSON.stringify(rule.requires).includes('incident_ticket'))),
     };
     expect(honestAboutReadability(asShipped)).toEqual(['incident_ticket']);
   });
 
-  it('does not advertise the hotfix incident ticket as readable', () => {
-    expect(hotfix.objects['incident_ticket']!.readable).toBeUndefined();
+  it('advertises the hotfix incident ticket as readable, and has a rule that reads it', () => {
+    expect(hotfix.objects['incident_ticket']!.readable).toBe(true);
+    expect(readableTargets(hotfix)).toContain('incident_ticket');
   });
 
   it('keeps the readable objects the world can actually be read', () => {
-    // The board and the runbook carry the information the mission needs, so
-    // the fix must not have swept them away with the ticket.
+    // The board and the runbook carry the information the mission needs.
     expect(readableTargets(hotfix)).toEqual(expect.arrayContaining(['oncall_board', 'runbook']));
-    expect(advertisedReadable(hotfix).sort()).toEqual(['oncall_board', 'runbook']);
+    expect(advertisedReadable(hotfix).sort()).toEqual(['incident_ticket', 'oncall_board', 'runbook']);
   });
 });

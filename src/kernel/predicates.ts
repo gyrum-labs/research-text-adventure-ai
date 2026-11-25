@@ -47,6 +47,13 @@ export function evaluatePredicate(predicate: Predicate, ctx: EvalContext): boole
       return object !== undefined && object.at === ctx.state.roomId;
     }
 
+    case 'arg_within_reach': {
+      const bound = ctx.bindings[predicate.arg];
+      if (bound === undefined) return false;
+      const object = ctx.state.objects[bound];
+      return object !== undefined && (object.at === ctx.state.roomId || ctx.state.inventory.includes(bound));
+    }
+
     case 'carrying':
       return ctx.state.inventory.includes(predicate.object);
 
