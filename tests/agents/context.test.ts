@@ -60,14 +60,14 @@ function buildInput(): ContextInput {
   };
 }
 
-describe('the four context strategies', () => {
+describe('the five context strategies', () => {
   const input = buildInput();
 
-  it('produce four different prompts from the same state', () => {
+  it('produce five different prompts from the same state', () => {
     const prompts = CONTEXT_STRATEGIES.map((strategy) => buildContext(strategy, input));
 
-    expect(prompts).toHaveLength(4);
-    expect(new Set(prompts).size).toBe(4);
+    expect(prompts).toHaveLength(5);
+    expect(new Set(prompts).size).toBe(5);
   });
 
   it('none shows the current observation and nothing else', () => {

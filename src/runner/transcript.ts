@@ -17,6 +17,8 @@ export interface TranscriptHeader {
   policy: string;
   provider: string | null;
   model: string | null;
+  /** The context strategy the agent read, when the plan names one. */
+  strategy?: string;
   seed: number;
   maxTurns: number;
   startedAt: string;

@@ -19,6 +19,7 @@ import type { LlmProvider } from '../agents/llm/provider.js';
 import type { RunBudgets } from './run.js';
 import { run } from './run.js';
 import { LlmPolicy } from '../agents/llm/policy.js';
+import { CONTEXT_STRATEGIES, type ContextStrategy } from '../agents/context.js';
 import { Transcript, readTranscript } from './transcript.js';
 import { computeMetrics } from './metrics.js';
 import { replayTranscript } from './replay.js';
@@ -65,6 +66,8 @@ export interface BatchPlan {
   /** One cell per world and seed, in the order they will run. */
   cells: Array<{ world: string; seed: number }>;
   model: { provider: string; model: string };
+  /** The context strategy every arm of the plan reads. */
+  strategy: ContextStrategy;
   temperature: number;
   promptVersion: string;
   promptHash: string;
@@ -116,6 +119,7 @@ export interface BatchPlanInput {
   worlds: Adventure[];
   runsPerWorld: number;
   model: { provider: string; model: string };
+  strategy: string;
   temperature: number;
   promptVersion: string;
   promptHash: string;
@@ -140,6 +144,13 @@ export function worstCaseCost(budgets: RunBudgets, prices: PriceEvidence): numbe
 
 /** Build the plan. Nothing here runs anything. */
 export function buildPlan(input: BatchPlanInput): BatchPlan {
+  // The plan is the record of a decision made before the run, so a strategy
+  // it cannot name is refused here, where the plan is made, and not cast
+  // later, where the plan is used.
+  if (!CONTEXT_STRATEGIES.includes(input.strategy as ContextStrategy)) {
+    throw new Error(`unknown context strategy "${input.strategy}". Known strategies: ${CONTEXT_STRATEGIES.join(', ')}`);
+  }
+  const strategy = input.strategy as ContextStrategy;
   const budgets = input.budgets;
   const worstCasePerRunUsd = worstCaseCost(budgets, input.prices);
   if (worstCasePerRunUsd > input.maxPerRunUsd) {
@@ -154,6 +165,7 @@ export function buildPlan(input: BatchPlanInput): BatchPlan {
   return {
     createdAt: new Date().toISOString(),
     sourceRevision: input.sourceRevision,
+    strategy,
     worldVersions: input.worlds.map(world => ({ id: world.id, version: world.version })),
     cells,
     model: input.model,
@@ -176,7 +188,17 @@ export function persistPlan(plan: BatchPlan, root: string): void {
 
 /** Read the plan back. */
 export function readPlan(root: string): BatchPlan {
-  return JSON.parse(readFileSync(join(root, 'plan.json'), 'utf8')) as BatchPlan;
+  const plan = JSON.parse(readFileSync(join(root, 'plan.json'), 'utf8')) as BatchPlan;
+  // Fail closed on the one field the runner casts: a plan is the record of a
+  // decision made before the run, so a strategy it cannot name is refused
+  // rather than guessed at. Plans written before the field existed all ran
+  // the structured context, and read as that.
+  const strategy = plan.strategy ?? 'structured';
+  if (!CONTEXT_STRATEGIES.includes(strategy as ContextStrategy)) {
+    throw new Error(`the plan on disk names an unknown context strategy "${plan.strategy}"`);
+  }
+  plan.strategy = strategy as ContextStrategy;
+  return plan;
 }
 
 /** Open the books for a plan: every cell outstanding, nothing spent, nothing held. */
@@ -287,7 +309,7 @@ export async function runBatch(
     const adventure = options.adventureFor(record.world);
     const provider = options.providerFor(record);
     const policy = new LlmPolicy({
-      adventure, provider, strategy: 'structured', renderer: 'json',
+      adventure, provider, strategy: plan.strategy, renderer: 'json',
       thinking: false, temperature: plan.temperature,
       maxOutputTokens: plan.budgets.maxOutputTokensPerTurn,
     });
@@ -296,6 +318,7 @@ export async function runBatch(
     const transcript = new Transcript(transcriptPath, {
       type: 'header', runId, adventure: adventure.id, adventureVersion: adventure.version,
       adventureHash: plan.promptHash, policy: policy.id, provider: provider.id, model: provider.model,
+      strategy: plan.strategy,
       seed: record.seed, maxTurns: plan.budgets.maxTurns,
       startedAt: (options.now ?? ((): number => Date.now()))().toString(),
       engineVersion: '0.1.0',
