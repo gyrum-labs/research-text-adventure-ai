@@ -1,50 +1,49 @@
 # The notepad: what the freeze is, and what to tell the agent
 
-Field notes for staff · 2026-11-25 · follows warp#23366 and warp#23409
+Field notes for staff, 2026-11-25. Follows warp#23366 and warp#23409. Read from
+the record that survived, at revision `1480db6`, world 1.0.5.
 
 ## In one paragraph
 
 We give the agent a notepad instead of a transcript to read before each move.
-On the hard level it is the best context we have tried, and the effect shows
-up with a second model — but it has a characteristic failure: about half the
-time, with one model, the agent reads the notepad and freezes into repeating
-one useless move. This note shows the freeze from the recorded runs, states
-what the agent is told about the notepad today (almost nothing), and sets out
-what to tell it instead.
+With one model it has a characteristic failure: half the time the agent reads
+the notepad, goes to the right room, and then examines the ticket in its hand
+twice, and the run is ended by the loop guard with fourteen turns left. This
+note shows the freeze from the recorded runs, separates what the model did
+from what the runner did, states what the agent is told about the notepad
+today (one line), and sets out what to tell it instead.
 
 ## The freeze, from the record
 
-A typical freezing run (map arm, hotfix-2-4-1, seed 1, deepseek-v4-flash):
+Five of the ten notepad runs (hotfix-2-4-1, deepseek-v4-flash, seeds 2, 4, 5, 6
+and 10) are the same run:
 
 ```
-turn 0  read on-call board      OK   told: Release engineering holds the deploy
+turn 0  read on-call board      told: Release engineering holds the deploy
                                  credential and the release runbook.
-turn 1  take incident ticket    OK
-turn 2  go north                OK   now in Release Engineering
-turn 3  examine incident ticket nothing new: "You take a good look at it."
-turn 4  examine incident ticket nothing new
-        -> loop guard stops the run
+turn 1  take incident ticket    told: You pick up the incident ticket.
+turn 2  go north                moved to Release Engineering
+turn 3  examine incident ticket told: You take a good look at the incident ticket.
+turn 4  examine incident ticket told: You take a good look at the incident ticket.
+        -> the loop guard ends the run: "returned to the same state 3 times
+           in a row"
 ```
 
 The first three moves are right. Then the agent examines a ticket it is
-already carrying, three times, and is stopped. It is not forgetting that it
-examined the ticket — the notepad's MOVES section lists it:
+already carrying, twice, and the runner ends the run.
+
+The notepad it was reading before turn 3, rendered again from the code that
+made the record:
 
 ```
-MOVES:
-  1. read on-call board -> You read the on-call board. ON CALL. …
-  2. take incident ticket -> You pick up the incident ticket.
-  3. go north -> moved to Release Engineering
-  4. examine incident ticket -> You take a good look at the incident ticket.
-```
-
-It repeats the move anyway. So this is not a memory failure. It is a "what
-next" failure, and the notepad the agent was reading shows why:
-
-```
+MAP:
+  Platform On-call
+    north -> Release Engineering
+  Release Engineering  <- you are here
+    south -> Platform On-call
+    east -> Customer Success (locked)
 YOU ARE AT: Release Engineering
 CARRYING: incident ticket
-
 OBJECTS KNOWN:
   - incident ticket, carried
   - on-call board, readable
@@ -53,19 +52,25 @@ OBJECTS KNOWN:
   - release-2.4.0
   - release-2.4.1
   - release gate
-
+OBJECTIVES:
+  - Ship the 2.4.1 hotfix [not done]
+  - Notify the customer [not done]
 WHAT YOU HAVE BEEN TOLD:
   - You read the on-call board.
   - ON CALL. Release engineering holds the deploy credential and the release
-    runbook. …
+    runbook. The customer success handover is sealed with an approval code.
   - You pick up the incident ticket.
-  - You take a good look at the incident ticket.
+MOVES:
+  1. read on-call board -> You read the on-call board. ON CALL. Release
+     engineering holds the deploy credential and the release runbook. ...
+  2. take incident ticket -> You pick up the incident ticket.
+  3. go north -> moved to Release Engineering
 ```
 
 Read it as the agent must. It has been told the deploy credential and the
 runbook are in this room. The objects list does not contain either. The one
-object that could be hiding them is written as `shared inbox, closed` — which
-reads as a fact, not as a lead. The agent is stuck between "they are here"
+object that could be hiding them is written as `shared inbox, closed`, which
+reads as a fact and not as a lead. The agent is stuck between "they are here"
 and "I cannot see them", and it goes looking in the only thing it can act on:
 the ticket in its hand.
 
@@ -75,9 +80,34 @@ Two gaps in the notepad cause this:
    notepad reduces it to the word `closed`. The system prompt does say "Only
    containers can be opened", but the notepad never says which objects are
    containers.
-2. **No leads.** The notepad states what is known and what was tried. It
-   never states the open question: *you were told X is here, you have not
-   found it, here is what you have not opened.*
+2. **No leads.** The notepad states what is known and what was tried. It never
+   states the open question: *you were told X is here, you have not found it,
+   here is what you have not opened.*
+
+## Two things happened, and only one was the model
+
+The freeze as recorded is two things together.
+
+- **What the model did.** It repeated a look that had already told it the same
+  thing. That is a real failure of the model, and it is what Step 1 below is
+  for.
+- **What the runner did.** It ended the run on the third turn in a row that
+  left the state unchanged. A look and a refused command both leave the state
+  unchanged. The count starts again whenever the agent moves or changes
+  something, so after arriving in a room an agent has two more turns there,
+  and the third ends the run. The agent had fourteen turns left.
+
+The second is the measuring instrument, not the model. The owner has decided
+that the guard will record repeats and no longer end a run (warp#23474).
+Under that rule this run would have gone on, and the freeze would be read as
+turns spent without a change instead of as an ending.
+
+**After a carried thing could be read (world 1.0.6).** The turn-5 freeze did
+not appear in the re-record on the fixed world. The same guard ended nine of
+the ten notepad runs all the same, later: at a median of six turns left, most
+of them after `examine release gate`. In one of those runs the world had said
+"The release gate is shut. It wants the incident ticket." one turn earlier.
+Those runs are a separate recording and are not pooled with the table below.
 
 ## What the agent is told about the notepad today
 
@@ -89,17 +119,18 @@ Exactly one line, in the system prompt:
 The agent is not told that the notepad is its memory, that it should read it
 instead of re-examining things, or what to do when the next move is not
 obvious. And it cannot write in it: the notepad is built for it, from its
-observations. The generic rules ("avoid repeating inspections that give no
-new information") are there, but they are rules, not a method.
+observations. The general rules are there ("Use descriptions already provided;
+avoid repeating inspections that give no new information"), but they are
+rules, not a method.
 
-## What to tell it instead — two steps
+## What to tell it instead: two steps
 
-### Step 1 — a notepad that states its affordances and its leads
+### Step 1: a notepad that states its affordances and its leads
 
 Keep the notepad system-built, so it stays deterministic and testable. Change
 what it says:
 
-- **Objects keep their affordances.** `shared inbox — container, closed, not
+- **Objects keep their affordances.** `shared inbox, container, closed, not
   opened yet` instead of `shared inbox, closed`.
 - **A LEADS section.** For every told fact naming a thing the agent has not
   found, say so and point at what is unopened in the current room:
@@ -116,7 +147,7 @@ what it says:
   > ## Your notepad
   > Each turn you are shown your notepad. It is your only memory of this
   > building: treat it as what you know, and do not examine or read something
-  > again to remind yourself — the answer is already on the notepad under
+  > again to remind yourself. The answer is already on the notepad under
   > MOVES.
   > - OBJECTS lists what each thing can do. A thing marked *container* can be
   >   opened; its contents appear once it is open.
@@ -130,11 +161,11 @@ what it says:
 This step is small, needs no change to how the agent replies, and can be
 measured against the current notepad with the same ten-seed harness.
 
-### Step 2 — let the agent keep its own notes
+### Step 2: let the agent keep its own notes
 
-The notepad is currently written *to* the agent. The stronger version lets
-the agent write in it. This is the design to try after Step 1, and it needs
-one addition to the reply format: an optional second line.
+The notepad is currently written *to* the agent. The stronger version lets the
+agent write in it. This is the design to try after Step 1, and it needs one
+addition to the reply format: an optional second line.
 
 System prompt addition:
 
@@ -145,7 +176,7 @@ System prompt addition:
 >
 > At the end of your reply you may add one line, `NOTES:`, and whatever you
 > write there is copied to the top of your notepad for your next turn, exactly
-> as you wrote it. You may rewrite it at any time — your newest note replaces
+> as you wrote it. You may rewrite it at any time: your newest note replaces
 > the old one.
 >
 > Use it for what you will need and cannot otherwise keep: what you came for
@@ -168,42 +199,62 @@ infer. What it costs: the note can be wrong, and a wrong note is carried
 forward with the agent's full confidence. That is the thing to watch in the
 transcripts.
 
-## What the measurements say so far
+The sandbox already works this way. A staff member there keeps a notebook of
+their own, in their own folder, and it is handed from shift to shift
+(`docs/staff-sandbox.md`, on the sandbox branch). The page game's notebook,
+written with `line+`, `line-` and `line=` on the reply, is planned and not
+built.
 
-Ten seeds per arm, hotfix-2-4-1, fixed strategy (`strategy-followups-2026-11-25.md`):
+## What the measurements say
 
-| Model | Baseline (structured) | Notepad (map) | Loops in the notepad arm |
-|---|---|---|---|
-| deepseek-v4-flash | 1 / 10 | 3 / 10 | 6 of 10, five of them on turn 5 |
-| glm-5.3-flash | 2 / 10 | 6 / 10 | none |
+Ten seeds per arm, hotfix-2-4-1 at 1.0.5, the limits as they were
+(`strategy-followups-2026-11-25.md`):
 
-Three things to hold together:
+| Model | Structured context | Notepad | Ended by the guard, notepad arm | Turns with no command, notepad arm |
+|---|---|---|---|---|
+| deepseek-v4-flash | 0 / 10 | 1 / 10 | 5 of 10, all on turn 5 | 5 of 109 |
+| glm-5.3-flash | 2 / 10 | 8 / 10 | none | 33 of 157 |
 
-- The notepad is the better context in both models. Pooled, it solves 9 of
-  20 against the baseline's 3 of 20 (Fisher p = 0.08); either model alone is
-  still within what ten runs can produce by chance (deepseek p = 0.58, GLM
-  p = 0.17). It is a consistent direction, not a proven effect.
-- The freeze is a deepseek behaviour in our data. GLM, reading the same
-  notepad, did not loop — it ran out of turns or solved. So the notepad's
-  gaps are real, and whether they bite depends on the model.
-- Individual runs do not repeat: same code, same seed, different outcome.
+Four things to hold together:
+
+- Under the first model nothing can be said for the notepad: 1/10 against
+  0/10, Fisher p = 1.00.
+- Under the second model the notepad looked better, 8/10 against 2/10
+  (p = 0.023). That result is withdrawn. The model reasons before it answers,
+  and the 300-token output cap paid for the reasoning first: 37 per cent of
+  the structured arm's turns came back with no command, and 21 per cent of the
+  notepad arm's. With the cap alone raised to 1,500 on the next world version,
+  the same seeds gave 10/10 and 8/10.
+- The freeze is a deepseek behaviour in our data, and it has two parts, as
+  above. GLM, reading the same notepad, never repeated a look into the guard.
+- Individual runs do not repeat: same code, same seed, a different ending.
   Compare rates, never single runs.
 
 ## The experiment that would settle Step 1
 
 Same harness, one new arm, one changed thing. Arms: the current notepad, and
 the Step 1 notepad (affordances, leads, instruction). Both models, ten seeds,
-hotfix-2-4-1. What would count as evidence:
+hotfix-2-4-1.
 
-- The turn-5 loops in the deepseek notepad arm fall, and
-- the notepad's solve rate against the baseline clears the interval overlap
-  that ten runs cannot clear today — which may need twenty seeds per arm.
+It has to be run under the new limits (warp#23474). With the guard ending
+runs, a freeze and an ending are the same event and cannot be told apart. With
+the output cap at 300, one of the two models loses a fifth to two fifths of
+its turns before it plays.
 
-The harness is ready: `batch --strategy <name>` makes the notepad the
-variable, and the recorded plans prove nothing else moved.
+What would count as evidence under those limits:
+
+- The first model's turns spent without a change fall in the Step 1 arm, and
+- the notepad's solve rate against the structured context separates by more
+  than ten runs can, which may need twenty seeds per arm.
+
+The harness is ready: `batch --strategy <name>` makes the context the
+variable, and the recorded plans show nothing else moved.
 
 ## What is measured and what is proposed
 
-Measured: the freeze (from recorded transcripts), the one line the agent is
-told, the solve rates above, the lack of run-by-run repeatability.
+Measured: the freeze (five identical recorded runs), the page the agent was
+shown (rendered again from the record's own revision), the one line the agent
+is told, the solve rates above, the lack of run-by-run repeatability, and the
+runner's part in the ending.
+
 Proposed and not yet built: both steps above. Neither has been run.

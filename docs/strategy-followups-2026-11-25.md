@@ -1,129 +1,162 @@
 # The context-strategy signal: replication, generalization, cross-model
 
-warp#23409 · follow-up to warp#23366 (roadmap step six, EPIC warp#22704) · run 2026-11-25
+warp#23409 · follow-up to warp#23366 (roadmap step six, EPIC warp#22704) ·
+recorded 2026-11-25 at revision `1480db6`, and read here from the record that
+survived
 
 ## The question
 
-The first comparison found the map-and-ledger notepad was the only arm to
-solve the hotfix mission, one run in three. Its own scorecard called that a
-signal. Three experiments ask whether the signal holds, where its edges are,
-and whether it belongs to the context or to one model's pairing with it.
+The first comparison could not say which context helps: no context solved in
+three seeds (`strategy-comparison-2026-11-24.md`). Three experiments ask more.
+Does anything hold at ten seeds, on a second world, and under a second model?
 
-All three ran on source revision `1480db6` (the fixed strategy), on the
-operator's workstation, with recorded plans, ledgers, and transcripts under
-`runs/v2-*`. Every experiment changes exactly one variable against the
-first comparison.
+All three were recorded on source revision `1480db6` with the limits as they
+then were: 20 turns, 30,000 tokens, 300 output tokens per request, 120
+seconds, and a loop guard that ended a run on its third turn in an unchanged
+state. Each experiment changes one thing against the first comparison. The
+plans show it: the generalization arms differ only in the world, and the
+cross-model arms only in the model and its prices.
 
-## Experiment B — replication at ten seeds
+### A note on the record
 
-Same world, model, and caps as the first comparison; seeds 1–10 per arm.
-Seeds 1–3 were re-run as fresh runs so reproducibility could be checked.
+A first recording of these experiments was lost on 24 November. An earlier
+version of this document described it and has been withdrawn. The batch was
+recorded again on 25 November and kept in two places. Every number below is
+read from that record, each run from its own transcript. A total of $0.240893
+was spent on the fourteen arms.
 
-| Strategy | Outcomes (seeds 1–10) | Solved | Wilson 95% | Spend |
+## Experiment B: replication at ten seeds
+
+Same world, model and limits as the first comparison. Seeds 1 to 10 in each
+arm. Seeds 1 to 3 are new runs, so that repeatability could be checked.
+
+| Context | How the ten runs ended | Solved | Wilson 95% | Turns with no command | Spend |
+|---|---|---|---|---|---|
+| none | loop guard ×10 | **0 / 10** | 0.00 to 0.28 | 11 of 111 (10 per cent) | $0.007191 |
+| full | token ceiling ×9, loop guard ×1 | **0 / 10** | 0.00 to 0.28 | 16 of 133 (12 per cent) | $0.029726 |
+| window | token ceiling ×9, loop guard ×1 | **0 / 10** | 0.00 to 0.28 | 10 of 147 (7 per cent) | $0.028210 |
+| structured | loop guard ×7, out of turns ×3 | **0 / 10** | 0.00 to 0.28 | 3 of 168 (2 per cent) | $0.017892 |
+| map | parse errors ×4, loop guard ×5, solved ×1 | **1 / 10** | 0.02 to 0.40 | 5 of 109 (5 per cent) | $0.011830 |
+
+Total spend $0.094849. The longest run took 17.8 seconds of its 120.
+
+**Did anything replicate?** Nothing to replicate was found. The planned
+comparison, the notepad against the structured context, is 1/10 against 0/10,
+Fisher two-sided p = 1.00. The one solve was seed 7, in 17 turns.
+
+**What the runs were doing when they ended:**
+
+- `none`: every run was ended by the loop guard, between turns 4 and 17.
+- `full` and `window`: nine runs in ten reached the 30,000-token ceiling,
+  between turns 12 and 15.
+- `structured`: seven were ended by the loop guard and three ran out of turns.
+- `map`: four runs ended repeating `read incident ticket`, a command the world
+  refused while the ticket was carried. Five were ended by the loop guard on
+  turn 5, after examining the ticket they were holding.
+
+### Repeatability, run by run (seeds 1 to 3, first comparison against this one)
+
+| Context | First comparison | Replication | Same ending |
+|---|---|---|---|
+| full | token ceiling ×3 | token ceiling ×3 | 3 / 3 |
+| window | token ceiling, loop guard, token ceiling | token ceiling ×3 | 2 / 3 |
+| none | loop guard ×3 | loop guard ×3 | 3 / 3 |
+| structured | loop guard ×3 | out of turns, loop guard, loop guard | 2 / 3 |
+| map | parse errors ×2, loop guard | parse errors, loop guard, parse errors | 1 / 3 |
+
+Eleven of fifteen runs ended the same way. Four did not. Same code, same seed,
+same context, a different ending: the seed fixes the world and not the model,
+and temperature 0 does not make a provider repeat itself. Only rates carry
+meaning, and a rate from ten runs is a wide interval.
+
+## Experiment C: the second world
+
+mission-impossible at 1.0.3, deepseek-v4-flash, seeds 1 to 10, the notepad
+against the structured context.
+
+| Context | How the ten runs ended | Solved | Turns the world would not take | Spend |
 |---|---|---|---|---|
-| none | loop ×9, out of turns ×1 | **0 / 10** | 0.00 – 0.28 | $0.005014 |
-| full | tokens ×10 | **0 / 10** | 0.00 – 0.28 | $0.029594 |
-| window | tokens ×10 | **0 / 10** | 0.00 – 0.28 | $0.029533 |
-| structured | loop ×9, **success** ×1 | **1 / 10** | 0.02 – 0.40 | $0.017981 |
-| map | **success ×3**, loop ×6, out of turns ×1 | **3 / 10** | 0.11 – 0.60 | $0.012400 |
+| structured | out of turns ×7, loop guard ×2, parse errors ×1 | **0 / 10** | 69 of 179 | $0.018621 |
+| map | out of turns ×7, parse errors ×2, loop guard ×1 | **0 / 10** | 72 of 185 | $0.022211 |
 
-Total spend $0.094522; longest run 32.0s of its 120s.
+Fisher two-sided p = 1.00. Total spend $0.040832. The longest run took 19.8
+seconds.
 
-**Did the signal replicate?** Directionally, yes: the notepad remains the
-arm with the most solves, and the three arms that never solved before still
-never solved. But the planned comparison — map against the structured
-baseline — is **not statistically established**: 3/10 against 1/10, Fisher
-two-sided p = 0.58, with overlapping intervals. The first comparison's
-"only arm to solve" did not survive: structured solved once here.
+**Determination: cannot be made from this record.** Both arms sit at the
+floor, and a comparison at the floor cannot show a difference.
 
-Exploratory, and flagged as post-hoc: against the three arms that never
-solve, pooled (0/30), the notepad's 3/10 gives p = 0.012. That comparison
-was not planned and pools arms after seeing the data.
+**Why the floor is where it is.** Of the turns the world would not take, 123 of
+141 were `read defusal manual` or `read manual`. Each time the world answered
+"You can't see anything called 'defusal manual' here" while the agent was
+holding it. The mission needs the manual read, and the manual is carried when
+it is read. That refusal was false, the same defect as the hotfix world's
+ticket.
 
-**A failure mode the first batch hid.** Five of the notepad's ten runs
-looped on turn 5, after about 4,500 tokens: the agent reads the map and
-repeats a command almost immediately. The arm is bimodal — it solves, it
-runs out of turns, or it stalls at once — rather than uniformly stronger.
+**After the fix, recorded separately.** PR #51 made a carried thing readable.
+On 2026-11-25 the same arms were recorded again on the fixed code, with the
+limits as they were: the notepad solved 10 of 10, in 12 to 14 turns, and the
+structured context 3 of 10, in 13 to 15 turns. Those runs are a different
+recording and are not pooled with the table above. They are told apart by
+source revision, `1480db6` against `7dea3fc`, because the world's version
+number did not move when its rules changed. That is a defect of labelling in
+PR #51, and it is to be put right.
 
-### Reproducibility, run by run (seeds 1–3, first comparison vs replication)
+## Experiment D: a second model
 
-| Strategy | First comparison | Replication | Same outcome class |
-|---|---|---|---|
-| full | tokens, tokens, tokens | tokens, tokens, tokens | 3 / 3 |
-| window | tokens, tokens, tokens | tokens, tokens, tokens | 3 / 3 |
-| none | loop, loop, out of turns | loop, loop, loop | 2 / 3 |
-| structured | loop, out of turns, loop | loop, loop, loop | 2 / 3 |
-| map | out of turns, out of turns, success | loop, loop, success | 1 / 3 |
+z-ai/glm-5.3-flash on hotfix-2-4-1 at 1.0.5, the notepad against the
+structured context, seeds 1 to 10.
 
-**Individual runs do not reproduce.** Same code, same seed, same strategy,
-different outcome — most sharply for the notepad. Temperature 0 does not
-make the provider deterministic across calls, and the seed fixes the world,
-not the model. Runs are samples, not fixtures; only rates carry meaning, and
-a rate from ten runs is still a wide interval.
+| Context | How the ten runs ended | Solved | Wilson 95% | Turns with no command | Spend |
+|---|---|---|---|---|---|
+| structured | out of turns ×8, solved ×2 | **2 / 10** | 0.06 to 0.51 | 71 of 194 (37 per cent) | $0.043208 |
+| map | solved ×8, out of turns ×2 | **8 / 10** | 0.49 to 0.94 | 33 of 157 (21 per cent) | $0.032905 |
 
-## Experiment C — generalization to the second world
+Total spend $0.076113. The longest run took 48.6 seconds. No run in either arm
+was ended by the loop guard. Every notepad solve took 12 turns. Fisher
+two-sided p = 0.023. Pooled over both models, the notepad is 9/20 against the
+structured context's 2/20, p = 0.031.
 
-mission-impossible @ 1.0.3, deepseek-v4-flash, seeds 1–10, structured
-against map, everything else as before.
+### This result is withdrawn as a claim about the contexts
 
-| Strategy | Outcomes | Solved | Spend |
-|---|---|---|---|
-| structured | out of turns ×9, **success** ×1 | **1 / 10** | $0.019064 |
-| map | out of turns ×10 | **0 / 10** | $0.023155 |
+It is reported because it was measured, and it cannot be read as it stands.
+The model reasons before it answers, and the 300-token output cap paid for
+that reasoning first. In the structured arm 37 per cent of turns came back
+with no command at all, and in the notepad arm 21 per cent. So the comparison
+measured how often each context made the model think past 300 tokens.
 
-Fisher two-sided p = 1.00. **Determination: does not matter** — measurably.
+On 2026-11-25, with the cap alone raised to 1,500 on the next world version,
+the same seeds gave the structured context 10 of 10, in 16 to 17 turns, and the
+notepad 8 of 10, in 14 to 16 turns, Fisher p = 0.47. That is a diagnostic of
+twenty runs, recorded separately and not pooled with anything. The direction
+is gone. Whether the notepad helps this model is an open question again, to be
+measured under the new limits.
 
-**The caveat that limits this finding.** The ticket described this as the
-world where the baseline already succeeds. That held for
-deepseek/deepseek-chat, which solved it eight to nine times in ten in the
-earlier batches. It does not hold for deepseek-v4-flash, which solved it
-once in ten here. Both arms sit at the floor under this model, and a
-comparison at the floor cannot show a difference that would appear at a
-higher solve rate. The honest result is "no measurable effect under a model
-that rarely solves this world" — not "the notepad does not generalize." A
-model that solves mission-impossible reliably is needed to test that.
+**The turn-5 freeze did not appear here.** This model, reading the same
+notepad, was never ended by the loop guard. Its failures were the cap, and a
+few runs that repeated `read incident ticket` into the same false refusal.
 
-## Experiment D — cross-model check
+## What stands, and what is open
 
-z-ai/glm-5.3-flash on hotfix-2-4-1 @ 1.0.5, structured against map, seeds
-1–10 — a different model from the first comparison, everything else as before.
-
-| Strategy | Outcomes (seeds 1–10) | Solved | Wilson 95% |
-|---|---|---|---|
-| structured | out of turns ×8, **success** ×2 | **2 / 10** | 0.06 – 0.51 |
-| map | out of turns ×4, **success ×6** | **6 / 10** | 0.31 – 0.83 |
-
-Spend $0.080875. Neither arm looped once: every run solved or ran out of
-turns.
-
-**Does the effect belong to the context or to one model's pairing with
-it?** To the context. Under a second model the notepad is again the better
-arm, by a wider margin than under the first (6/10 against 2/10, where the
-first model gave 3/10 against 1/10). On its own this comparison is still
-short of conventional significance (Fisher two-sided p = 0.17) at ten seeds.
-
-Pooled across both models — notepad 9/20 against baseline 3/20, the same
-direction in both — Fisher two-sided p = 0.08. That is the closest the
-programme comes to a statistical claim, and it is still short of 0.05; it is
-reported as a consistent direction across two models, not as proof.
-
-**The freeze did not appear here.** GLM, reading the same notepad, never
-looped; its failures were runs out of turns. The turn-5 freeze is a
-behaviour of one model reading this notepad, not of the notepad alone. The
-notepad's gaps that sit behind it are real and are set out in
-`notepad-field-notes.md`.
+- Stands: on this world, with this model, at these limits, the long contexts
+  (`full`, `window`) spend their tokens by turn 15 and the short ones are
+  ended by the loop guard. A carried thing could not be read, and that cost
+  both worlds runs.
+- Open: whether any context is better than another. The runner's output cap
+  and loop guard spend a run's budget before the contexts can be told apart.
+  The owner has decided on new limits (25 turns, 40,000 tokens, 3,000 output
+  tokens per request with a retry, and a guard that records but does not end a
+  run). The page arms will be recorded again under them.
 
 ## Acceptance, checked against the records
 
 | Criterion | Evidence |
 |---|---|
-| 1 replication coverage | 5 arms × 10 distinct seeds on hotfix-2-4-1 @ 1.0.5; seeds 1–3 are fresh transcripts in `runs/v2-strategy10-*`, not copies |
-| 2 generalization coverage | both arms on mission-impossible @ 1.0.3; the record shows the baseline at 1/10, and the determination is one of the three, grounded in counts |
-| 3 cross-model coverage | z-ai/glm-5.3-flash on hotfix-2-4-1 @ 1.0.5, both arms, ten seeds each; the model differs from warp#23366's in the one field the plan diff shows |
-| 4 one-variable rule | B differs from the first comparison only in seed count; C only in world; D only in model — each plan diff shows the single field |
-| 5 no retries | B: 50 planned cells, 50 transcripts; C: 20 and 20; no discarded or re-attempted run |
-| 6 every run recorded | each transcript header carries strategy, model, world, version, seed; its metrics record the outcome; scorecard counts equal a recount |
-| 7 reproducibility built in | the table above, run by run; mismatches surfaced, not smoothed |
-| 8 scorecards claim only what was measured | rates given with intervals; the planned comparison reported as not established; the pooled comparison flagged exploratory |
-| 9 wall clock recorded | per-run `wallClockMs` in every metrics record; longest B run 32.0s, C run 27.2s |
-| 10 independent verifiability | every count above recomputes from the ledgers and transcripts named here |
+| Replication recorded | five contexts at ten seeds on hotfix-2-4-1 at 1.0.5, revision `1480db6`; seeds 1 to 3 are new transcripts in `v2-strategy10-*` |
+| Second world recorded | both contexts on mission-impossible at 1.0.3, ten seeds each; both at 0/10; the determination is that it cannot be made from this record, grounded in the counts |
+| Second model recorded | z-ai/glm-5.3-flash on hotfix-2-4-1 at 1.0.5, both contexts, ten seeds each |
+| One change per experiment | plan diffs: the second-world arms differ only in the world, the second-model arms only in the model and its prices, with timestamps in both |
+| No retries | B has 50 planned cells and 50 transcripts, C has 20 and 20, D has 20 and 20; with the first comparison that is 105 and 105, and each transcript has exactly one metrics record |
+| Repeatability shown | the run-by-run table, with the four mismatches left visible |
+| Scorecards claim what was measured | rates with intervals; the planned comparisons with their p-values; the second-model result reported and then withdrawn, with the reason |
+| The clock recorded | a `wallClockMs` in every metrics record; the longest runs are 17.8 s in B, 19.8 s in C and 48.6 s in D, against 120 s |
+| Can be checked again | every count above recomputes from the ledgers and transcripts named here |

@@ -1,88 +1,114 @@
 # Context strategies on the fixed engine, like for like
 
-warp#23366 · roadmap step six (EPIC warp#22704) · run 2026-11-24, re-run 2026-11-25 on the fixed strategy
+warp#23366 · roadmap step six (EPIC warp#22704) · recorded 2026-11-25 at
+revision `1480db6`, and read here from the record that survived
 
 ## The question
 
-Operators could not tell whether an agent's failures came from what the model
-knew or from what it was shown: every recorded run so far read the same
-structured context, and the map-and-ledger notepad existed only as an
-unmerged branch with no comparison behind it.
+Operators could not tell whether an agent's failure came from what the model
+knew or from what it was shown. Every recorded run had read the same
+structured context, and the notepad existed only as an unmerged branch with no
+comparison behind it.
 
 ## The experiment
 
-One variable — the context strategy the agent reads — on everything else
-held fixed. Recorded plans, ledgers, and transcripts live under
-`runs/v2-strategy-<name>/` on the operator's workstation.
-
-A first batch (three seeds per arm) ran on 2026-11-24 against a strategy
-that kept a stale lock status on the map: an exit seen locked and then
-opened stayed listed both ways. That violated the notepad's own promise and
-sat on this world's critical path, so the strategy was fixed and the whole
-comparison was re-run on the fixed code. **This scorecard reports the
-re-run.** The first batch stays on disk as recorded history, superseded.
+One variable, the context the agent reads, with everything else held fixed.
 
 | Fixed | Value |
 |---|---|
-| World | hotfix-2-4-1 @ 1.0.5 (every plan) |
-| Seeds | 1, 2, 3 (every plan: identical cells) |
-| Model | openrouter/deepseek/deepseek-v4-flash, temperature 0 |
-| Caps | 20 turns / 30,000 tokens / 300 output per request / 120s per run |
-| Source revision | `1480db6` (every plan — the fixed strategy) |
-| Prices | 0.09 in / 0.18 out per million (identical rates in every plan) |
+| World | hotfix-2-4-1 at 1.0.5 |
+| Seeds | 1, 2, 3 |
+| Model | deepseek/deepseek-v4-flash, temperature 0 |
+| Limits | 20 turns, 30,000 tokens, 300 output tokens per request, 120 seconds |
+| Source revision | `1480db6` |
+| Prices | 0.09 in and 0.18 out per million |
 
-Verified from the plans: the only differing fields between arms are
-`strategy`, its derived `promptHash`, the fetch timestamp on the price
-evidence, and `createdAt`.
+The five contexts, as the code names them. `none` shows the agent only where
+it is. `full` shows every turn so far. `window` keeps the last five turns.
+`structured` keeps a compact summary and the last two outcomes. `map`, the
+notepad, shows the world as the agent knows it: every connection, object and
+told fact stated once, with one line per move.
 
-## The scorecard — claims only what was measured
+Recorded plans, ledgers and transcripts are kept by the operator outside the
+repository, in two places. Verified from the plans: between any two arms the
+fields that differ are `strategy`, its derived `promptHash`, the time the
+prices were checked, and `createdAt`.
 
-| Strategy | Seed 1 | Seed 2 | Seed 3 | Solved | Turns | Tokens | Spend |
-|---|---|---|---|---|---|---|---|
-| none | loop (5) | loop (4) | out of turns (13) | **0 / 3** | 4–13 | 2k–11k | $0.001581 |
-| full | tokens (12) | tokens (13) | tokens (12) | **0 / 3** | 12–13 | 31k–35k | $0.008962 |
-| window | tokens (13) | tokens (13) | tokens (14) | **0 / 3** | 13–14 | 31k–32k | $0.008710 |
-| structured | loop (19) | out of turns (18) | loop (11) | **0 / 3** | 11–19 | 12k–25k | $0.005591 |
-| map | out of turns (15) | out of turns (14) | **success (14)** | **1 / 3** | 14–15 | 20k–24k | $0.006163 |
+### A note on the record
 
-Total spend: **$0.031007**. Every run stayed inside its 120s wall clock
-(longest 20.1s); the clock never bound, and cost never appeared as a
-constraint.
+A first recording of these arms, and of the ten-seed arms, was lost on 24
+November when a temporary folder was wiped. An earlier version of this
+scorecard described that recording. It could not be checked, so it was
+withdrawn. The whole batch was recorded again on 25 November and kept in two
+places. Every number below is read from that record. Each run is taken from
+its own transcript.
 
-- `tokens` = the run used its 30,000-token ceiling; `loop` = the loop guard
-  stopped a repeated state; `out of turns` = the run spent its turns without
-  the loop guard firing.
+## The scorecard
 
-## What the scorecard says — and does not
+| Context | Seed 1 | Seed 2 | Seed 3 | Solved | Turns used | Spend |
+|---|---|---|---|---|---|---|
+| none | loop guard (7) | loop guard (14) | loop guard (10) | **0 / 3** | 7 to 14 | $0.002079 |
+| full | token ceiling (13) | token ceiling (12) | token ceiling (12) | **0 / 3** | 12 to 13 | $0.008737 |
+| window | token ceiling (13) | loop guard (13) | token ceiling (14) | **0 / 3** | 13 to 14 | $0.008393 |
+| structured | loop guard (11) | loop guard (10) | loop guard (16) | **0 / 3** | 10 to 16 | $0.004111 |
+| map | parse errors (14) | parse errors (16) | loop guard (14) | **0 / 3** | 14 to 16 | $0.005779 |
 
-- On this world, with this model, at three seeds each, **the map-and-ledger
-  arm is the only one that solved the mission** (seed 3, 14 turns). Every
-  other arm scored 0 of 3.
-- `none` loops quickly with nothing to remember by; `full` and `window`
-  burn their token ceiling on long contexts every time; `structured`
-  splits between looping and running out of turns.
-- **Three seeds cannot establish significance.** One success in three
-  against zero in twelve is a signal, not a verdict. This scorecard claims
-  nothing about other worlds, other models, other seeds, or other caps.
-- Nothing was retried: every planned cell ran exactly once and its recorded
-  outcome stands.
-- The re-run reproduced the first batch's shape (map one of three, the rest
-  zero of three) on the fixed strategy. The ten-seed replication and the
-  generalization and cross-model checks are recorded in
+Total spend $0.029099. The longest run took 16.4 seconds of its 120.
+
+The bracket holds the turn the run ended on. "Loop guard" means the runner
+ended the run on its third turn in an unchanged state. "Token ceiling" means
+the run used all 30,000 tokens. "Parse errors" means ten commands could not be
+carried out.
+
+## What the scorecard says, and does not
+
+- No context solved in three seeds. Nothing here says which context is better.
+  Three seeds cannot establish anything, and this scorecard claims nothing
+  about other worlds, other models or other seeds.
+- The shape of each failure can be read, and much of it is the runner's. `none`
+  and `structured` were ended by the loop guard in every run. `full` reached
+  the token ceiling in every run, and `window` in two of three.
+- The two `map` runs that ended on parse errors repeated `read incident ticket`
+  ten times each. The world answered "You can't see anything called 'incident
+  ticket' here" while the agent was holding it. That refusal was false. It is
+  fixed in world 1.0.6 (PR #51), and results from before and after are never
+  pooled.
+- Nothing was retried. Each planned cell ran once.
+- The ten-seed arms, the second world and the second model are in
   `strategy-followups-2026-11-25.md`.
+
+## Two rules of the runner that shape every number in this document
+
+Both were found on 25 November, after this record was made. Both belong to the
+measuring instrument, not to the model.
+
+**The loop guard.** It compares the whole state. A look and a refused command
+leave the state as it was. The count starts at one when the agent arrives in a
+state, so after any move that changes the world the agent has two more turns
+there, and the third ends the run. In this record it ended eight of the
+fifteen runs.
+
+**The output cap.** A request may produce 300 tokens. On a model that reasons
+before it answers, that includes the reasoning. When the reasoning needs more,
+the reply arrives with no content, the turn is spent, and the agent is asked
+again. This model lost 3 to 13 per cent of its turns that way in these arms. A
+second model lost up to 43 per cent (see the follow-ups).
+
+The owner has decided to change both, together with the turn cap and the token
+budget: 25 turns, 40,000 tokens, 3,000 output tokens per request with a retry
+when a reply is cut off, and a loop guard that records repeats and no longer
+ends a run. The page arms will be recorded again under those limits. Every
+number in this document belongs to the limits as they were.
 
 ## Acceptance, checked against the records
 
 | Criterion | Evidence |
 |---|---|
-| AC1 world pin | every `plan.json` → `worldVersions` = hotfix-2-4-1 @ 1.0.5 |
-| AC2 single variable | pairwise plan diff → only `strategy` (+ derived `promptHash`, timestamps) |
-| AC3 shipped strategies | none, full, window, structured each have 3 recorded runs |
-| AC4 notepad arm | map has 3 recorded runs under the same pin, seeds, caps |
-| AC5 nothing retried | 15 planned cells, 15 transcripts, one metrics record each |
-| AC6 scorecard restraint | the section above claims only the measured cells |
-| AC7 wall clock binds | every run ≤ 20.1s of its 120s; each transcript's `metrics` record carries `wallClockMs`; the runner's enforcement is tested in `tests/runner/budgets.test.ts` |
-| AC8 operator can attribute | the table answers per strategy from the ledgers alone |
-
-To re-verify the wall-clock claim from the records: every transcript ends in
-a `metrics` record whose `wallClockMs` is below 120000.
+| World pinned | every `plan.json` names hotfix-2-4-1 at 1.0.5 |
+| One variable | a pairwise diff of the five plans: only `strategy`, `promptHash`, `prices.checkedAt` and `createdAt` differ |
+| Shipped contexts recorded | none, full, window and structured each have 3 recorded runs |
+| Notepad recorded alike | map has 3 recorded runs under the same pin, seeds and limits |
+| Nothing retried | the whole batch has 105 planned cells, 105 transcripts, and each transcript has exactly one metrics record; these arms are 15 of them |
+| Scorecard restraint | the section above claims the measured cells and no others |
+| The clock did not bind | every run ended inside 16.4 seconds of its 120; each transcript's `metrics` record carries `wallClockMs` |
+| An operator can attribute | the table answers per context from the ledgers alone |
