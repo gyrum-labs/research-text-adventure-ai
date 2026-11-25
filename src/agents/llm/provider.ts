@@ -84,6 +84,8 @@ export interface MockReply {
   text: string;
   finishReason?: FinishReason;
   reasoningTokens?: number;
+  /** A failure the script wants: the request did not succeed, and reports no tokens. */
+  transientError?: string;
 }
 
 export class MockProvider implements LlmProvider {
@@ -120,6 +122,7 @@ export class MockProvider implements LlmProvider {
     const text = typeof reply === 'string' ? reply : reply.text;
     const finishReason = typeof reply === 'string' ? undefined : reply.finishReason;
     const reasoningTokens = typeof reply === 'string' ? undefined : reply.reasoningTokens;
+    const transientError = typeof reply === 'string' ? undefined : reply.transientError;
 
     const input = estimateTokens(req.system) + req.messages.reduce(
       (total, message) => total + estimateTokens(message.content),
@@ -131,6 +134,7 @@ export class MockProvider implements LlmProvider {
       usage: { inputTokens: input, outputTokens: estimateTokens(text) + (reasoningTokens ?? 0) },
       finishReason,
       reasoningTokens,
+      transientError,
     };
   }
 }

@@ -156,6 +156,44 @@ describe('a reply cut off by its allowance', () => {
     expect(policy.metrics().lastReply?.attempts[0]?.failed).toBeDefined();
   });
 
+  it('counts the tokens of every attempt that came back, and asks no further after a failure', async () => {
+    // The first attempt is cut off, and comes back: it is paid for, and counted.
+    // The second fails. A failed request reports no tokens, so there are none
+    // to count for it, and it is not asked for again. The turn says all of this.
+    const provider = new MockProvider([
+      CUT_OFF,
+      { text: '', transientError: 'the provider is rate limited' },
+      'COMMAND: look',
+    ]);
+    const policy = new LlmPolicy({ adventure, provider, maxOutputTokens: ALLOWANCE });
+
+    const command = await policy.next(context());
+
+    expect(command).toBeNull();
+    expect(provider.calls).toBe(2);
+    expect(policy.metrics().outputTokens).toBe(ALLOWANCE);
+    expect(policy.metrics().transientErrors).toBe(1);
+    expect(policy.metrics().lastReply).toMatchObject({
+      cutOff: true,
+      command: false,
+      attempts: [
+        { allowance: 3_000, finishReason: 'length', outputTokens: 3_000 },
+        { allowance: 6_000, failed: 'the provider is rate limited', textLength: 0 },
+      ],
+    });
+  });
+
+  it('doubles what the adapters asked for when the policy named no allowance', async () => {
+    const provider = new MockProvider([CUT_OFF, 'COMMAND: look']);
+    const policy = new LlmPolicy({ adventure, provider });
+
+    await policy.next(context());
+
+    // The first attempt named no allowance, so the adapters' own 500 applied.
+    // The retry asks for twice what the first attempt had.
+    expect(provider.requests.map((request) => request.maxOutputTokens)).toEqual([undefined, 1_000]);
+  });
+
   it('leaves a reply that finished alone', async () => {
     const provider = new MockProvider(['COMMAND: look']);
     const policy = new LlmPolicy({ adventure, provider, maxOutputTokens: ALLOWANCE });

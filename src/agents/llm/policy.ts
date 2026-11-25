@@ -27,6 +27,12 @@ import { extractCommand } from './extract.js';
 import { buildPrompt } from './prompt.js';
 import type { LlmProvider, LlmResponse } from './provider.js';
 
+/**
+ * What the adapters ask for when a request names no allowance. A retry doubles
+ * what the first attempt had, so it starts from here when nothing was named.
+ */
+const ADAPTERS_OWN_ALLOWANCE = 500;
+
 export interface LlmPolicyOptions {
   adventure: Adventure;
   provider: LlmProvider;
@@ -153,7 +159,7 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
         this.outputTokens += response.usage?.outputTokens ?? 0;
       }
       if (response.transientError !== undefined || response.finishReason !== 'length' || attempt >= this.maxCutOffRetries) break;
-      allowance = (allowance ?? 500) * 2;
+      allowance = (allowance ?? ADAPTERS_OWN_ALLOWANCE) * 2;
     }
     this.tokensUsed = this.inputTokens + this.outputTokens;
 
