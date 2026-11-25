@@ -230,17 +230,17 @@ graph LR
 | Verb | Also | Takes |
 |---|---|---|
 | `look` | l, look around |  |
-| `inventory` | carrying, i, inv |  |
+| `inventory` | i, inv, carrying |  |
 | `help` | ? |  |
 | `wait` | z |  |
 | `hint` | h |  |
-| `examine` | inspect, look at, x | target |
+| `examine` | x, inspect, look at | target |
 | `read` | study | target |
 | `take` | get, grab, pick up | target |
 | `open` |  | target |
 | `unlock` |  | target, with |
 | `cut` | snip | target, with |
-| `go` | head, move, walk | target |
+| `go` | walk, move, head | target |
 
 ### The goals
 
@@ -302,17 +302,17 @@ graph LR
 | Verb | Also | Takes |
 |---|---|---|
 | `look` | l, look around |  |
-| `inventory` | carrying, context, i, inv |  |
+| `inventory` | i, inv, carrying, context |  |
 | `help` | ? |  |
 | `wait` | z |  |
 | `hint` | h |  |
-| `examine` | inspect, look at, x | target |
-| `claim` | get, pick up, take | target |
+| `examine` | x, inspect, look at | target |
+| `claim` | take, get, pick up | target |
 | `read` | study | target |
 | `open` |  | target |
 | `unlock` |  | target, with |
-| `deploy` | release, ship | target, with |
-| `go` | head, move, walk | target |
+| `deploy` | ship, release | target, with |
+| `go` | walk, move, head | target |
 
 ### The goals
 
