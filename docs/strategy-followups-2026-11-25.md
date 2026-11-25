@@ -85,9 +85,33 @@ model that solves mission-impossible reliably is needed to test that.
 
 ## Experiment D — cross-model check
 
-Pending: z-ai/glm-5.3-flash on hotfix-2-4-1, structured against map, seeds
-1–10. Recorded under `runs/v2-xmodel-glm-*`; this section is completed from
-those ledgers when the arm finishes.
+z-ai/glm-5.3-flash on hotfix-2-4-1 @ 1.0.5, structured against map, seeds
+1–10 — a different model from the first comparison, everything else as before.
+
+| Strategy | Outcomes (seeds 1–10) | Solved | Wilson 95% |
+|---|---|---|---|
+| structured | out of turns ×8, **success** ×2 | **2 / 10** | 0.06 – 0.51 |
+| map | out of turns ×4, **success ×6** | **6 / 10** | 0.31 – 0.83 |
+
+Spend $0.080875. Neither arm looped once: every run solved or ran out of
+turns.
+
+**Does the effect belong to the context or to one model's pairing with
+it?** To the context. Under a second model the notepad is again the better
+arm, by a wider margin than under the first (6/10 against 2/10, where the
+first model gave 3/10 against 1/10). On its own this comparison is still
+short of conventional significance (Fisher two-sided p = 0.17) at ten seeds.
+
+Pooled across both models — notepad 9/20 against baseline 3/20, the same
+direction in both — Fisher two-sided p = 0.08. That is the closest the
+programme comes to a statistical claim, and it is still short of 0.05; it is
+reported as a consistent direction across two models, not as proof.
+
+**The freeze did not appear here.** GLM, reading the same notepad, never
+looped; its failures were runs out of turns. The turn-5 freeze is a
+behaviour of one model reading this notepad, not of the notepad alone. The
+notepad's gaps that sit behind it are real and are set out in
+`notepad-field-notes.md`.
 
 ## Acceptance, checked against the records
 
@@ -95,7 +119,7 @@ those ledgers when the arm finishes.
 |---|---|
 | 1 replication coverage | 5 arms × 10 distinct seeds on hotfix-2-4-1 @ 1.0.5; seeds 1–3 are fresh transcripts in `runs/v2-strategy10-*`, not copies |
 | 2 generalization coverage | both arms on mission-impossible @ 1.0.3; the record shows the baseline at 1/10, and the determination is one of the three, grounded in counts |
-| 3 cross-model coverage | pending with Experiment D |
+| 3 cross-model coverage | z-ai/glm-5.3-flash on hotfix-2-4-1 @ 1.0.5, both arms, ten seeds each; the model differs from warp#23366's in the one field the plan diff shows |
 | 4 one-variable rule | B differs from the first comparison only in seed count; C only in world; D only in model — each plan diff shows the single field |
 | 5 no retries | B: 50 planned cells, 50 transcripts; C: 20 and 20; no discarded or re-attempted run |
 | 6 every run recorded | each transcript header carries strategy, model, world, version, seed; its metrics record the outcome; scorecard counts equal a recount |
