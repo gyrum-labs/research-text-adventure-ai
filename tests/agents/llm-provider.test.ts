@@ -318,3 +318,37 @@ describe('the ollama adapter', () => {
     }
   });
 });
+
+describe('every word the three services use for the end of a reply', () => {
+  // The seam is written down once, in SPEC.md 10.2. These hold the adapters to
+  // it, word for word. A word that means something else is kept as `other`,
+  // and written to the transcript as such: only the word for a reply cut off
+  // by its allowance makes the runner ask again.
+
+  it.each(['stop', 'length', 'tool_calls', 'content_filter', 'function_call'])("an OpenAI-shaped reply that ended with '%s'", async (word) => {
+    const expected = word === 'stop' ? 'stop' : word === 'length' ? 'length' : 'other';
+    const server = await fakeProvider({ choices: [{ message: { content: 'x' }, finish_reason: word }], usage: { prompt_tokens: 1, completion_tokens: 1 } });
+    try {
+      const response = await new OpenAiProvider({ apiKey: 'test-key', baseUrl: server.url, model: 'test-model' }).complete(REQUEST);
+      expect(response.finishReason).toBe(expected);
+    } finally { server.close(); }
+  });
+
+  it.each(['end_turn', 'max_tokens', 'stop_sequence', 'tool_use', 'pause_turn', 'refusal'])("an Anthropic-shaped reply that ended with '%s'", async (word) => {
+    const expected = word === 'max_tokens' ? 'length' : word === 'end_turn' || word === 'stop_sequence' ? 'stop' : 'other';
+    const server = await fakeProvider({ content: [{ type: 'text', text: 'x' }], stop_reason: word, usage: { input_tokens: 1, output_tokens: 1 } });
+    try {
+      const response = await new AnthropicProvider({ apiKey: 'test-key', baseUrl: server.url, model: 'test-model' }).complete(REQUEST);
+      expect(response.finishReason).toBe(expected);
+    } finally { server.close(); }
+  });
+
+  it.each(['stop', 'length', 'load', 'unload'])("an Ollama-shaped reply that ended with '%s'", async (word) => {
+    const expected = word === 'stop' ? 'stop' : word === 'length' ? 'length' : 'other';
+    const server = await fakeProvider({ message: { content: 'x' }, done_reason: word, prompt_eval_count: 1, eval_count: 1 });
+    try {
+      const response = await new OllamaProvider({ model: 'test-model', baseUrl: server.url }).complete(REQUEST);
+      expect(response.finishReason).toBe(expected);
+    } finally { server.close(); }
+  });
+});

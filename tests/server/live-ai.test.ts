@@ -161,6 +161,32 @@ describe('the real-model demo', () => {
     } finally { await started.close(); }
   });
 
+  it('ends a run cleanly when it cannot afford the retry, and counts the reply it did get', async () => {
+    // The reply is cut off, and says it used nearly all the run's tokens. The
+    // retry is refused by the server's guard before it reaches the model. The
+    // run ends as out of tokens, the one request that was made is in the final
+    // figures, and the turn's record says why nothing followed it.
+    const requests: { max_tokens: number }[] = [];
+    modelFetch(async init => {
+      requests.push(JSON.parse(String(init.body)));
+      return Response.json({ choices: [{ message: { content: '' }, finish_reason: 'length' }],
+        usage: { prompt_tokens: 80, completion_tokens: 11000, completion_tokens_details: { reasoning_tokens: 11000 } } });
+    });
+    const f = demo({ budgets: { providerRetryDelayMs: 0, maxTotalTokens: 12_000 } });
+    const started = await startSessionServer({ liveAi: f.liveAi });
+    try {
+      const { id } = await (await open(started.url)).json();
+      const stream = await records(started.url, id);
+      expect(stream.find(record => record.type === 'run_ended')?.data?.['outcome']).toBe('budget_exhausted');
+      expect(requests).toHaveLength(1);
+      const written = readTranscript(join(f.transcriptRoot, `${id}.jsonl`));
+      const reply = written.find(record => record.type === 'reply');
+      expect(reply).toMatchObject({ turn: 0, ended: 'The next model request would exceed the token budget.' });
+      expect((reply?.['data'] as { attempts: unknown[] }).attempts).toHaveLength(1);
+      expect(written.find(record => record.type === 'metrics')?.['data']).toMatchObject({ cutOffReplies: 1, tokensUsed: 11_080 });
+    } finally { await started.close(); }
+  });
+
   it('keeps the old 20k guard and gives the new live default headroom for the final actions', async () => {
     // regression: warp#22695 — a full next-request reservation could strand a nearly won run.
     let calls = 0;

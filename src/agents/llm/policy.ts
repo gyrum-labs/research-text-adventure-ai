@@ -157,6 +157,9 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
       if (response.transientError === undefined) {
         this.inputTokens += response.usage?.inputTokens ?? 0;
         this.outputTokens += response.usage?.outputTokens ?? 0;
+        // Kept true after every attempt, and not only once the loop is done:
+        // a later attempt can throw, and what was spent before it was spent.
+        this.tokensUsed = this.inputTokens + this.outputTokens;
       }
       if (response.transientError !== undefined || response.finishReason !== 'length' || attempt >= this.maxCutOffRetries) break;
       allowance = (allowance ?? ADAPTERS_OWN_ALLOWANCE) * 2;

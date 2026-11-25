@@ -18,7 +18,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { LlmPolicy } from '../../src/agents/llm/policy.js';
-import { MockProvider, estimateTokens, type MockReply } from '../../src/agents/llm/provider.js';
+import { MockProvider, estimateTokens, type LlmProvider, type MockReply } from '../../src/agents/llm/provider.js';
 import type { ReplyRecord } from '../../src/agents/policy.js';
 import { CUT_OFF_RETRIES } from '../../src/agents/policy.js';
 import type { PolicyContext } from '../../src/agents/policy.js';
@@ -28,7 +28,7 @@ import { adventure as hotfix } from '../../src/adventures/hotfix-2-4-1/adventure
 import { BATCH_BUDGETS, buildPlan, openLedger, summarise } from '../../src/runner/batch.js';
 import { computeMetrics } from '../../src/runner/metrics.js';
 import { MOST_OUTPUT_TOKENS_IN_ONE_REQUEST, PAGE_GAME_LIMITS } from '../../src/runner/limits.js';
-import { run } from '../../src/runner/run.js';
+import { run, RunBudgetExceeded } from '../../src/runner/run.js';
 import { Transcript } from '../../src/runner/transcript.js';
 import { LIVE_AI_BUDGETS } from '../../src/server/live-ai.js';
 import { describeLedger } from '../../src/cli/batch.js';
@@ -194,6 +194,25 @@ describe('a reply cut off by its allowance', () => {
     expect(provider.requests.map((request) => request.maxOutputTokens)).toEqual([undefined, 1_000]);
   });
 
+  it('leaves alone a reply that ended for another reason, and its record says how it ended', async () => {
+    // Only the service's own word for "cut off by the allowance" is a reason
+    // to ask again with more room. A refusal, or a reply that stopped for a
+    // reason of its own, would only cost more to ask again. The record keeps
+    // the service's word, so that such a turn can be found.
+    const provider = new MockProvider([{ text: '', finishReason: 'other' }, 'COMMAND: look']);
+    const policy = new LlmPolicy({ adventure, provider, maxOutputTokens: ALLOWANCE });
+
+    const command = await policy.next(context());
+
+    expect(command).toBeNull();
+    expect(provider.calls).toBe(1);
+    expect(policy.metrics().lastReply).toMatchObject({
+      cutOff: false,
+      command: false,
+      attempts: [{ allowance: 3_000, finishReason: 'other', textLength: 0 }],
+    });
+  });
+
   it('leaves a reply that finished alone', async () => {
     const provider = new MockProvider(['COMMAND: look']);
     const policy = new LlmPolicy({ adventure, provider, maxOutputTokens: ALLOWANCE });
@@ -316,6 +335,16 @@ describe('the guard that used to end a run', () => {
     expect(result.freezes).toBe(turns >= 3 ? 1 : 0);
   });
 
+  it('writes each freeze to the transcript, on the turn where the streak reached three', async () => {
+    const waiting = { id: 'waiter', async next(): Promise<string | null> { return 'wait'; } };
+    const written = transcript();
+
+    await run({ adventure, policy: waiting, transcript: written, maxTurns: 6 });
+
+    // Six quiet turns, and one streak. It reached three on the third of them.
+    expect(written.all().filter(record => record['type'] === 'freeze')).toEqual([{ type: 'freeze', turn: 2, streak: 3 }]);
+  });
+
   it('counts a freeze that lands on the last turn', async () => {
     // The last turn has no next turn to count it, so it is counted where the
     // run ends. A streak that reaches three only there is still a freeze.
@@ -370,7 +399,8 @@ describe('the batch says what happened, in order', () => {
     expect(at('solved, fewest turns first:')).toBeGreaterThan(at('successes 2 of 3 attempted'));
     expect(lines[at('solved, fewest turns first:')]).toBe(
       `solved, fewest turns first: seed ${second!.seed} of hotfix-2-4-1 in 12 turns, seed ${first!.seed} of hotfix-2-4-1 in 17 turns`);
-    expect(at('turns to solve, the middle solved run: 17')).toBeGreaterThan(at('solved, fewest turns first:'));
+    // Two solved runs, 12 and 17 turns: the median lies halfway between them.
+    expect(at('turns to solve, the median of the solved runs: 14.5')).toBeGreaterThan(at('solved, fewest turns first:'));
     expect(lines.some((line) => line.startsWith(
       `  seed ${third!.seed} of hotfix-2-4-1: not solved, 25 turns, because The agent used all 25 turns.`))).toBe(true);
   });
@@ -403,5 +433,71 @@ describe('the batch says what happened, in order', () => {
     const listed = describeLedger(ledger).split('\n').filter(line => line.includes(': not solved,'));
     expect(listed).toHaveLength(4);
     for (const line of listed) expect(line).toMatch(/^ {2}seed [12] of (hotfix-2-4-1|mission-impossible): not solved, /);
+  });
+});
+
+describe('a retry the run cannot afford', () => {
+  it('ends the run as out of tokens, and the attempt that was made is counted and written down', async () => {
+    // The first reply is cut off, and is real: it is paid for. The second
+    // request is refused before it is sent, because the run has no room for
+    // it. That is neither a crash nor a lost turn. The run ends as out of
+    // tokens, the first attempt's tokens are in its final figures, and its
+    // record says why nothing followed it.
+    let calls = 0;
+    const provider: LlmProvider = {
+      id: 'mock',
+      model: 'mock-model',
+      async complete() {
+        calls += 1;
+        if (calls === 1) {
+          return { text: '', finishReason: 'length', reasoningTokens: 3_000, usage: { inputTokens: 10, outputTokens: 3_010 } };
+        }
+        throw new RunBudgetExceeded('The next model request would exceed the token budget.');
+      },
+    };
+    const policy = new LlmPolicy({ adventure, provider, maxOutputTokens: ALLOWANCE });
+    const written = transcript();
+
+    const result = await run({ adventure, policy, transcript: written, maxTurns: 3 });
+
+    expect(calls).toBe(2);
+    expect(result.outcome).toBe('budget_exhausted');
+    expect(result.reason).toBe('The next model request would exceed the token budget.');
+    expect(result.tokensUsed).toBe(3_020);
+    expect(result.cutOffReplies).toBe(1);
+    const records = written.all();
+    const reply = records.find(record => record['type'] === 'reply');
+    expect(reply).toMatchObject({
+      turn: 0,
+      ended: 'The next model request would exceed the token budget.',
+      data: { cutOff: true, command: false },
+    });
+    expect((reply!['data'] as ReplyRecord).attempts).toHaveLength(1);
+    expect(records.find(record => record['type'] === 'metrics')?.['data']).toMatchObject({ cutOffReplies: 1, retriedReplies: 0, tokensUsed: 3_020 });
+  });
+
+  it('does not write a turn\u2019s reply twice when the very first request is the one refused', async () => {
+    // Turn 0 is answered. Turn 1 is refused before it is sent. The policy
+    // still holds turn 0's reply, and that reply must not be written again
+    // under turn 1, nor counted twice.
+    let calls = 0;
+    const provider: LlmProvider = {
+      id: 'mock',
+      model: 'mock-model',
+      async complete() {
+        calls += 1;
+        if (calls === 1) return { text: 'COMMAND: look', usage: { inputTokens: 10, outputTokens: 5 } };
+        throw new RunBudgetExceeded('The next model request would exceed the token budget.');
+      },
+    };
+    const policy = new LlmPolicy({ adventure, provider, maxOutputTokens: ALLOWANCE });
+    const written = transcript();
+
+    const result = await run({ adventure, policy, transcript: written, maxTurns: 3 });
+
+    expect(result.outcome).toBe('budget_exhausted');
+    const replies = written.all().filter(record => record['type'] === 'reply');
+    expect(replies.map(record => record['turn'])).toEqual([0]);
+    expect(result.tokensUsed).toBe(15);
   });
 });

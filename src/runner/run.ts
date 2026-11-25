@@ -16,7 +16,7 @@ import { buildObservation, messagesFromEvents } from '../kernel/observation.js';
 import { canonicalJson, hashInitial, hashNext } from '../kernel/hash.js';
 import { parseCommand } from '../kernel/parser.js';
 import { reduce } from '../kernel/reduce.js';
-import { metricsOf, type AgentPolicy, type PolicyContext } from '../agents/policy.js';
+import { metricsOf, type AgentPolicy, type PolicyContext, type ReplyRecord } from '../agents/policy.js';
 import { legalCommands } from '../agents/legal-actions.js';
 import { PAGE_GAME_LIMITS } from './limits.js';
 import type { Transcript } from './transcript.js';
@@ -270,6 +270,30 @@ export async function run(options: RunOptions): Promise<RunResult> {
   let countedTurn = -1;
   let countBefore = { lastSituation, repeats, freezes, longestUnchangedTurns };
 
+  /** Note a freeze, on the turn where the streak of unchanged turns reached the run's threshold. It is written down. It ends nothing. */
+  const countFreeze = (turn: number): void => {
+    if (repeats !== budgets.maxRepeatedStates) return;
+    freezes += 1;
+    options.transcript?.write({ type: 'freeze', turn, streak: repeats });
+  };
+
+  /** The last reply written down, so that a failure on a later turn cannot write it twice. */
+  let recorded: ReplyRecord | undefined;
+
+  /**
+   * Write what the model sent back for a turn, attempt by attempt, and count
+   * it: whether the allowance cut the reply off, and how many tokens were
+   * reasoning and how many were the reply. A turn that ended with no command
+   * can never again be read as a turn that ran out.
+   */
+  const recordReply = (turn: number, reply: ReplyRecord, more: Record<string, unknown> = {}): void => {
+    options.transcript?.write({ type: 'reply', turn, data: reply, ...more });
+    recorded = reply;
+    cutOffReplies += reply.cutOff ? 1 : 0;
+    retriedReplies += reply.attempts.length > 1 ? 1 : 0;
+    reasoningTokens += reply.attempts.reduce((total, attempt) => total + (attempt.reasoningTokens ?? 0), 0);
+  };
+
   /**
    * Count the last turn, when it left the world as it found it.
    *
@@ -279,10 +303,10 @@ export async function run(options: RunOptions): Promise<RunResult> {
    * because the agent declined to act, or the provider failed, or the clock
    * ran out, did not spend that turn, and it is not counted.
    */
-  const countLastTurn = (): void => {
+  const countLastTurn = (turn: number): void => {
     if (situationKey(state) === lastSituation) {
       repeats += 1;
-      if (repeats === budgets.maxRepeatedStates) freezes += 1;
+      countFreeze(turn);
     }
     longestUnchangedTurns = Math.max(longestUnchangedTurns, repeats);
   };
@@ -410,7 +434,9 @@ export async function run(options: RunOptions): Promise<RunResult> {
     const situationAtStart = situationKey(state);
     countBefore = { lastSituation, repeats, freezes, longestUnchangedTurns };
     repeats = situationAtStart === lastSituation ? repeats + 1 : 0;
-    if (repeats === budgets.maxRepeatedStates) freezes += 1;
+    // The count is taken as this turn begins, and covers the turns before it.
+    // So a streak that has just reached three did so on the turn before.
+    countFreeze(turn - 1);
     lastSituation = situationAtStart;
     longestUnchangedTurns = Math.max(longestUnchangedTurns, repeats);
     countedTurn = turn;
@@ -463,6 +489,17 @@ export async function run(options: RunOptions): Promise<RunResult> {
     } catch (error) {
       const stopped = interrupted(turn);
       if (stopped !== undefined) return stopped;
+      // What the policy spent before it threw is spent. A reply cut off, and
+      // then a retry the run could not afford, comes here. The first attempt
+      // was real: its tokens are counted, its record is written, and the record
+      // says why nothing followed it.
+      const spent = metricsOf(policy);
+      if (spent?.lastReply !== undefined && spent.lastReply !== recorded && spent.lastReply.attempts.length > 0) {
+        tokensUsed = spent.tokensUsed;
+        inputTokens = spent.inputTokens;
+        outputTokens = spent.outputTokens;
+        recordReply(turn, spent.lastReply, { ended: error instanceof Error ? error.message : 'the policy threw' });
+      }
       if (error instanceof RunBudgetExceeded) return finish('budget_exhausted', error.message, turn);
       // A policy that throws is a provider failure, not a crash. It is
       // counted, retried, and the run stops cleanly when the budget is spent.
@@ -492,16 +529,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
     if (after !== undefined && after.lastResponse.length > 0) {
       options.transcript?.write({ type: 'response', turn, text: after.lastResponse });
     }
-    if (after?.lastReply !== undefined) {
-      // What the model sent back, attempt by attempt: whether the allowance cut
-      // the reply off, and how many tokens were reasoning and how many were
-      // the reply. A turn that ended with no command can never again be read
-      // as a turn that ran out.
-      options.transcript?.write({ type: 'reply', turn, data: after.lastReply });
-      cutOffReplies += after.lastReply.cutOff ? 1 : 0;
-      retriedReplies += after.lastReply.attempts.length > 1 ? 1 : 0;
-      reasoningTokens += after.lastReply.attempts.reduce((total, attempt) => total + (attempt.reasoningTokens ?? 0), 0);
-    }
+    if (after?.lastReply !== undefined) recordReply(turn, after.lastReply);
     const interruptedAfterReply = interrupted(turn);
     if (interruptedAfterReply !== undefined) return interruptedAfterReply;
 
@@ -542,7 +570,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
       options.onMessage?.(parsed.message);
 
       if (parseErrors >= budgets.maxParseErrors) {
-        countLastTurn();
+        countLastTurn(turn);
         return finish(
           'budget_exhausted',
           `The agent made ${parseErrors} parse errors and stopped being useful.`,
@@ -596,7 +624,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
 
   }
 
-  countLastTurn();
+  if (countedTurn >= 0) countLastTurn(countedTurn);
   if (state.status === 'success') {
     return finish('success', 'Every objective was met.', state.turn);
   }
