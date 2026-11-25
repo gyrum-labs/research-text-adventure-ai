@@ -1021,8 +1021,28 @@ export interface LlmResponse {
   raw?: unknown;
   /** Non-fatal provider error (rate limit, transient). */
   transientError?: string;
+  /** How the reply ended, when the provider says: `stop`, `length` or `other`. */
+  finishReason?: FinishReason;
+  /** Output tokens spent on reasoning the model did not show, when the provider says. */
+  reasoningTokens?: number;
 }
 ```
+
+This is a seam with services outside the project. Each has its own word for how
+a reply ended, and the adapter for it brings that word back to one of three:
+`stop` (the reply was finished), `length` (the allowance cut it off), or
+`other`. Only `length` makes the runner ask again, with the room doubled.
+
+| Service | Its word for a finished reply | Its word for a reply cut off by its allowance |
+|---|---|---|
+| OpenAI chat completions, which OpenRouter also speaks | `finish_reason`: `stop` | `finish_reason`: `length` |
+| Anthropic messages | `stop_reason`: `end_turn`, `stop_sequence` | `stop_reason`: `max_tokens` |
+| Ollama | `done_reason`: `stop` | `done_reason`: `length` |
+
+Any other word is kept as `other` and written to the transcript as such, so
+that it can be seen. `tests/agents/llm-provider.test.ts` holds every word
+named here. Before a new word is mapped, it is checked against the service's
+own published API.
 
 Required adapters: **Anthropic**, **OpenAI-compatible**, **Ollama** (local), and **`Mock`**
 (scripted responses, for tests and zero-cost runs). Implement all of them with plain `fetch`. No
@@ -1162,7 +1182,9 @@ reasoning and how many were the reply.
 **A run that does not change the world.** The runner notes when a turn leaves the
 world as it found it. A look, a refused command and a reply with no command all
 leave it. The longest such streak, and the number of streaks that reached three,
-are in the run's final metrics. They end nothing. The turns are the limit.
+are in the run's final metrics. Each streak is written to the transcript as a
+`freeze` record, on the turn where it reached three. They end nothing. The
+turns are the limit.
 
 **History.** Until 25 November 2026 the limits were 20 turns, 30,000 tokens and
 300 output tokens per request, and the third turn in an unchanged state ended the

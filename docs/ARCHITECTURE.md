@@ -390,7 +390,9 @@ recorded before this date belongs to the old limits, is never pooled with a numb
 recorded after, and every document that cites one says so. The kernel's
 `loop_detected` outcome stays in its type because recorded runs carry it, and the
 runner no longer produces it. The sandbox sets no output cap and had no guard.
-Its shift length follows separately.
+Its shift length follows separately. The words each model service uses for the
+end of a reply are a seam with something outside the project: they are written
+down once (`SPEC.md` 10.2), with a test for every word named there.
 
 ## 5. Open decisions for the implementing agent
 
