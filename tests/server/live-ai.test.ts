@@ -8,6 +8,7 @@ import { adventure } from '../../src/adventures/mission-impossible/adventure.js'
 import { GOLD_PATH } from '../../src/adventures/mission-impossible/gold-path.js';
 import { replayTranscript } from '../../src/runner/replay.js';
 import { readTranscript } from '../../src/runner/transcript.js';
+import { PAGE_GAME_LIMITS } from '../../src/runner/limits.js';
 
 interface DemoRecord { type: string; raw?: string; data?: Record<string, unknown> }
 
@@ -73,7 +74,9 @@ describe('the real-model demo', () => {
       expect(requests).toHaveLength(0);
       const stream = await records(started.url, id);
       expect(requests).toHaveLength(GOLD_PATH.length);
-      expect(requests.every(request => request['max_tokens'] <= 300)).toBe(true);
+      // The allowance is the page game's, stated once. The server holds it,
+      // and the ceiling of the retries on a cut-off reply.
+      expect(requests.every(request => request['max_tokens'] <= PAGE_GAME_LIMITS.maxOutputTokensPerTurn)).toBe(true);
       // regression: warp#22688 — prose dropped public descriptions and readable flags.
       const firstContext = requests[0]!.messages.map(message => message.content).join('\n');
       expect(firstContext).toContain(adventure.objects['bulletin']!.description);
@@ -105,7 +108,7 @@ describe('the real-model demo', () => {
       const started = await startSessionServer({ liveAi: demo(configuration).liveAi });
       try {
         const health = await (await fetch(`${started.url}/api/health`)).json();
-        expect(health.ai.budgets.maxTotalTokens).toBe(ceiling ?? 30_000);
+        expect(health.ai.budgets.maxTotalTokens).toBe(ceiling ?? PAGE_GAME_LIMITS.maxTotalTokens);
         const { id } = await (await open(started.url)).json();
         const stream = await records(started.url, id);
         expect(stream.find(record => record.type === 'run_ended')?.data?.['outcome'])

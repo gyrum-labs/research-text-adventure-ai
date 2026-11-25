@@ -91,27 +91,39 @@ describe('resuming a run', () => {
     // world the first command changed.
     expect(first.pause?.history).toHaveLength(3);
     expect(first.pause?.commands).toEqual(FIRST_HALF);
-    expect(first.pause?.loop.repeats).toBeGreaterThanOrEqual(1);
+    // Nothing has repeated: both commands changed the world, and a streak is
+    // counted from nought.
+    expect(first.pause?.loop.repeats).toBe(0);
+    expect(first.pause?.counters).toMatchObject({
+      cutOffReplies: 0, retriedReplies: 0, reasoningTokens: 0, longestUnchangedTurns: 0, freezes: 0,
+    });
   });
 
-  it('a resumed run keeps the loop guard the pause interrupted', async () => {
-    // One turn in the same room before the pause, one after: the guard must
-    // see three repeats across the pause, not start counting again. The
-    // situation the run starts in counts as the first repeat.
+  it('a resumed run keeps counting the unchanged turns the pause interrupted', async () => {
+    // One quiet turn before the pause. The pause arrives inside the next turn,
+    // before its command is applied, so the resumed run takes that turn again
+    // and then one more. The count carries across the pause, and the turn the
+    // pause interrupted is not counted twice. It is a count now, and no longer
+    // ends the run (warp#23474).
     const waiting = waitingPolicy(1);
     const first = await run({
       adventure, policy: waiting.policy as never, maxTurns: 2, signal: waiting.policy.signal,
     });
     expect(first.outcome).toBe('paused');
-    expect(first.pause?.loop.repeats).toBe(2);
+    expect(first.pause?.loop.repeats).toBe(0);
     const second = await run({
       adventure, policy: { id: 'stub', async next() { return 'wait'; } } as never,
       initial: first.state, startingTurn: first.turns,
       resume: first.pause, maxTurns: 2,
     });
-    // One more turn in the same room crosses the guard of three.
-    expect(second.outcome).toBe('loop_detected');
-    expect(second.turns).toBe(2);
+    // Three turns in all in the same state: the one before the pause, and two
+    // after. That is one freeze. The turns ended the run, at their limit: the
+    // turn count is the whole lineage's, across the pause.
+    expect(second.outcome).toBe('budget_exhausted');
+    expect(second.reason).toBe('The agent used all 2 turns.');
+    expect(second.turns).toBe(3);
+    expect(second.longestUnchangedTurns).toBe(3);
+    expect(second.freezes).toBe(1);
   });
 
   it('a resumed run carries its error counters across the pause', async () => {

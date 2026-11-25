@@ -7,12 +7,12 @@ import { PROMPT_VERSION } from '../agents/llm/prompt.js';
 import { OpenAiProvider, redact, type LlmProvider, type LlmRequest } from '../agents/llm/provider.js';
 import { DEFAULT_BUDGETS, RunBudgetExceeded, type RunBudgets, type RunResumeState } from '../runner/run.js';
 import { PRICES } from '../runner/metrics.js';
+import { MOST_OUTPUT_TOKENS_IN_ONE_REQUEST, PAGE_GAME_LIMITS } from '../runner/limits.js';
 import { Transcript } from '../runner/transcript.js';
 
 /** Server-owned maxima for an explicitly started model demo. */
 export const LIVE_AI_BUDGETS: Readonly<RunBudgets> = Object.freeze({
-  ...DEFAULT_BUDGETS, maxTurns: 20, maxTotalTokens: 30_000, maxOutputTokensPerTurn: 300,
-  maxWallClockMs: 120_000, maxTransientProviderErrors: 2, maxParseErrors: 3,
+  ...DEFAULT_BUDGETS, ...PAGE_GAME_LIMITS, maxTransientProviderErrors: 2, maxParseErrors: 3,
 });
 
 /** Private configuration; none of this object is serialized to the browser. */
@@ -99,8 +99,11 @@ function guardedProvider(options: LiveAiOptions, signal: AbortSignal, limits: { 
       if (bytes > limits.maxPromptBytes) throw new RunBudgetExceeded('The AI prompt exceeded the request-size limit.');
       // UTF-8 bytes conservatively bound text tokens; reserve extra chat framing.
       const inputAllowance = bytes + 1024;
-      const maxOutputTokens = Math.min(request.maxOutputTokens ?? 300, limits.budgets.maxOutputTokensPerTurn,
-        limits.budgets.maxTotalTokens - tokensUsed - inputAllowance);
+      // The policy asks for the page game's allowance, and twice that again when
+      // a reply was cut off. The server holds the ceiling of that, and the rest
+      // of the run's tokens.
+      const maxOutputTokens = Math.min(request.maxOutputTokens ?? PAGE_GAME_LIMITS.maxOutputTokensPerTurn,
+        MOST_OUTPUT_TOKENS_IN_ONE_REQUEST, limits.budgets.maxTotalTokens - tokensUsed - inputAllowance);
       if (maxOutputTokens < 1) throw new RunBudgetExceeded('The next model request would exceed the token budget.');
       try {
         const response = await remote.complete({ ...request, signal, maxOutputTokens });
@@ -110,6 +113,7 @@ function guardedProvider(options: LiveAiOptions, signal: AbortSignal, limits: { 
           outputTokens: response.usage?.outputTokens ?? new TextEncoder().encode(text).length };
         tokensUsed += response.transientError === undefined ? usage.inputTokens + usage.outputTokens : inputAllowance + maxOutputTokens;
         return { text, usage,
+          finishReason: response.finishReason, reasoningTokens: response.reasoningTokens,
           ...(response.transientError === undefined ? {} : { transientError: redact(response.transientError, options.apiKey) }),
         };
       } catch {

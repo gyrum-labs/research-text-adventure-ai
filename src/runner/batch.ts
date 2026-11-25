@@ -17,6 +17,7 @@ import { join } from 'node:path';
 import type { Adventure } from '../kernel/types.js';
 import type { LlmProvider } from '../agents/llm/provider.js';
 import type { RunBudgets } from './run.js';
+import { PAGE_GAME_LIMITS } from './limits.js';
 import { run } from './run.js';
 import { LlmPolicy } from '../agents/llm/policy.js';
 import { CONTEXT_STRATEGIES, type ContextStrategy } from '../agents/context.js';
@@ -37,23 +38,19 @@ export interface PriceEvidence {
 /**
  * The limits every cell is held to.
  *
- * They are the profile the roadmap pins — twenty turns, thirty thousand total
- * tokens, three hundred output tokens per request, two minutes — and they live
- * here rather than in the server, because the batch is a research profile and
- * the CLI may not reach the server layer.
+ * The four that say how much work a run may do are the page game's limits,
+ * stated once in `limits.ts` and taken from there by the live page as well.
+ * The rest are the batch's own. They live here rather than in the server,
+ * because the batch is a research profile and the CLI may not reach the server
+ * layer.
  */
 export const BATCH_BUDGETS: Readonly<RunBudgets> = Object.freeze({
-  ...{
-    maxTurns: 20,
-    maxHints: 3,
-    maxOutputTokensPerTurn: 300,
-    maxTotalTokens: 30_000,
-    maxWallClockMs: 120_000,
-    maxTransientProviderErrors: 2,
-    providerRetryDelayMs: 1_000,
-    maxParseErrors: 10,
-    maxRepeatedStates: 3,
-  },
+  maxHints: 3,
+  ...PAGE_GAME_LIMITS,
+  maxTransientProviderErrors: 2,
+  providerRetryDelayMs: 1_000,
+  maxParseErrors: 10,
+  maxRepeatedStates: 3,
 });
 
 /** The plan, written before any cell runs. */
@@ -134,10 +131,11 @@ export interface BatchPlanInput {
  * The most one run could cost, from the published prices.
  *
  * Output is the dearer token and is capped by the turns times the per-request
- * output ceiling; the rest of the total token cap can only be input.
+ * output allowance, and always by the total token cap. The rest of the total
+ * can only be input.
  */
 export function worstCaseCost(budgets: RunBudgets, prices: PriceEvidence): number {
-  const outputTokens = budgets.maxTurns * budgets.maxOutputTokensPerTurn;
+  const outputTokens = Math.min(budgets.maxTurns * budgets.maxOutputTokensPerTurn, budgets.maxTotalTokens);
   const inputTokens = Math.max(0, budgets.maxTotalTokens - outputTokens);
   return (inputTokens * prices.inputPerMillion + outputTokens * prices.outputPerMillion) / 1_000_000;
 }
@@ -388,6 +386,10 @@ export interface BatchReport {
   failures: Record<string, number>;
   /** Why the plan was not finished, when it was not. */
   shortfall: null | string;
+  /** The solved runs, fewest turns first. The solve rate is the first key. This is the second. */
+  solvedByTurns: Array<{ seed: number; turns: number }>;
+  /** The runs that did not solve, each with why it ended. They cannot be sorted by turns: each sat at a limit. */
+  unsolved: Array<{ seed: number; reason: string; turns: number | undefined }>;
 }
 
 /** Recount the experiment from the books, without embellishment. */
@@ -406,6 +408,18 @@ export function summarise(ledger: BatchLedger): BatchReport {
     outstanding.length + unperformed.length > 0
       ? `${outstanding.length + unperformed.length} of ${ledger.cells.length} planned cells did not run`
       : null;
+  // The solve rate stands first. Among the solved, fewer turns ranks higher.
+  // A run that did not solve sat at a limit, so its turns say how long it was
+  // allowed and not how well it did. Those are listed after, with why each
+  // ended.
+  const solvedByTurns = attempted
+    .filter(cell => cell.outcome === 'success')
+    .map(cell => ({ seed: cell.seed, turns: cell.turns ?? Number.MAX_SAFE_INTEGER }))
+    .sort((one, other) => one.turns - other.turns || one.seed - other.seed);
+  const unsolved = attempted
+    .filter(cell => cell.outcome !== 'success')
+    .sort((one, other) => one.seed - other.seed)
+    .map(cell => ({ seed: cell.seed, reason: cell.reason ?? cell.outcome ?? 'unknown', turns: cell.turns }));
   return {
     planned: ledger.cells.length,
     attempted: attempted.length,
@@ -420,6 +434,8 @@ export function summarise(ledger: BatchLedger): BatchReport {
     unsettledUsd: round(ledger.reservedUsd),
     failures,
     shortfall,
+    solvedByTurns,
+    unsolved,
   };
 }
 

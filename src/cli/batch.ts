@@ -207,6 +207,18 @@ export function describeLedger(ledger: ReturnType<typeof openLedger>): string {
     `spend $${report.spentUsd.toFixed(6)}, unsettled holds ${report.unsettledHolds} worth $${report.unsettledUsd.toFixed(6)}`,
     `cost per solve ${report.costPerSolve === null ? 'not applicable: nothing was solved' : `$${report.costPerSolve.toFixed(6)}`}`,
   ];
+  // The solve rate stands first. Then the solved runs, fewest turns first.
+  // Then the runs that did not solve, each with why it ended.
+  const solved = report.solvedByTurns.map(run => `seed ${run.seed} in ${run.turns} turns`).join(', ');
+  lines.push(`solved, fewest turns first: ${solved.length === 0 ? 'none' : solved}`);
+  if (report.solvedByTurns.length > 0) {
+    const turns = report.solvedByTurns.map(run => run.turns).sort((one, other) => one - other);
+    lines.push(`turns to solve, the middle solved run: ${turns[Math.floor(turns.length / 2)]}`);
+  }
+  for (const run of report.unsolved) {
+    const length = run.turns === undefined ? 'turns not recorded' : `${run.turns} turns`;
+    lines.push(`  seed ${run.seed}: not solved, ${length}, because ${run.reason}`);
+  }
   for (const [reason, count] of Object.entries(report.failures)) {
     lines.push(`  ${count} × ${reason}`);
   }

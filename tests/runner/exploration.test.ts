@@ -20,14 +20,21 @@ describe('exploration progress', () => {
   });
 
   it.each([
-    ['look', 'look', 'look', 'look'],
-    ['examine desk', 'examine desk', 'examine desk', 'examine desk'],
-    ['examine desk', 'examine wall notice', 'examine desk', 'examine wall notice', 'examine desk'],
-  ])('still stops no-op repetitions without counting turn increments: %s', async (...commands) => {
+    ['four looks', 4, ['look', 'look', 'look', 'look']],
+    ['one thing, examined four times', 3, ['examine desk', 'examine desk', 'examine desk', 'examine desk']],
+    ['two things, examined again', 3, ['examine desk', 'examine wall notice', 'examine desk', 'examine wall notice', 'examine desk']],
+  ])('counts no-op repetitions as the same state, turn increments and all: %s', async (_name, streak, commands) => {
+    // Until 25 November 2026 the third of these ended the run (warp#23474).
+    // It is counted now, which still shows what the test was written for: a
+    // look, or the same examine again, leaves the world as it was, and the
+    // turn counter on its own is not a change. The first examine of a thing
+    // does change the world. It marks the thing examined.
     const result = await run({ adventure, policy: new ScriptedPolicy(commands) });
-    expect(result.outcome).toBe('loop_detected');
-    expect(result.commands.length).toBeLessThanOrEqual(commands.length);
-    expect(result.turns).toBeLessThan(6);
+    expect(result.commands).toEqual(commands);
+    expect(result.longestUnchangedTurns).toBe(streak);
+    // The scripted policy stops when its commands run out, and a turn the
+    // agent declined to take is not a turn spent.
+    expect(result.outcome).toBe('provider_stopped');
   });
 
   it('keeps human and runner feedback and hash chains equivalent through exploration', async () => {

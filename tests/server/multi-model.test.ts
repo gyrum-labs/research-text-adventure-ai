@@ -13,6 +13,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createLiveAiDemo, liveAisFromEnvironment } from '../../src/server/live-ai.js';
 import { startSessionServer } from '../../src/server/server.js';
+import { PAGE_GAME_LIMITS } from '../../src/runner/limits.js';
 
 const secret = 'demo-key-keep-on-server';
 afterEach(() => vi.restoreAllMocks());
@@ -40,7 +41,7 @@ describe('several configured agents', () => {
       expect(health.aiModels.map(entry => entry.model)).toEqual([
         'deepseek/deepseek-chat', 'z-ai/glm-5.3',
       ]);
-      expect(health.aiModels.every(entry => entry.budgets.maxTotalTokens === 30_000)).toBe(true);
+      expect(health.aiModels.every(entry => entry.budgets.maxTotalTokens === PAGE_GAME_LIMITS.maxTotalTokens)).toBe(true);
     } finally { await started.close(); }
   });
 
