@@ -387,9 +387,9 @@ export interface BatchReport {
   /** Why the plan was not finished, when it was not. */
   shortfall: null | string;
   /** The solved runs, fewest turns first. The solve rate is the first key. This is the second. */
-  solvedByTurns: Array<{ seed: number; turns: number }>;
+  solvedByTurns: Array<{ world: string; seed: number; turns: number }>;
   /** The runs that did not solve, each with why it ended. They cannot be sorted by turns: each sat at a limit. */
-  unsolved: Array<{ seed: number; reason: string; turns: number | undefined }>;
+  unsolved: Array<{ world: string; seed: number; reason: string; turns: number | undefined }>;
 }
 
 /** Recount the experiment from the books, without embellishment. */
@@ -412,14 +412,18 @@ export function summarise(ledger: BatchLedger): BatchReport {
   // A run that did not solve sat at a limit, so its turns say how long it was
   // allowed and not how well it did. Those are listed after, with why each
   // ended.
+  // A seed is the seed of one world, and a plan can hold several. Every run is
+  // named by both, or "seed 1" would be two runs.
+  const byWorldAndSeed = (one: { world: string; seed: number }, other: { world: string; seed: number }): number =>
+    one.world < other.world ? -1 : one.world > other.world ? 1 : one.seed - other.seed;
   const solvedByTurns = attempted
     .filter(cell => cell.outcome === 'success')
-    .map(cell => ({ seed: cell.seed, turns: cell.turns ?? Number.MAX_SAFE_INTEGER }))
-    .sort((one, other) => one.turns - other.turns || one.seed - other.seed);
+    .map(cell => ({ world: cell.world, seed: cell.seed, turns: cell.turns ?? Number.MAX_SAFE_INTEGER }))
+    .sort((one, other) => one.turns - other.turns || byWorldAndSeed(one, other));
   const unsolved = attempted
     .filter(cell => cell.outcome !== 'success')
-    .sort((one, other) => one.seed - other.seed)
-    .map(cell => ({ seed: cell.seed, reason: cell.reason ?? cell.outcome ?? 'unknown', turns: cell.turns }));
+    .sort(byWorldAndSeed)
+    .map(cell => ({ world: cell.world, seed: cell.seed, reason: cell.reason ?? cell.outcome ?? 'unknown', turns: cell.turns }));
   return {
     planned: ledger.cells.length,
     attempted: attempted.length,

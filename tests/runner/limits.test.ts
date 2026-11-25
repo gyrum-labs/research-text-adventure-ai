@@ -266,6 +266,18 @@ describe('the guard that used to end a run', () => {
     expect(result.events.at(-1)).toMatchObject({ type: 'run_ended', outcome: 'budget_exhausted' });
   });
 
+  it.each([1, 2, 3, 4, 5, 6, 20])('%i quiet turns are counted as %i, and are one freeze from three', async (turns) => {
+    // The arithmetic, turn by turn. A turn is counted as the next turn begins,
+    // so the last turn, which has no next, is counted once where the run ends.
+    // Nothing is counted twice: a run of twenty quiet turns reads twenty.
+    const waiting = { id: 'waiter', async next(): Promise<string | null> { return 'wait'; } };
+    const result = await run({ adventure, policy: waiting, budgets: { maxTurns: turns, maxRepeatedStates: 3 } });
+    expect(result.commands).toHaveLength(turns);
+    expect(result.outcome).toBe('budget_exhausted');
+    expect(result.longestUnchangedTurns).toBe(turns);
+    expect(result.freezes).toBe(turns >= 3 ? 1 : 0);
+  });
+
   it('counts a freeze that lands on the last turn', async () => {
     // The last turn has no next turn to count it, so it is counted where the
     // run ends. A streak that reaches three only there is still a freeze.
@@ -305,16 +317,53 @@ describe('the batch says what happened, in order', () => {
 
     const report = summarise(ledger);
     expect(report.successes).toBe(2);
-    expect(report.solvedByTurns).toEqual([{ seed: second!.seed, turns: 12 }, { seed: first!.seed, turns: 17 }]);
-    expect(report.unsolved).toEqual([{ seed: third!.seed, reason: 'The agent used all 25 turns.', turns: 25 }]);
+    expect(report.solvedByTurns).toEqual([
+      { world: 'hotfix-2-4-1', seed: second!.seed, turns: 12 },
+      { world: 'hotfix-2-4-1', seed: first!.seed, turns: 17 },
+    ]);
+    expect(report.unsolved).toEqual([
+      { world: 'hotfix-2-4-1', seed: third!.seed, reason: 'The agent used all 25 turns.', turns: 25 },
+    ]);
 
     const text = describeLedger(ledger);
     const lines = text.split('\n');
     const at = (start: string): number => lines.findIndex((line) => line.startsWith(start));
     expect(at('successes 2 of 3 attempted')).toBeGreaterThanOrEqual(0);
     expect(at('solved, fewest turns first:')).toBeGreaterThan(at('successes 2 of 3 attempted'));
-    expect(lines[at('solved, fewest turns first:')]).toBe(`solved, fewest turns first: seed ${second!.seed} in 12 turns, seed ${first!.seed} in 17 turns`);
+    expect(lines[at('solved, fewest turns first:')]).toBe(
+      `solved, fewest turns first: seed ${second!.seed} of hotfix-2-4-1 in 12 turns, seed ${first!.seed} of hotfix-2-4-1 in 17 turns`);
     expect(at('turns to solve, the middle solved run: 17')).toBeGreaterThan(at('solved, fewest turns first:'));
-    expect(lines.some((line) => line.startsWith(`  seed ${third!.seed}: not solved, 25 turns, because The agent used all 25 turns.`))).toBe(true);
+    expect(lines.some((line) => line.startsWith(
+      `  seed ${third!.seed} of hotfix-2-4-1: not solved, 25 turns, because The agent used all 25 turns.`))).toBe(true);
+  });
+
+  it('names the world of every run, because a seed is the seed of one world', () => {
+    // A plan of two worlds has a seed 1 in each. Listed by seed alone, "seed 1"
+    // would be two runs.
+    const plan = buildPlan({
+      worlds: [hotfix, adventure],
+      runsPerWorld: 2,
+      model: { provider: 'openrouter', model: 'deepseek/deepseek-chat' },
+      strategy: 'structured',
+      temperature: 0 as const,
+      promptVersion: 'llm-prompt-v4',
+      promptHash: 'sha256:prompt',
+      budgets: BATCH_BUDGETS,
+      prices: { source: 'test', checkedAt: '2026-11-25T00:00:00Z', inputPerMillion: 0.3, outputPerMillion: 0.9 },
+      sourceRevision: 'test',
+      maxTotalUsd: 1,
+      maxPerRunUsd: 0.1,
+    });
+    const ledger = openLedger(plan);
+    for (const cell of ledger.cells) {
+      Object.assign(cell, { status: 'attempted' as const, chargeState: 'settled' as const, outcome: 'budget_exhausted',
+        turns: 25, reason: 'The agent used all 25 turns.' });
+    }
+    expect(summarise(ledger).unsolved.map(run => `${run.world}:${run.seed}`).sort()).toEqual([
+      'hotfix-2-4-1:1', 'hotfix-2-4-1:2', 'mission-impossible:1', 'mission-impossible:2',
+    ]);
+    const listed = describeLedger(ledger).split('\n').filter(line => line.includes(': not solved,'));
+    expect(listed).toHaveLength(4);
+    for (const line of listed) expect(line).toMatch(/^ {2}seed [12] of (hotfix-2-4-1|mission-impossible): not solved, /);
   });
 });

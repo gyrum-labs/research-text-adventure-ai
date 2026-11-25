@@ -108,6 +108,15 @@ describe('the budgets', () => {
     expect(result.freezes).toBe(1);
   });
 
+  it('and maxRepeatedStates on its own ends nothing, even at one', async () => {
+    // The most aggressive setting there is, with no turn limit named: the run
+    // still goes to the last turn the default allows.
+    const result = await run({ adventure, policy: new FixedPolicy('look'), budgets: { maxRepeatedStates: 1 } });
+    expect(result.outcome).toBe('budget_exhausted');
+    expect(result.reason).toBe('The agent used all 30 turns.');
+    expect(result.longestUnchangedTurns).toBe(30);
+  });
+
   it('stop the run when the provider keeps failing', async () => {
     const result = await run({
       adventure,

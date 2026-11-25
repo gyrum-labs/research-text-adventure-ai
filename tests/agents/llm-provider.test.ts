@@ -102,6 +102,94 @@ describe('the mock provider', () => {
     expect(response.usage?.inputTokens).toBeGreaterThan(0);
     expect(response.usage?.outputTokens).toBeGreaterThan(0);
   });
+
+  it('can script a reply that the allowance cut off, and what it spent on reasoning', async () => {
+    const provider = new MockProvider([{ text: '', finishReason: 'length', reasoningTokens: 300 }]);
+
+    const response = await provider.complete(REQUEST);
+
+    expect(response.text).toBe('');
+    expect(response.finishReason).toBe('length');
+    expect(response.reasoningTokens).toBe(300);
+    // Reasoning is output, and is paid for as output.
+    expect(response.usage?.outputTokens).toBe(300);
+  });
+});
+
+describe('how a reply ended, as the live adapters read it', () => {
+  // Only two things matter to the runner: the reply was finished, or the
+  // allowance cut it off. Every provider has its own words for those, and the
+  // reasoning a model did not show is counted by some and not others.
+
+  it('an OpenAI-shaped reply says when the allowance cut it off, and what was spent on reasoning', async () => {
+    const server = await fakeProvider({
+      choices: [{ message: { content: '' }, finish_reason: 'length' }],
+      usage: { prompt_tokens: 20, completion_tokens: 300, completion_tokens_details: { reasoning_tokens: 300 } },
+    });
+
+    try {
+      const provider = new OpenAiProvider({ apiKey: 'test-key', baseUrl: server.url, model: 'test-model' });
+      const response = await provider.complete(REQUEST);
+      expect(response.text).toBe('');
+      expect(response.finishReason).toBe('length');
+      expect(response.reasoningTokens).toBe(300);
+      expect(response.usage).toEqual({ inputTokens: 20, outputTokens: 300 });
+    } finally {
+      server.close();
+    }
+  });
+
+  it('and a finished reply says so', async () => {
+    const server = await fakeProvider({
+      choices: [{ message: { content: 'COMMAND: look' }, finish_reason: 'stop' }],
+      usage: { prompt_tokens: 20, completion_tokens: 155, completion_tokens_details: { reasoning_tokens: 126 } },
+    });
+
+    try {
+      const provider = new OpenAiProvider({ apiKey: 'test-key', baseUrl: server.url, model: 'test-model' });
+      const response = await provider.complete(REQUEST);
+      expect(response.text).toBe('COMMAND: look');
+      expect(response.finishReason).toBe('stop');
+      expect(response.reasoningTokens).toBe(126);
+    } finally {
+      server.close();
+    }
+  });
+
+  it('a reply with no choices at all is safe, and says nothing about how it ended', async () => {
+    const server = await fakeProvider({ choices: [], usage: { prompt_tokens: 3, completion_tokens: 0 } });
+
+    try {
+      const provider = new OpenAiProvider({ apiKey: 'test-key', baseUrl: server.url, model: 'test-model' });
+      const response = await provider.complete(REQUEST);
+      expect(response.text).toBe('');
+      expect(response.finishReason).toBeUndefined();
+      expect(response.reasoningTokens).toBeUndefined();
+    } finally {
+      server.close();
+    }
+  });
+
+  it("and Anthropic's and Ollama's own words are read the same way", async () => {
+    const anthropic = await fakeProvider({
+      content: [{ type: 'text', text: 'half a thought' }],
+      stop_reason: 'max_tokens',
+      usage: { input_tokens: 5, output_tokens: 9 },
+    });
+    const ollama = await fakeProvider({ message: { content: 'half a thought' }, done_reason: 'length', prompt_eval_count: 5, eval_count: 9 });
+
+    try {
+      const first = await new AnthropicProvider({ apiKey: 'test-key', baseUrl: anthropic.url, model: 'test-model' }).complete(REQUEST);
+      expect(first.text).toBe('half a thought');
+      expect(first.finishReason).toBe('length');
+      const second = await new OllamaProvider({ model: 'test-model', baseUrl: ollama.url }).complete(REQUEST);
+      expect(second.text).toBe('half a thought');
+      expect(second.finishReason).toBe('length');
+    } finally {
+      anthropic.close();
+      ollama.close();
+    }
+  });
 });
 
 describe('the anthropic adapter', () => {
