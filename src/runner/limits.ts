@@ -29,5 +29,13 @@ export const PAGE_GAME_LIMITS = Object.freeze({
   maxWallClockMs: 120_000,
 });
 
-/** The most output tokens one request can come to ask for, after every retry on a cut-off reply. */
-export const MOST_OUTPUT_TOKENS_IN_ONE_REQUEST: number = PAGE_GAME_LIMITS.maxOutputTokensPerTurn * 2 ** CUT_OFF_RETRIES;
+/**
+ * The most output tokens one request of a run can come to ask for: the run's
+ * own allowance, doubled once for every retry on a cut-off reply.
+ */
+export function mostOutputTokensInOneRequest(allowance: number): number {
+  return allowance * 2 ** CUT_OFF_RETRIES;
+}
+
+/** The page game's: the most output tokens one request can come to ask for, after every retry on a cut-off reply. */
+export const MOST_OUTPUT_TOKENS_IN_ONE_REQUEST: number = mostOutputTokensInOneRequest(PAGE_GAME_LIMITS.maxOutputTokensPerTurn);

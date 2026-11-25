@@ -2,13 +2,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createLiveAiDemo, liveAiFromEnvironment } from '../../src/server/live-ai.js';
+import { LIVE_AI_BUDGETS, createLiveAiDemo, guardedProvider, liveAiFromEnvironment } from '../../src/server/live-ai.js';
 import { startSessionServer } from '../../src/server/server.js';
 import { adventure } from '../../src/adventures/mission-impossible/adventure.js';
 import { GOLD_PATH } from '../../src/adventures/mission-impossible/gold-path.js';
 import { replayTranscript } from '../../src/runner/replay.js';
 import { readTranscript } from '../../src/runner/transcript.js';
-import { MOST_OUTPUT_TOKENS_IN_ONE_REQUEST, PAGE_GAME_LIMITS } from '../../src/runner/limits.js';
+import { MOST_OUTPUT_TOKENS_IN_ONE_REQUEST, PAGE_GAME_LIMITS, mostOutputTokensInOneRequest } from '../../src/runner/limits.js';
 
 interface DemoRecord { type: string; raw?: string; data?: Record<string, unknown> }
 
@@ -130,6 +130,63 @@ describe('the real-model demo', () => {
       expect(asked.filter((_value, index) => index % 2 === 0).every(value => value <= PAGE_GAME_LIMITS.maxOutputTokensPerTurn)).toBe(true);
       expect(asked.filter((_value, index) => index % 2 === 1).every(value => value <= 2 * PAGE_GAME_LIMITS.maxOutputTokensPerTurn)).toBe(true);
       expect(asked.every(value => value <= MOST_OUTPUT_TOKENS_IN_ONE_REQUEST)).toBe(true);
+    } finally { await started.close(); }
+  });
+
+  it('holds a request to the run\'s own allowance, however much it asks for', async () => {
+    // The guard is tried as itself here, and not through the policy. The
+    // policy always asks for the right amount, so a guard that let more
+    // through would never be seen through it. A server that lowers a run's
+    // allowance lowers the ceiling with it: a request may have the allowance,
+    // doubled once for every retry on a cut-off reply, and no more.
+    const requests: { max_tokens: number }[] = [];
+    modelFetch(async init => {
+      requests.push(JSON.parse(String(init.body)));
+      return Response.json({ choices: [{ message: { content: 'COMMAND: look' }, finish_reason: 'stop' }],
+        usage: { prompt_tokens: 10, completion_tokens: 5 } });
+    });
+    const budgets = { ...LIVE_AI_BUDGETS, maxOutputTokensPerTurn: 500 };
+    const guarded = guardedProvider({ apiKey: secret, model: 'deepseek/deepseek-chat' },
+      new AbortController().signal, { maxPromptBytes: 16_000, budgets });
+    const ask = async (maxOutputTokens?: number): Promise<number> => {
+      await guarded.provider.complete({ system: 'system', messages: [{ role: 'user', content: 'go' }],
+        ...(maxOutputTokens === undefined ? {} : { maxOutputTokens }) });
+      return requests.at(-1)!['max_tokens'];
+    };
+
+    // Far more than the allowance, a little more than it, and nothing named.
+    expect(await ask(50_000)).toBe(2_000);
+    expect(await ask(600)).toBe(600);
+    expect(await ask()).toBe(500);
+  });
+
+  it('keeps a lowered allowance through the whole path, on a first request and on a retry', async () => {
+    // The same lowered allowance, watched through the page. The policy asks
+    // for it, and for twice it on a retry, and the guard passes exactly that.
+    // On its own this would also pass with a guard that let more through,
+    // because the policy is well behaved. The test above holds the guard.
+    const requests: { max_tokens: number }[] = [];
+    let call = 0;
+    modelFetch(async init => {
+      requests.push(JSON.parse(String(init.body)));
+      call += 1;
+      const firstAttempt = call % 2 === 1;
+      return firstAttempt
+        ? Response.json({ choices: [{ message: { content: '' }, finish_reason: 'length' }],
+            usage: { prompt_tokens: 80, completion_tokens: 500, completion_tokens_details: { reasoning_tokens: 500 } } })
+        : Response.json({ choices: [{ message: { content: `COMMAND: ${GOLD_PATH[(call - 2) / 2] ?? 'look'}` }, finish_reason: 'stop' }],
+            usage: { prompt_tokens: 80, completion_tokens: 20 } });
+    });
+    const f = demo({ budgets: { providerRetryDelayMs: 0, maxOutputTokensPerTurn: 500 } });
+    const started = await startSessionServer({ liveAi: f.liveAi });
+    try {
+      const { id } = await (await open(started.url)).json();
+      const stream = await records(started.url, id);
+      expect(stream.filter(record => record['type'] === 'command').length).toBe(GOLD_PATH.length);
+      const asked = requests.map(request => request['max_tokens']);
+      expect(asked.slice(0, 2)).toEqual([500, 1_000]);
+      expect(asked.filter((_value, index) => index % 2 === 0).every(value => value <= 500)).toBe(true);
+      expect(asked.every(value => value <= mostOutputTokensInOneRequest(500))).toBe(true);
     } finally { await started.close(); }
   });
 

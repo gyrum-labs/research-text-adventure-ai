@@ -7,7 +7,7 @@ import { PROMPT_VERSION } from '../agents/llm/prompt.js';
 import { OpenAiProvider, redact, type LlmProvider, type LlmRequest } from '../agents/llm/provider.js';
 import { DEFAULT_BUDGETS, RunBudgetExceeded, type RunBudgets, type RunResumeState } from '../runner/run.js';
 import { PRICES } from '../runner/metrics.js';
-import { MOST_OUTPUT_TOKENS_IN_ONE_REQUEST, PAGE_GAME_LIMITS } from '../runner/limits.js';
+import { PAGE_GAME_LIMITS, mostOutputTokensInOneRequest } from '../runner/limits.js';
 import { Transcript } from '../runner/transcript.js';
 
 /** Server-owned maxima for an explicitly started model demo. */
@@ -87,7 +87,12 @@ function boundedBudgets(overrides: Partial<RunBudgets> = {}): RunBudgets {
   return budgets;
 }
 
-function guardedProvider(options: LiveAiOptions, signal: AbortSignal, limits: { maxPromptBytes: number; budgets: RunBudgets }, alreadyUsed = 0) {
+/**
+ * The server's own guard around the model service. It is exported so that it
+ * can be tried as itself, with a request that asks for more than any policy
+ * would. A guard tried only through the policy is held up by the policy.
+ */
+export function guardedProvider(options: LiveAiOptions, signal: AbortSignal, limits: { maxPromptBytes: number; budgets: RunBudgets }, alreadyUsed = 0) {
   const remote = new OpenAiProvider({ apiKey: options.apiKey, model: options.model,
     baseUrl: 'https://openrouter.ai/api/v1' });
   let estimated = false;
@@ -99,11 +104,15 @@ function guardedProvider(options: LiveAiOptions, signal: AbortSignal, limits: { 
       if (bytes > limits.maxPromptBytes) throw new RunBudgetExceeded('The AI prompt exceeded the request-size limit.');
       // UTF-8 bytes conservatively bound text tokens; reserve extra chat framing.
       const inputAllowance = bytes + 1024;
-      // The policy asks for the page game's allowance, and twice that again when
-      // a reply was cut off. The server holds the ceiling of that, and the rest
-      // of the run's tokens.
-      const maxOutputTokens = Math.min(request.maxOutputTokens ?? PAGE_GAME_LIMITS.maxOutputTokensPerTurn,
-        MOST_OUTPUT_TOKENS_IN_ONE_REQUEST, limits.budgets.maxTotalTokens - tokensUsed - inputAllowance);
+      // The policy asks for the run's allowance, and twice that again when a
+      // reply was cut off. The server does not take the policy's word for it.
+      // A request gets no more than it asked for, no more than the run's own
+      // allowance doubled once for every retry, and no more than the run has
+      // left. The ceiling comes from the run's budgets and not from the page
+      // game's, so a server that lowers the allowance lowers the ceiling.
+      const maxOutputTokens = Math.min(request.maxOutputTokens ?? limits.budgets.maxOutputTokensPerTurn,
+        mostOutputTokensInOneRequest(limits.budgets.maxOutputTokensPerTurn),
+        limits.budgets.maxTotalTokens - tokensUsed - inputAllowance);
       if (maxOutputTokens < 1) throw new RunBudgetExceeded('The next model request would exceed the token budget.');
       try {
         const response = await remote.complete({ ...request, signal, maxOutputTokens });

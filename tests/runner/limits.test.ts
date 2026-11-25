@@ -27,7 +27,7 @@ import { adventure } from '../../src/adventures/mission-impossible/adventure.js'
 import { adventure as hotfix } from '../../src/adventures/hotfix-2-4-1/adventure.js';
 import { BATCH_BUDGETS, buildPlan, openLedger, summarise } from '../../src/runner/batch.js';
 import { computeMetrics } from '../../src/runner/metrics.js';
-import { MOST_OUTPUT_TOKENS_IN_ONE_REQUEST, PAGE_GAME_LIMITS } from '../../src/runner/limits.js';
+import { MOST_OUTPUT_TOKENS_IN_ONE_REQUEST, PAGE_GAME_LIMITS, mostOutputTokensInOneRequest } from '../../src/runner/limits.js';
 import { DEFAULT_MAX_TURNS, run, RunBudgetExceeded } from '../../src/runner/run.js';
 import { readTranscript, Transcript } from '../../src/runner/transcript.js';
 import { driveRun, type HeldRun } from '../../src/server/ai-runs.js';
@@ -93,6 +93,10 @@ describe('the limits, stated once', () => {
   it('bound what one request can come to ask for, after every retry', () => {
     expect(MOST_OUTPUT_TOKENS_IN_ONE_REQUEST).toBe(ALLOWANCE * 2 ** CUT_OFF_RETRIES);
     expect(MOST_OUTPUT_TOKENS_IN_ONE_REQUEST).toBe(12_000);
+    // Taken from the run's own allowance, so that a run given a smaller one
+    // has a smaller ceiling, and the page game's is only the page game's.
+    expect(mostOutputTokensInOneRequest(500)).toBe(2_000);
+    expect(MOST_OUTPUT_TOKENS_IN_ONE_REQUEST).toBe(mostOutputTokensInOneRequest(ALLOWANCE));
   });
 
   it('are carried whole by the batch and by the live page', () => {

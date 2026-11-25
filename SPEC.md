@@ -1199,6 +1199,11 @@ and the reasoning count. The reply's own tokens are the difference. A turn that
 gets no reply, because the run stopped while it waited for one, has no reply
 record. The record that says how the run stopped, or was paused, follows it.
 
+**What the server allows.** On the live page the server keeps each request
+within that ceiling and within what the run has left, whatever the policy asks
+for. The ceiling is taken from the run's own allowance and not from the page
+game's, so a run given a smaller allowance has a smaller ceiling.
+
 **A run that does not change the world.** The runner notes when a turn leaves the
 world as it found it. A look, a refused command and a reply with no command all
 leave it. The longest such streak, and the number of streaks that reached three,
