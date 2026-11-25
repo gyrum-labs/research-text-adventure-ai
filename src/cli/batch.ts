@@ -32,6 +32,7 @@ import {
 import type { PriceEvidence } from '../runner/batch.js';
 export type { PriceEvidence };
 import type { FetchLike } from '../session/http.js';
+import { CONTEXT_STRATEGIES } from '../agents/context.js';
 
 /** How long the price catalogue may take to answer before the plan gives up. */
 const PRICES_TIMEOUT_MS = 10_000;
@@ -90,6 +91,8 @@ export interface BatchOptions {
   maxPerRunUsd: number;
   /** One world, when the experiment is about that world alone. */
   world?: string;
+  /** The context strategy every arm reads; defaults to the shipped structured one. */
+  strategy?: string;
 }
 
 /** The source revision the plan is written against. */
@@ -102,9 +105,9 @@ function sourceRevision(): string {
 }
 
 /** The prompt the batch will send, hashed so the plan names it exactly. */
-function promptHash(): string {
+function promptHash(strategy: string): string {
   const policy = {
-    strategy: 'structured', renderer: 'json', thinking: false, temperature: 0,
+    strategy, renderer: 'json', thinking: false, temperature: 0,
     maxOutputTokens: BATCH_BUDGETS.maxOutputTokensPerTurn, promptVersion: PROMPT_VERSION,
   };
   return `sha256:${createHash('sha256').update(canonicalJson(policy)).digest('hex')}`;
@@ -112,6 +115,10 @@ function promptHash(): string {
 
 /** The plan this invocation would run, against the prices it was given. */
 export function planFor(options: BatchOptions, prices: PriceEvidence): BatchPlan {
+  const strategy = options.strategy ?? 'structured';
+  if (!CONTEXT_STRATEGIES.includes(strategy as never)) {
+    throw new Error(`unknown context strategy "${options.strategy}". Known strategies: ${CONTEXT_STRATEGIES.join(', ')}`);
+  }
   const worlds = options.world === undefined
     ? Object.values(ADVENTURES)
     : [adventureById(options.world)];
@@ -119,9 +126,10 @@ export function planFor(options: BatchOptions, prices: PriceEvidence): BatchPlan
     worlds,
     runsPerWorld: options.runs,
     model: { provider: BATCH_MODEL.provider, model: options.model },
+    strategy,
     temperature: 0,
     promptVersion: PROMPT_VERSION,
-    promptHash: promptHash(),
+    promptHash: promptHash(options.strategy ?? 'structured'),
     budgets: BATCH_BUDGETS,
     prices,
     sourceRevision: sourceRevision(),
@@ -154,6 +162,7 @@ export async function describeBatch(options: BatchOptions, prices: PriceEvidence
     `plan ${plan.createdAt} at ${plan.sourceRevision}`,
     `worlds ${plan.worldVersions.map(world => `${world.id}@${world.version}`).join(', ')}`,
     `model ${plan.model.provider}/${plan.model.model} temperature ${plan.temperature}`,
+    `strategy ${plan.strategy}`,
     `limits ${plan.budgets.maxTurns} turns / ${plan.budgets.maxTotalTokens} tokens / ${plan.budgets.maxOutputTokensPerTurn} output per request`,
     `prices ${plan.prices.inputPerMillion} in, ${plan.prices.outputPerMillion} out per million (checked ${plan.prices.checkedAt})`,
     `worst case $${plan.worstCasePerRunUsd.toFixed(6)} per run, ceiling $${plan.maxTotalUsd}`,

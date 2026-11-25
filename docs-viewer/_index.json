@@ -146,6 +146,11 @@
         },
         {
           "type": "file",
+          "name": "notepad-field-notes.md",
+          "path": "docs/notepad-field-notes.md"
+        },
+        {
+          "type": "file",
           "name": "proposal.md",
           "path": "docs/proposal.md"
         },
@@ -163,6 +168,16 @@
           "type": "file",
           "name": "RESEARCH-CONTEXT.md",
           "path": "docs/RESEARCH-CONTEXT.md"
+        },
+        {
+          "type": "file",
+          "name": "strategy-comparison-2026-11-24.md",
+          "path": "docs/strategy-comparison-2026-11-24.md"
+        },
+        {
+          "type": "file",
+          "name": "strategy-followups-2026-11-25.md",
+          "path": "docs/strategy-followups-2026-11-25.md"
         },
         {
           "type": "file",

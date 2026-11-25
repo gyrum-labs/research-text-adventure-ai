@@ -251,7 +251,7 @@ graph LR
 
 ## The 2.4.1 Hotfix
 
-`hotfix-2-4-1` · 3 rooms · 11 objects · 4 doors · 19 verbs · 10-command gold path
+`hotfix-2-4-1` · 3 rooms · 11 objects · 4 doors · 20 verbs · 10-command gold path
 
 The customer SLA expires at 17:00 and the 2.4.1 hotfix is not shipped. Two objectives: ship the hotfix, and notify the customer. Nothing else is known. You are platform on-call. Discover the rest by exploring.
 
