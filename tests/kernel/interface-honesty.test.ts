@@ -18,7 +18,7 @@ import { describe, expect, it } from 'vitest';
 import { ADVENTURES, adventureById } from '../../src/adventures/index.js';
 import { CARRIED_PREFIX, NOT_VISIBLE_PREFIX, parseCommand } from '../../src/kernel/parser.js';
 import type { GameState } from '../../src/kernel/types.js';
-import { probe, probeInterface, statesAlong } from './interface-matrix.js';
+import { probe, probeInterface, statesAlong, verbsOf } from './interface-matrix.js';
 
 interface Baseline {
   worlds: Record<string, string>;
@@ -81,6 +81,42 @@ describe('the interface tells the truth', () => {
     const refused = parseCommand(hotfix, structuredClone(hotfix.initial), 'open customer handover');
     expect(refused.ok).toBe(false);
     expect(refused.ok === false && refused.message.startsWith(NOT_VISIBLE_PREFIX)).toBe(true);
+  });
+
+  it('every command that takes only what is in the room says so when it names something carried', () => {
+    // Said for each command by name, in every world, so that a command added
+    // later is held to it too. Review 1 of PR #51 read the branch for things
+    // that must be carried as this one. Kept apart, and each named.
+    const checked: string[] = [];
+    for (const world of Object.keys(ADVENTURES)) {
+      const adventure = adventureById(world);
+      const inPocket = Object.values(adventure.objects).find((object) => object.takeable) ?? Object.values(adventure.objects)[0]!;
+      for (const { verb, args } of verbsOf(adventure)) {
+        const target = args.find((arg) => arg.role === 'object-in-room');
+        if (target === undefined) continue;
+        const state = carrying(world, inPocket.id);
+        let command = `${verb} ${inPocket.name}`;
+        for (const arg of args) {
+          if (arg === target) continue;
+          // A second argument, made valid, so that the target is the only thing wrong.
+          if (arg.role === 'text') {
+            command += ' with 0000';
+            continue;
+          }
+          const other = Object.values(adventure.objects).find((object) => object.id !== inPocket.id)!;
+          state.inventory.push(other.id);
+          state.objects[other.id] = { ...state.objects[other.id]!, at: null };
+          command += ` with ${other.name}`;
+        }
+        const refused = parseCommand(adventure, state, command);
+        expect(refused.ok, `${world}: ${command}`).toBe(false);
+        expect(refused.ok === false && refused.message.startsWith(CARRIED_PREFIX), `${world}: ${command}`).toBe(true);
+        checked.push(verb);
+      }
+    }
+    expect([...new Set(checked)].sort()).toEqual(
+      expect.arrayContaining(['claim', 'cut', 'deploy', 'examine', 'open', 'take', 'unlock']),
+    );
   });
 });
 
