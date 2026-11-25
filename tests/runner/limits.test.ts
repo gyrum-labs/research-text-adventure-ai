@@ -28,9 +28,11 @@ import { adventure as hotfix } from '../../src/adventures/hotfix-2-4-1/adventure
 import { BATCH_BUDGETS, buildPlan, openLedger, summarise } from '../../src/runner/batch.js';
 import { computeMetrics } from '../../src/runner/metrics.js';
 import { MOST_OUTPUT_TOKENS_IN_ONE_REQUEST, PAGE_GAME_LIMITS } from '../../src/runner/limits.js';
-import { run, RunBudgetExceeded } from '../../src/runner/run.js';
-import { Transcript } from '../../src/runner/transcript.js';
+import { DEFAULT_MAX_TURNS, run, RunBudgetExceeded } from '../../src/runner/run.js';
+import { readTranscript, Transcript } from '../../src/runner/transcript.js';
+import { driveRun, type HeldRun } from '../../src/server/ai-runs.js';
 import { LIVE_AI_BUDGETS } from '../../src/server/live-ai.js';
+import { SavedRunStore } from '../../src/server/saved-runs.js';
 import { describeLedger } from '../../src/cli/batch.js';
 
 const ALLOWANCE = PAGE_GAME_LIMITS.maxOutputTokensPerTurn;
@@ -96,6 +98,28 @@ describe('the limits, stated once', () => {
   it('are carried whole by the batch and by the live page', () => {
     expect(BATCH_BUDGETS).toMatchObject(PAGE_GAME_LIMITS);
     expect(LIVE_AI_BUDGETS).toMatchObject(PAGE_GAME_LIMITS);
+  });
+
+  // A free run is one a person starts on the live page with the random or the
+  // scripted policy. No model plays it, so it does not take the page game's
+  // limits, which say how much a model may spend. It takes the runner's own.
+  // The run itself is read, not only the transcript's header: a header could
+  // claim a limit the run did not have.
+  it('are not a free run\'s, which takes the runner defaults instead', async () => {
+    const store = new SavedRunStore(mkdtempSync(join(tmpdir(), 'limits-free-')));
+    const held: HeldRun = {
+      id: 'free', adventureId: adventure.id, seed: 1, records: [], finished: false, listeners: new Set(),
+    };
+    const look = { id: 'look', async next(): Promise<string | null> { return 'look'; } };
+
+    await driveRun(held, adventure, look, store);
+
+    const ended = held.records.find((record) => record['type'] === 'run_ended');
+    expect(ended).toMatchObject({
+      type: 'run_ended', data: { outcome: 'budget_exhausted', turns: DEFAULT_MAX_TURNS },
+    });
+    const [header] = readTranscript(store.transcriptPath('free'));
+    expect(header).toMatchObject({ type: 'header', maxTurns: DEFAULT_MAX_TURNS });
   });
 
   it('let a run use twenty-five turns', async () => {

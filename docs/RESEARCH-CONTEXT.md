@@ -133,7 +133,7 @@ The paper's own findings that matter to our design:
 | Grounded failures: acting on objects **seen but not present in the current location**. | `SPEC.md` §9.2 confines the observation to room contents ∪ inventory, and `hallucinationRate` measures exactly this failure. |
 | Inductive failures: repeating failed actions, cycling between locations. | `SPEC.md` §11.2 compares consecutive situations and counts a streak. Since 25 November 2026 a streak is reported (`longestUnchangedTurns`, `freezes`) and stops nothing (warp#23474). |
 | *"basing current action and reasoning in outdated or incorrect game state facts, especially in later steps"*; *"failure to abstract failure modes from repeated attempts"*. | Directly motivates **H5** and the `structured` context strategy (`SPEC.md` §10.4): a known-facts block beats a growing transcript. |
-| Step cap: **100 steps**, 5 repeats per game, temperature 0 where supported plus multiple seeds. | Our experiment uses a **30-turn** budget (gold path 10) and ≥10 seeds per cell, and records the exact model id and date. |
+| Step cap: **100 steps**, 5 repeats per game, temperature 0 where supported plus multiple seeds. | Our hypothesis matrix uses a **30-turn** budget (gold path 10) and ≥10 seeds per cell, and records the exact model id and date. The page game, the project's measuring instrument, has its own limits, 25 turns among them (`SPEC.md` §11.2). |
 
 ### 3.5 Two methodological choices in TALES that differ from ours
 

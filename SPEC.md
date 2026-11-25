@@ -842,8 +842,8 @@ random policy fails 20/20 seeds.
 | `unlock safe with 0000` … `9999` | action fails | Bounded by the turn budget, so brute force is impossible in practice |
 | `go vault` while the vault door is locked | action fails | |
 | `unlock vault door with keycard` without the keycard | action fails | |
-| Turn budget exhausted (30) | `budget_exhausted` | |
-| Repeated identical state ≥ 3× | `loop_detected` | |
+| Turn budget exhausted (25 in the page game, 11.2; 30 by default, 11.2.1) | `budget_exhausted` | |
+| Repeated identical state ≥ 3× | The run goes on | Counted as a freeze and written to the transcript (11.2). Until 25 November 2026 this ended the run as `loop_detected`, an outcome recorded runs keep |
 
 ---
 
@@ -1044,6 +1044,18 @@ that it can be seen. `tests/agents/llm-provider.test.ts` holds every word
 named here. Before a new word is mapped, it is checked against the service's
 own published API.
 
+The words in the table were each read from the service's own published
+reference on 25 November 2026. OpenAI's OpenAPI description of `finish_reason`
+gives `stop` for "a natural stop point or a provided stop sequence" and `length`
+when "the maximum number of tokens specified in the request was reached".
+OpenRouter's reference says it normalizes `finish_reason` to `tool_calls`,
+`stop`, `length`, `content_filter` or `error`, and keeps the provider's own word
+in `native_finish_reason`. Anthropic's Messages reference gives `end_turn` when
+"the model reached a natural stopping point" and `max_tokens` when it "exceeded
+the requested `max_tokens`". Ollama's API page says only that `done_reason` is
+the reason the response finished, without listing values. Its source lists them
+(`llm/server.go`, `DoneReason.String()`): `stop` and `length`.
+
 Required adapters: **Anthropic**, **OpenAI-compatible**, **Ollama** (local), and **`Mock`**
 (scripted responses, for tests and zero-cost runs). Implement all of them with plain `fetch`. No
 vendor SDKs. So provider churn does not become a dependency problem.
@@ -1163,7 +1175,7 @@ guards:
 The page game is the project's measuring instrument. These four numbers say how
 much work one of its runs may do. They are stated here, and in one place in the
 code (`src/runner/limits.ts`), which both ways into the page game take them from:
-the batch that records runs, and the live page a person watches.
+the batch that records runs, and the live page a person watches a model play.
 
 | Limit | Value | Why |
 |---|---|---|
@@ -1172,12 +1184,20 @@ the batch that records runs, and the live page a person watches.
 | Output tokens a request asks for | 3,000 | A cap of 300 paid for a model's hidden reasoning before any reply. A reply cut off by it is asked for again with the room doubled |
 | Wall-clock time a run may take | 120 seconds | Unchanged. The longest recorded run is 56 seconds |
 
+**A free run.** A person can also start a run on the live page with the random or
+the scripted policy. No model plays it, so it measures no model and spends
+nothing. It does not take the table. It takes the runner's own defaults (11.2.1),
+and a test holds it to that.
+
 **A reply that is cut off.** The provider says when the allowance ended a reply
 before the model had finished. On that, the same question is asked for again with
 twice the room, at most twice more, so one request can come to ask for at most
 12,000 output tokens. The turn is still one turn. Every attempt is written to the
 transcript with its allowance, how the reply ended, and how many tokens were
-reasoning and how many were the reply.
+reasoning and how many were the reply. The reply record keeps the output total
+and the reasoning count. The reply's own tokens are the difference. A turn that
+gets no reply, because the run stopped while it waited for one, has no reply
+record. The record that says how the run stopped, or was paused, follows it.
 
 **A run that does not change the world.** The runner notes when a turn leaves the
 world as it found it. A look, a refused command and a reply with no command all
@@ -1194,8 +1214,10 @@ which it was.
 
 ### 11.2.1 The runner's own defaults
 
-A caller that names none of the limits above gets these. They are not the page
-game's limits: both ways into the page game pass the table above.
+A caller that names none of the limits above gets these. A free run on the live
+page is one (11.2). They are not the page game's limits: both ways into the page game that a model
+plays pass the table above. Until 25 November 2026 a request was allowed 500
+output tokens by default, and the third unchanged turn ended the run.
 
 Loop detection compares consecutive gameplay states, including each object's string
 state, flags, position and remaining hints. It excludes the turn counter. A first

@@ -2,9 +2,11 @@
  * The page game's limits, stated once.
  *
  * The page game is the project's measuring instrument, and these four numbers
- * say how much work one run may do. Every way into the page game takes them
- * from here: the batch that records runs, and the live page a person watches.
- * The specification's section on limits says the same.
+ * say how much work one run may do. Every way into the page game that a model
+ * plays takes them from here: the batch that records runs, and the live page a
+ * person watches. A free run on that page, which no model plays, takes the
+ * runner's own defaults instead. The specification's section on limits says the
+ * same.
  *
  * They changed on 25 November 2026, at the owner's decision (warp#23474),
  * after the records showed the old numbers spending a run's budget before the

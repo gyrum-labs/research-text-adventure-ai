@@ -7,6 +7,14 @@ metaphor survives the transfer, the game was a rehearsal. If it does not, we lea
 much machinery a real simulation would need.*
 
 
+> **Recorded before 25 November 2026, with a harness that has since changed.** A request was then
+> allowed 500 output tokens under the runner's defaults, and a run stopped by the ordinary runner
+> ended on its third unchanged turn. The guard now counts the streak and the run goes on. A request
+> asks for 3,000 output tokens, and a reply cut off is asked for again with more room (`SPEC.md`
+> 11.2, warp#23474). The commands in this document run the harness as it is now, under budgets these
+> figures were not recorded with. No figure here has been rewritten, and none is pooled with a
+> result recorded after the change.
+
 > **The one idea:** the adventure vocabulary has to survive contact with a real organisation. Or
 > the whole idea was a metaphor that does not pay.
 
