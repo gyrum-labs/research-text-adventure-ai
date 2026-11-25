@@ -67,6 +67,47 @@ export interface PolicyMetrics {
   lastPromptHash: string;
   /** The raw text the model returned on the last turn. */
   lastResponse: string;
+  /**
+   * What the model sent back on the last turn, attempt by attempt. Present
+   * when the policy can tell: not every policy asks a model.
+   */
+  lastReply?: ReplyRecord;
+}
+
+/**
+ * How many times a reply that its allowance cut off is asked for again, with
+ * the room doubled each time. After this the reply stands as it came.
+ *
+ * The cap on a request's output pays for a model's hidden reasoning before it
+ * pays for anything the agent can read. A reply cut off that way arrives with
+ * no content, so the same question is asked again with more room, and the
+ * turn is still one turn.
+ */
+export const CUT_OFF_RETRIES = 2;
+
+/** One request to a model, and what came back. */
+export interface ReplyAttempt {
+  /** The output allowance asked for, in tokens. */
+  allowance?: number;
+  /** `length` when the allowance cut the reply off. */
+  finishReason?: 'stop' | 'length' | 'other';
+  inputTokens?: number;
+  outputTokens?: number;
+  /** Output tokens spent on reasoning the model did not show. */
+  reasoningTokens?: number;
+  /** How long the visible reply was, in characters. */
+  textLength: number;
+  /** Why the attempt failed, when the provider failed. */
+  failed?: string;
+}
+
+/** Every attempt made for one turn, and what the turn came to. */
+export interface ReplyRecord {
+  attempts: ReplyAttempt[];
+  /** The first attempt was cut off by its allowance. */
+  cutOff: boolean;
+  /** Whether the turn produced a command. */
+  command: boolean;
 }
 
 /**
