@@ -82,6 +82,18 @@ function transcript(): Transcript {
 const repliesOf = (records: ReturnType<Transcript['all']>): ReplyRecord[] =>
   records.filter((record) => record['type'] === 'reply').map((record) => record['data'] as ReplyRecord);
 
+/**
+ * A token count as the transcript holds it. A record without the count fails
+ * here. It is never read as zero, because that would let a record with nothing
+ * in it pass for one that holds the count.
+ */
+function given(count: number | undefined): number {
+  if (count === undefined || !Number.isInteger(count) || count < 0) {
+    throw new Error(`the transcript holds no such count: ${String(count)}`);
+  }
+  return count;
+}
+
 describe('the limits, stated once', () => {
   it('are what the owner decided on 25 November 2026', () => {
     expect(PAGE_GAME_LIMITS).toEqual({
@@ -276,7 +288,7 @@ describe('a reply cut off by its allowance', () => {
 });
 
 describe('what the transcript says about a turn', () => {
-  it('every turn says whether the reply was cut off, and how many tokens were reasoning and how many were the reply', async () => {
+  it('every turn says whether the reply was cut off, and a reply the service split says how many tokens were reasoning', async () => {
     const provider = new MockProvider([CUT_OFF, 'COMMAND: look', 'COMMAND: look']);
     const policy = new LlmPolicy({ adventure, provider, maxOutputTokens: ALLOWANCE });
     const written = transcript();
@@ -290,14 +302,19 @@ describe('what the transcript says about a turn', () => {
       expect(typeof reply.cutOff).toBe('boolean');
       expect(typeof reply.command).toBe('boolean');
       for (const attempt of reply.attempts) {
-        const output = attempt.outputTokens ?? 0;
-        const reasoning = attempt.reasoningTokens ?? 0;
-        expect(output).toBeGreaterThanOrEqual(0);
-        expect(reasoning).toBeGreaterThanOrEqual(0);
-        // The reply's own tokens are what is left of the output.
-        expect(output - reasoning).toBeGreaterThanOrEqual(0);
+        // What a turn spent is a count. Where the service also said how much
+        // of it was reasoning, that is a count too, and no more than the whole.
+        const output = given(attempt.outputTokens);
+        if (attempt.reasoningTokens !== undefined) expect(given(attempt.reasoningTokens)).toBeLessThanOrEqual(output);
       }
     }
+    // The first reply was cut off, and the service said that all of it was
+    // reasoning. Its record holds that as a count.
+    expect(replies[0]?.attempts[0]?.reasoningTokens).toBe(ALLOWANCE);
+    // The second reply came from a script that gives no split, as a service
+    // that reports none does not. Its record leaves the count out. It does not
+    // put a zero there.
+    expect(replies[1]?.attempts[0]?.reasoningTokens).toBeUndefined();
     expect(replies[0]?.cutOff).toBe(true);
     expect(replies[1]?.cutOff).toBe(false);
     expect(result.commands).toEqual(['look', 'look']);

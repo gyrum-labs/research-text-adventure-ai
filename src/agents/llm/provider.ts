@@ -80,12 +80,6 @@ export function redact(text: string, secret: string): string {
   return text.split(secret).join('[redacted]');
 }
 
-/**
- * The mock provider: scripted responses, no network, no cost.
- *
- * It is the backbone of the offline harness. A whole experiment runs against
- * it, and the same scripted responses make a failing run reproducible.
- */
 /** A scripted reply: its text, and how it ended when the script wants a reply cut off. */
 export interface MockReply {
   text: string;
@@ -95,6 +89,12 @@ export interface MockReply {
   transientError?: string;
 }
 
+/**
+ * The mock provider: scripted responses, no network, no cost.
+ *
+ * It is the backbone of the offline harness. A whole experiment runs against
+ * it, and the same scripted responses make a failing run reproducible.
+ */
 export class MockProvider implements LlmProvider {
   readonly id = 'mock';
   readonly model: string;
