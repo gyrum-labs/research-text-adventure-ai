@@ -15,7 +15,7 @@ import { randomUUID } from 'node:crypto';
 import type { ServerResponse } from 'node:http';
 import type { Adventure } from '../kernel/types.js';
 import { buildObservation } from '../kernel/observation.js';
-import { run } from '../runner/run.js';
+import { DEFAULT_MAX_TURNS, run } from '../runner/run.js';
 import type { AgentPolicy } from '../agents/policy.js';
 import { Transcript, readTranscript } from '../runner/transcript.js';
 import type { SavedRunStore } from './saved-runs.js';
@@ -147,6 +147,9 @@ export async function driveRun(
 
   // Every watched run is evidence, whatever its policy: write the transcript
   // the replay route can re-apply, in the format replay already reads.
+  // A free run, which no model plays, names no limits of its own, so it takes
+  // the runner's defaults. The page game's limits (src/runner/limits.ts) are
+  // carried by a model's run, and reach this function in `held.live`.
   const transcript = new Transcript(saved.transcriptPath(held.id), {
     type: 'header',
     runId: held.id,
@@ -157,7 +160,7 @@ export async function driveRun(
     provider: held.metadata?.provider ?? null,
     model: held.metadata?.model ?? null,
     seed: 1,
-    maxTurns: held.live?.budgets.maxTurns ?? 30,
+    maxTurns: held.live?.budgets.maxTurns ?? DEFAULT_MAX_TURNS,
     startedAt: new Date().toISOString(),
     engineVersion: '0.1.0',
   });
@@ -175,7 +178,7 @@ export async function driveRun(
     const result = await run({
       adventure,
       policy,
-      maxTurns: 30,
+      maxTurns: DEFAULT_MAX_TURNS,
       transcript: held.live === undefined ? transcript : held.live.transcript,
       ...(held.live === undefined ? {} : { maxTurns: held.live.budgets.maxTurns,
         budgets: held.live.budgets, signal: held.live.signal }),

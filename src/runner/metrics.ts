@@ -82,6 +82,16 @@ export interface RunMetrics {
   recoveryRate: number;
   /** Uses of a gated action before the gate was discovered. */
   orderingViolations: number;
+  /** The most turns in a row that left the world as they found it. Zero in a transcript recorded before this was counted. */
+  longestUnchangedTurns: number;
+  /** Streaks of unchanged turns that reached the run's threshold for a freeze. */
+  freezes: number;
+  /** Turns whose first reply was cut off by the output allowance. */
+  cutOffReplies: number;
+  /** Turns that were asked for more than once, because the reply was cut off. */
+  retriedReplies: number;
+  /** Output tokens spent on reasoning the model did not show, as far as the provider reported them. */
+  reasoningTokens: number;
   tokensUsed: number;
   inputTokens: number;
   outputTokens: number;
@@ -298,6 +308,13 @@ export function computeMetrics(
   const outputTokens = Number(data['outputTokens'] ?? 0);
   const tokensUsed = inputTokens + outputTokens;
   const wallClockMs = Number(data['wallClockMs'] ?? 0);
+  // Counted since the limits changed (warp#23474). A transcript recorded
+  // before that carries none of them, and reads as zero.
+  const longestUnchangedTurns = Number(data['longestUnchangedTurns'] ?? 0);
+  const freezes = Number(data['freezes'] ?? 0);
+  const cutOffReplies = Number(data['cutOffReplies'] ?? 0);
+  const retriedReplies = Number(data['retriedReplies'] ?? 0);
+  const reasoningTokens = Number(data['reasoningTokens'] ?? 0);
 
   const price = options.prices ?? PRICES[options.model ?? ''] ?? { input: 0, output: 0 };
   const estimatedCostUsd =
@@ -324,6 +341,11 @@ export function computeMetrics(
     explorationSteps: explorationSteps(hashes),
     recoveryRate: recoveryRate(run),
     orderingViolations: ordering,
+    longestUnchangedTurns,
+    freezes,
+    cutOffReplies,
+    retriedReplies,
+    reasoningTokens,
     tokensUsed,
     inputTokens,
     outputTokens,

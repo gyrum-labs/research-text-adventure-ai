@@ -13,16 +13,25 @@
 import type { Adventure } from '../../kernel/types.js';
 import { parseCommand } from '../../kernel/parser.js';
 import type { ContextStrategy, ContextTurn, ObservationRenderer } from '../context.js';
+import { CUT_OFF_RETRIES } from '../policy.js';
 import type {
   AgentPolicy,
   MeasurablePolicy,
   PolicyContext,
   PolicyMetrics,
   PolicyTurnOutcome,
+  ReplyAttempt,
+  ReplyRecord,
 } from '../policy.js';
 import { extractCommand } from './extract.js';
 import { buildPrompt } from './prompt.js';
-import type { LlmProvider } from './provider.js';
+import type { LlmProvider, LlmResponse } from './provider.js';
+
+/**
+ * What the adapters ask for when a request names no allowance. A retry doubles
+ * what the first attempt had, so it starts from here when nothing was named.
+ */
+const ADAPTERS_OWN_ALLOWANCE = 500;
 
 export interface LlmPolicyOptions {
   adventure: Adventure;
@@ -35,6 +44,11 @@ export interface LlmPolicyOptions {
   renderer?: ObservationRenderer;
   temperature?: number;
   maxOutputTokens?: number;
+  /**
+   * How many times a reply that its allowance cut off is asked for again with
+   * the room doubled. Defaults to `CUT_OFF_RETRIES`.
+   */
+  maxCutOffRetries?: number;
   /**
    * How a candidate command is judged before it is sent to the world.
    *
@@ -68,6 +82,7 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
   private readonly renderer: ObservationRenderer;
   private readonly temperature: number | undefined;
   private readonly maxOutputTokens: number | undefined;
+  private readonly maxCutOffRetries: number;
   private readonly parseCheck: ((candidate: string) => boolean) | undefined;
 
   /** The commands this policy has issued, in order. */
@@ -82,6 +97,7 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
   private readonly extractionRoutes: Record<string, number> = {};
   private promptHash = '';
   private response = '';
+  private reply: ReplyRecord | undefined;
 
   constructor(options: LlmPolicyOptions) {
     this.adventure = options.adventure;
@@ -91,6 +107,7 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
     this.renderer = options.renderer ?? 'text';
     this.temperature = options.temperature;
     this.maxOutputTokens = options.maxOutputTokens;
+    this.maxCutOffRetries = options.maxCutOffRetries ?? CUT_OFF_RETRIES;
     this.parseCheck = options.parseCheck;
     this.commands = [...(options.resume?.commands ?? [])];
     this.inputTokens = options.resume?.inputTokens ?? 0;
@@ -112,13 +129,43 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
     });
     this.promptHash = bundle.systemHash;
 
-    const response = await this.provider.complete({
-      signal: context.signal,
-      system: bundle.system,
-      messages: bundle.messages,
-      ...(this.maxOutputTokens === undefined ? {} : { maxOutputTokens: this.maxOutputTokens }),
-      ...(this.temperature === undefined ? {} : { temperature: this.temperature }),
-    });
+    // One turn is one request, unless the allowance cut the reply off. Then
+    // the same question is asked again with twice the room, a bounded number
+    // of times, and the turn is still one turn. Every attempt is kept, so that
+    // a turn which ended with no command can say why.
+    const attempts: ReplyAttempt[] = [];
+    let allowance = this.maxOutputTokens;
+    let response: LlmResponse;
+    for (let attempt = 0; ; attempt += 1) {
+      response = await this.provider.complete({
+        signal: context.signal,
+        system: bundle.system,
+        messages: bundle.messages,
+        ...(allowance === undefined ? {} : { maxOutputTokens: allowance }),
+        ...(attempt === 0 ? {} : { cutOffRetry: attempt }),
+        ...(this.temperature === undefined ? {} : { temperature: this.temperature }),
+      });
+      attempts.push({
+        allowance,
+        finishReason: response.finishReason,
+        inputTokens: response.usage?.inputTokens,
+        outputTokens: response.usage?.outputTokens,
+        reasoningTokens: response.reasoningTokens,
+        textLength: response.text.length,
+        failed: response.transientError,
+      });
+      this.reply = { attempts: [...attempts], cutOff: attempts[0]?.finishReason === 'length', command: false };
+      if (response.transientError === undefined) {
+        this.inputTokens += response.usage?.inputTokens ?? 0;
+        this.outputTokens += response.usage?.outputTokens ?? 0;
+        // Kept true after every attempt, and not only once the loop is done:
+        // a later attempt can throw, and what was spent before it was spent.
+        this.tokensUsed = this.inputTokens + this.outputTokens;
+      }
+      if (response.transientError !== undefined || response.finishReason !== 'length' || attempt >= this.maxCutOffRetries) break;
+      allowance = (allowance ?? ADAPTERS_OWN_ALLOWANCE) * 2;
+    }
+    this.tokensUsed = this.inputTokens + this.outputTokens;
 
     this.response = response.text;
 
@@ -127,10 +174,6 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
       this.lastTurn = 'provider_error';
       return null;
     }
-
-    this.inputTokens += response.usage?.inputTokens ?? 0;
-    this.outputTokens += response.usage?.outputTokens ?? 0;
-    this.tokensUsed = this.inputTokens + this.outputTokens;
 
     const extraction = extractCommand(response.text, (candidate) =>
       this.canParse(candidate, context),
@@ -145,6 +188,7 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
 
     this.commands.push({ raw: extraction.command, observationIndex: context.history.length - 1 });
     this.lastTurn = 'command';
+    this.reply = { attempts: this.reply?.attempts ?? [], cutOff: this.reply?.cutOff ?? false, command: true };
     return extraction.command;
   }
 
@@ -159,6 +203,7 @@ export class LlmPolicy implements AgentPolicy, MeasurablePolicy {
       extractionRoutes: { ...this.extractionRoutes },
       lastPromptHash: this.promptHash,
       lastResponse: this.response,
+      lastReply: this.reply,
     };
   }
 

@@ -92,15 +92,29 @@ describe('the budgets', () => {
     expect(result.reason).toContain('time');
   });
 
-  it('stop the run when the agent keeps returning to the same state', async () => {
+  it('count the turns an agent spends in the same state, without stopping for them', async () => {
+    // This budget ends nothing (warp#23474). It is the number of unchanged
+    // turns in a row that counts as a freeze.
     const result = await run({
       adventure,
       policy: new FixedPolicy('look'),
-      budgets: { maxRepeatedStates: 3 },
+      budgets: { maxRepeatedStates: 3, maxTurns: 7 },
     });
 
-    expect(result.outcome).toBe('loop_detected');
-    expect(result.reason).toContain('same state');
+    // Seven looks, seven turns in the same state, and the turns ended it.
+    expect(result.outcome).toBe('budget_exhausted');
+    expect(result.reason).toContain('all 7 turns');
+    expect(result.longestUnchangedTurns).toBe(7);
+    expect(result.freezes).toBe(1);
+  });
+
+  it('and maxRepeatedStates on its own ends nothing, even at one', async () => {
+    // The most aggressive setting there is, with no turn limit named: the run
+    // still goes to the last turn the default allows.
+    const result = await run({ adventure, policy: new FixedPolicy('look'), budgets: { maxRepeatedStates: 1 } });
+    expect(result.outcome).toBe('budget_exhausted');
+    expect(result.reason).toBe('The agent used all 30 turns.');
+    expect(result.longestUnchangedTurns).toBe(30);
   });
 
   it('stop the run when the provider keeps failing', async () => {

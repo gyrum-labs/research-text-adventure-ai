@@ -2,12 +2,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createLiveAiDemo, liveAiFromEnvironment } from '../../src/server/live-ai.js';
+import { LIVE_AI_BUDGETS, createLiveAiDemo, guardedProvider, liveAiFromEnvironment } from '../../src/server/live-ai.js';
 import { startSessionServer } from '../../src/server/server.js';
 import { adventure } from '../../src/adventures/mission-impossible/adventure.js';
 import { GOLD_PATH } from '../../src/adventures/mission-impossible/gold-path.js';
 import { replayTranscript } from '../../src/runner/replay.js';
 import { readTranscript } from '../../src/runner/transcript.js';
+import { MOST_OUTPUT_TOKENS_IN_ONE_REQUEST, PAGE_GAME_LIMITS, mostOutputTokensInOneRequest } from '../../src/runner/limits.js';
 
 interface DemoRecord { type: string; raw?: string; data?: Record<string, unknown> }
 
@@ -73,7 +74,9 @@ describe('the real-model demo', () => {
       expect(requests).toHaveLength(0);
       const stream = await records(started.url, id);
       expect(requests).toHaveLength(GOLD_PATH.length);
-      expect(requests.every(request => request['max_tokens'] <= 300)).toBe(true);
+      // The allowance is the page game's, stated once. The server holds it,
+      // and the ceiling of the retries on a cut-off reply.
+      expect(requests.every(request => request['max_tokens'] <= PAGE_GAME_LIMITS.maxOutputTokensPerTurn)).toBe(true);
       // regression: warp#22688 — prose dropped public descriptions and readable flags.
       const firstContext = requests[0]!.messages.map(message => message.content).join('\n');
       expect(firstContext).toContain(adventure.objects['bulletin']!.description);
@@ -94,6 +97,167 @@ describe('the real-model demo', () => {
     } finally { await started.close(); }
   });
 
+  it('holds its ceiling on a retry exactly as on a first request', async () => {
+    // A reply cut off by its allowance is asked for again with the room
+    // doubled. That request goes through the same guard as the first. The
+    // guard is the policy's provider, so no request can skip it: not the
+    // ceiling of a single request, and not what the run has left.
+    const requests: { max_tokens: number }[] = [];
+    let call = 0;
+    modelFetch(async init => {
+      requests.push(JSON.parse(String(init.body)));
+      call += 1;
+      const firstAttempt = call % 2 === 1;
+      return firstAttempt
+        ? Response.json({ choices: [{ message: { content: '' }, finish_reason: 'length' }],
+            usage: { prompt_tokens: 80, completion_tokens: 3000, completion_tokens_details: { reasoning_tokens: 3000 } } })
+        : Response.json({ choices: [{ message: { content: `COMMAND: ${GOLD_PATH[(call - 2) / 2] ?? 'look'}` }, finish_reason: 'stop' }],
+            usage: { prompt_tokens: 80, completion_tokens: 20 } });
+    });
+    const f = demo();
+    const started = await startSessionServer({ liveAi: f.liveAi });
+    try {
+      const { id } = await (await open(started.url)).json();
+      const stream = await records(started.url, id);
+      expect(stream.filter(record => record['type'] === 'command').length).toBe(GOLD_PATH.length);
+      expect(requests.length).toBe(2 * GOLD_PATH.length);
+      const asked = requests.map(request => request['max_tokens']);
+      // The first turn shows the whole shape: the page game's allowance, then
+      // twice it. The later turns show the same guard watching the run's tokens
+      // go. A request is never allowed more than its due, nor more than the run
+      // has left, and by the last turns that is less than its due.
+      expect(asked.slice(0, 2)).toEqual([PAGE_GAME_LIMITS.maxOutputTokensPerTurn, 2 * PAGE_GAME_LIMITS.maxOutputTokensPerTurn]);
+      expect(asked.filter((_value, index) => index % 2 === 0).every(value => value <= PAGE_GAME_LIMITS.maxOutputTokensPerTurn)).toBe(true);
+      expect(asked.filter((_value, index) => index % 2 === 1).every(value => value <= 2 * PAGE_GAME_LIMITS.maxOutputTokensPerTurn)).toBe(true);
+      expect(asked.every(value => value <= MOST_OUTPUT_TOKENS_IN_ONE_REQUEST)).toBe(true);
+    } finally { await started.close(); }
+  });
+
+  it('gives a first request the run\'s allowance and a retry twice the room, however much is asked', async () => {
+    // The guard is tried as itself here, and not through the policy. The
+    // policy always asks for the right amount, so a guard that let more
+    // through would never be seen through it. A run given a smaller allowance
+    // has a smaller ceiling. The server does not take the policy's word for
+    // which retry a request is: a request that does not say is a first
+    // request, and gets the allowance. A retry says which it is, and gets the
+    // allowance doubled once for every retry before it.
+    const requests: Record<string, unknown>[] = [];
+    modelFetch(async init => {
+      requests.push(JSON.parse(String(init.body)));
+      return Response.json({ choices: [{ message: { content: 'COMMAND: look' }, finish_reason: 'stop' }],
+        usage: { prompt_tokens: 10, completion_tokens: 5 } });
+    });
+    const budgets = { ...LIVE_AI_BUDGETS, maxOutputTokensPerTurn: 500 };
+    const guarded = guardedProvider({ apiKey: secret, model: 'deepseek/deepseek-chat' },
+      new AbortController().signal, { maxPromptBytes: 16_000, budgets });
+    const ask = async (said: { maxOutputTokens?: number; cutOffRetry?: number } = {}): Promise<number> => {
+      await guarded.provider.complete({ system: 'system', messages: [{ role: 'user', content: 'go' }], ...said });
+      return requests.at(-1)!['max_tokens'] as number;
+    };
+
+    // A first request: the allowance, and no more, though it asks for far more.
+    expect(await ask({ maxOutputTokens: 50_000 })).toBe(500);
+    expect(await ask({ maxOutputTokens: 600 })).toBe(500);
+    expect(await ask({ maxOutputTokens: 300 })).toBe(300);
+    expect(await ask()).toBe(500);
+    // The first retry gets twice the allowance, and the second twice that.
+    expect(await ask({ maxOutputTokens: 50_000, cutOffRetry: 1 })).toBe(1_000);
+    expect(await ask({ maxOutputTokens: 600, cutOffRetry: 1 })).toBe(600);
+    expect(await ask({ maxOutputTokens: 50_000, cutOffRetry: 2 })).toBe(2_000);
+    // Past the bound is no more than the last retry. Nonsense is a first request.
+    expect(await ask({ maxOutputTokens: 50_000, cutOffRetry: 9 })).toBe(2_000);
+    expect(await ask({ maxOutputTokens: 50_000, cutOffRetry: -1 })).toBe(500);
+    expect(await ask({ maxOutputTokens: 50_000, cutOffRetry: 1.5 })).toBe(500);
+    // What a request said about itself is for the guard, and never leaves it.
+    expect(requests.some(request => 'cutOffRetry' in request)).toBe(false);
+  });
+
+  it('keeps a lowered allowance through the whole path, on a first request and on a retry', async () => {
+    // The same lowered allowance, watched through the page. The policy asks
+    // for it, and for twice it on a retry, and says which request is the
+    // retry. The guard passes exactly that. So this holds the two together:
+    // if the policy stopped saying which request is a retry, the guard would
+    // hold that request to the allowance, and the second number below would
+    // be 500.
+    const requests: { max_tokens: number }[] = [];
+    let call = 0;
+    modelFetch(async init => {
+      requests.push(JSON.parse(String(init.body)));
+      call += 1;
+      const firstAttempt = call % 2 === 1;
+      return firstAttempt
+        ? Response.json({ choices: [{ message: { content: '' }, finish_reason: 'length' }],
+            usage: { prompt_tokens: 80, completion_tokens: 500, completion_tokens_details: { reasoning_tokens: 500 } } })
+        : Response.json({ choices: [{ message: { content: `COMMAND: ${GOLD_PATH[(call - 2) / 2] ?? 'look'}` }, finish_reason: 'stop' }],
+            usage: { prompt_tokens: 80, completion_tokens: 20 } });
+    });
+    const f = demo({ budgets: { providerRetryDelayMs: 0, maxOutputTokensPerTurn: 500 } });
+    const started = await startSessionServer({ liveAi: f.liveAi });
+    try {
+      const { id } = await (await open(started.url)).json();
+      const stream = await records(started.url, id);
+      expect(stream.filter(record => record['type'] === 'command').length).toBe(GOLD_PATH.length);
+      const asked = requests.map(request => request['max_tokens']);
+      expect(asked.slice(0, 2)).toEqual([500, 1_000]);
+      expect(asked.filter((_value, index) => index % 2 === 0).every(value => value <= 500)).toBe(true);
+      expect(asked.every(value => value <= mostOutputTokensInOneRequest(500))).toBe(true);
+    } finally { await started.close(); }
+  });
+
+  it('gives a retry no more than the run has left', async () => {
+    // The same, with a run that cannot afford the doubled room. The retry is
+    // cut down to what remains, by the same guard, on the same terms.
+    const requests: { max_tokens: number }[] = [];
+    let call = 0;
+    modelFetch(async init => {
+      requests.push(JSON.parse(String(init.body)));
+      call += 1;
+      const firstAttempt = call % 2 === 1;
+      return firstAttempt
+        ? Response.json({ choices: [{ message: { content: '' }, finish_reason: 'length' }],
+            usage: { prompt_tokens: 80, completion_tokens: 3000, completion_tokens_details: { reasoning_tokens: 3000 } } })
+        : Response.json({ choices: [{ message: { content: `COMMAND: ${GOLD_PATH[(call - 2) / 2] ?? 'look'}` }, finish_reason: 'stop' }],
+            usage: { prompt_tokens: 80, completion_tokens: 20 } });
+    });
+    const f = demo({ budgets: { providerRetryDelayMs: 0, maxTotalTokens: 12_500 } });
+    const started = await startSessionServer({ liveAi: f.liveAi });
+    try {
+      const { id } = await (await open(started.url)).json();
+      await records(started.url, id);
+      expect(requests.length).toBeGreaterThan(1);
+      expect(requests[0]?.['max_tokens']).toBe(PAGE_GAME_LIMITS.maxOutputTokensPerTurn);
+      const retry = requests[1]?.['max_tokens'] as number;
+      expect(retry).toBeGreaterThan(0);
+      expect(retry).toBeLessThan(2 * PAGE_GAME_LIMITS.maxOutputTokensPerTurn);
+    } finally { await started.close(); }
+  });
+
+  it('ends a run cleanly when it cannot afford the retry, and counts the reply it did get', async () => {
+    // The reply is cut off, and says it used nearly all the run's tokens. The
+    // retry is refused by the server's guard before it reaches the model. The
+    // run ends as out of tokens, the one request that was made is in the final
+    // figures, and the turn's record says why nothing followed it.
+    const requests: { max_tokens: number }[] = [];
+    modelFetch(async init => {
+      requests.push(JSON.parse(String(init.body)));
+      return Response.json({ choices: [{ message: { content: '' }, finish_reason: 'length' }],
+        usage: { prompt_tokens: 80, completion_tokens: 11000, completion_tokens_details: { reasoning_tokens: 11000 } } });
+    });
+    const f = demo({ budgets: { providerRetryDelayMs: 0, maxTotalTokens: 12_000 } });
+    const started = await startSessionServer({ liveAi: f.liveAi });
+    try {
+      const { id } = await (await open(started.url)).json();
+      const stream = await records(started.url, id);
+      expect(stream.find(record => record.type === 'run_ended')?.data?.['outcome']).toBe('budget_exhausted');
+      expect(requests).toHaveLength(1);
+      const written = readTranscript(join(f.transcriptRoot, `${id}.jsonl`));
+      const reply = written.find(record => record.type === 'reply');
+      expect(reply).toMatchObject({ turn: 0, ended: 'The next model request would exceed the token budget.' });
+      expect((reply?.['data'] as { attempts: unknown[] }).attempts).toHaveLength(1);
+      expect(written.find(record => record.type === 'metrics')?.['data']).toMatchObject({ cutOffReplies: 1, tokensUsed: 11_080 });
+    } finally { await started.close(); }
+  });
+
   it('keeps the old 20k guard and gives the new live default headroom for the final actions', async () => {
     // regression: warp#22695 — a full next-request reservation could strand a nearly won run.
     let calls = 0;
@@ -105,7 +269,7 @@ describe('the real-model demo', () => {
       const started = await startSessionServer({ liveAi: demo(configuration).liveAi });
       try {
         const health = await (await fetch(`${started.url}/api/health`)).json();
-        expect(health.ai.budgets.maxTotalTokens).toBe(ceiling ?? 30_000);
+        expect(health.ai.budgets.maxTotalTokens).toBe(ceiling ?? PAGE_GAME_LIMITS.maxTotalTokens);
         const { id } = await (await open(started.url)).json();
         const stream = await records(started.url, id);
         expect(stream.find(record => record.type === 'run_ended')?.data?.['outcome'])

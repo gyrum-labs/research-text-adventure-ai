@@ -112,6 +112,11 @@ class AbstainingPolicy implements AgentPolicy {
  * These are not experiments. They are the fixtures that give every category
  * a run, so that the classifier is proved against something rather than
  * against a policy that happens to wander.
+ *
+ * A fixture keeps acting until its turns run out. One that simply stops makes
+ * the run an abstention, and that category is named before anything about the
+ * path. Until 25 November 2026 three of these were ended early by the loop
+ * guard instead (warp#23474), and so never had to last.
  */
 function failingPolicies(): Array<{ name: string; policy: AgentPolicy }> {
   return [
@@ -125,11 +130,11 @@ function failingPolicies(): Array<{ name: string; policy: AgentPolicy }> {
     },
     {
       name: 'f3-repeated-failure',
-      policy: new WalkingPolicy('f3-repeated-failure', ['take desk', 'take desk', 'look']),
+      policy: new WanderingPolicy('f3-repeated-failure', ['take desk', 'take desk'], ['look']),
     },
     {
       name: 'f4-too-early',
-      policy: new WalkingPolicy('f4-too-early', [
+      policy: new WanderingPolicy('f4-too-early', [
         'take keycard',
         'go corridor',
         'open locker',
@@ -137,13 +142,11 @@ function failingPolicies(): Array<{ name: string; policy: AgentPolicy }> {
         'unlock vault door with keycard',
         'go vault',
         'cut yellow wire with cutters',
-        'look',
-        'look',
-      ]),
+      ], ['look']),
     },
     {
       name: 'f5-no-exploration',
-      policy: new WalkingPolicy('f5-no-exploration', ['look', 'look', 'look']),
+      policy: new WanderingPolicy('f5-no-exploration', [], ['look']),
     },
     {
       name: 'f6-lethal-trap',

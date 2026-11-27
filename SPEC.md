@@ -246,7 +246,7 @@ Terms used throughout this document, in the order a newcomer meets them.
 | **Canonical JSON** | A JSON representation with sorted keys and no incidental whitespace, so two equal states always produce identical bytes. |
 | **Policy** | Whatever is choosing the agent's next command. The human, a script, a random picker and the model are all policies. The runner cannot tell them apart. |
 | **Budget** | A limit on turns, tokens, cost or wall-clock time. Every run has them, so a confused agent cannot run up a bill. |
-| **Guard** | A rule that stops a run early. A repeated state, too many provider errors, a blown budget. |
+| **Guard** | A rule that stops a run early: too many provider errors, a blown budget. Until 25 November 2026 a repeated state was one (11.2). |
 | **Transcript** | The JSONL record of a run: every observation, command, event and state hash. |
 | **Replay** | Re-running a transcript's commands through the engine and checking the hashes match. Proves the environment is deterministic. |
 | **Context strategy** | What the model is allowed to remember: the whole history, a recent window, a summary of what it has seen, or nothing. An experimental variable. See §10.4. |
@@ -842,8 +842,8 @@ random policy fails 20/20 seeds.
 | `unlock safe with 0000` … `9999` | action fails | Bounded by the turn budget, so brute force is impossible in practice |
 | `go vault` while the vault door is locked | action fails | |
 | `unlock vault door with keycard` without the keycard | action fails | |
-| Turn budget exhausted (30) | `budget_exhausted` | |
-| Repeated identical state ≥ 3× | `loop_detected` | |
+| Turn budget exhausted (25 in the page game, 11.2; 30 by default, 11.2.1) | `budget_exhausted` | |
+| Repeated identical state ≥ 3× | The run goes on | Counted as a freeze and written to the transcript (11.2). Until 25 November 2026 this ended the run as `loop_detected`, an outcome recorded runs keep |
 
 ---
 
@@ -1021,8 +1021,40 @@ export interface LlmResponse {
   raw?: unknown;
   /** Non-fatal provider error (rate limit, transient). */
   transientError?: string;
+  /** How the reply ended, when the provider says: `stop`, `length` or `other`. */
+  finishReason?: FinishReason;
+  /** Output tokens spent on reasoning the model did not show, when the provider says. */
+  reasoningTokens?: number;
 }
 ```
+
+This is a seam with services outside the project. Each has its own word for how
+a reply ended, and the adapter for it brings that word back to one of three:
+`stop` (the reply was finished), `length` (the allowance cut it off), or
+`other`. Only `length` makes the runner ask again, with the room doubled.
+
+| Service | Its word for a finished reply | Its word for a reply cut off by its allowance |
+|---|---|---|
+| OpenAI chat completions, which OpenRouter also speaks | `finish_reason`: `stop` | `finish_reason`: `length` |
+| Anthropic messages | `stop_reason`: `end_turn`, `stop_sequence` | `stop_reason`: `max_tokens` |
+| Ollama | `done_reason`: `stop` | `done_reason`: `length` |
+
+Any other word is kept as `other` and written to the transcript as such, so
+that it can be seen. `tests/agents/llm-provider.test.ts` holds every word
+named here. Before a new word is mapped, it is checked against the service's
+own published API.
+
+The words in the table were each read from the service's own published
+reference on 25 November 2026. OpenAI's OpenAPI description of `finish_reason`
+gives `stop` for "a natural stop point or a provided stop sequence" and `length`
+when "the maximum number of tokens specified in the request was reached".
+OpenRouter's reference says it normalizes `finish_reason` to `tool_calls`,
+`stop`, `length`, `content_filter` or `error`, and keeps the provider's own word
+in `native_finish_reason`. Anthropic's Messages reference gives `end_turn` when
+"the model reached a natural stopping point" and `max_tokens` when it "exceeded
+the requested `max_tokens`". Ollama's API page says only that `done_reason` is
+the reason the response finished, without listing values. Its source lists them
+(`llm/server.go`, `DoneReason.String()`): `stop` and `length`.
 
 Required adapters: **Anthropic**, **OpenAI-compatible**, **Ollama** (local), and **`Mock`**
 (scripted responses, for tests and zero-cost runs). Implement all of them with plain `fetch`. No
@@ -1130,28 +1162,92 @@ loop:
   record events + new state hash
   if transition indicates terminal failure → finish(failure)
 guards:
-  if turn >= maxTurns            → finish(budget_exhausted)
-  if repeatedStateHashes >= 3    → finish(loop_detected)
-  if cost/token ceiling exceeded → finish(budget_exhausted)
+  if turn >= maxTurns             → finish(budget_exhausted)
+  if token ceiling exceeded       → finish(budget_exhausted)
+  if wall clock exceeded          → finish(budget_exhausted)
   if provider transient error x3  → finish(provider_error)
+  a reply cut off by its allowance → asked again, same turn, room doubled, at most twice
+  a turn that left the world as it found it → counted. It ends nothing (§11.2)
 ```
 
-### 11.2 Budgets (defaults, all overridable by CLI flag)
+### 11.2 The page game's limits, stated once
+
+The page game is the project's measuring instrument. These four numbers say how
+much work one of its runs may do. They are stated here, and in one place in the
+code (`src/runner/limits.ts`), which both ways into the page game take them from:
+the batch that records runs, and the live page a person watches a model play.
+
+| Limit | Value | Why |
+|---|---|---|
+| Turns a run may take | 25 | The shortest route is 10 moves. Solves were arriving at 16 to 17 turns against a cap of 20, and 19 of 21 runs that used all 20 had one of two objectives done and were still changing the world |
+| Tokens a run may spend, reasoning included | 40,000 | In step with 25 turns. A 16 or 17 turn run used 22,000 to 27,000 |
+| Output tokens a request asks for | 3,000 | A cap of 300 paid for a model's hidden reasoning before any reply. A reply cut off by it is asked for again with the room doubled |
+| Wall-clock time a run may take | 120 seconds | Unchanged. The longest recorded run is 56 seconds |
+
+**A free run.** A person can also start a run on the live page with the random or
+the scripted policy. No model plays it, so it measures no model and spends
+nothing. It does not take the table. It takes the runner's own defaults (11.2.1),
+and a test holds it to that.
+
+**A reply that is cut off.** The provider says when the allowance ended a reply
+before the model had finished. On that, the same question is asked for again with
+twice the room, at most twice more, so one request can come to ask for at most
+12,000 output tokens. The turn is still one turn. Every attempt is written to the
+transcript with its allowance, how the reply ended, and how many tokens were
+reasoning and how many were the reply. The reply record keeps the output total
+and the reasoning count. The reply's own tokens are the difference. A turn that
+gets no reply, because the run stopped while it waited for one, has no reply
+record. The record that says how the run stopped, or was paused, follows it.
+
+**What the server allows.** On the live page the server keeps each request to
+what the run's allowance gives it and to what the run has left, whatever the
+policy asks for. A turn's first request gets the allowance. A retry on a
+cut-off reply gets twice the room of the request before it. The policy says
+which retry a request is, and a request that does not say is held to the
+allowance, as a first request is. The numbers are taken from the run's own
+budgets and not from the page game's, so a run given a smaller allowance has a
+smaller ceiling.
+
+**A run that does not change the world.** The runner notes when a turn leaves the
+world as it found it. A look, a refused command and a reply with no command all
+leave it. The longest such streak, and the number of streaks that reached three,
+are in the run's final metrics. Each streak is written to the transcript as a
+`freeze` record, on the turn where it reached three, and written once: a pause
+that splits the turn the streak is counted on does not write it again. They end
+nothing. The turns are the limit.
+
+**History.** Until 25 November 2026 the limits were 20 turns, 30,000 tokens and
+300 output tokens per request, and the third turn in an unchanged state ended the
+run as `loop_detected` (warp#23474). A result recorded under those limits is never
+pooled with a result recorded under these, and every document that cites one says
+which it was.
+
+### 11.2.1 The runner's own defaults
+
+A caller that names none of the limits above gets these. A free run on the live
+page is one (11.2). One of them is the page game's: the output allowance, 3,000,
+because a model that reasons before it answers needs it wherever it plays. The
+others are not. A run of the page game that a model plays gets 25 turns and
+40,000 tokens, and both ways into it pass the table above rather than this one.
+Until 25 November 2026 a request was allowed 500 output tokens by default, and
+the third unchanged turn ended the run.
 
 Loop detection compares consecutive gameplay states, including each object's string
 state, flags, position and remaining hints. It excludes the turn counter. A first
 inspection that sets `examined` counts as progress; repeating an inspection after
-that state is set does not. Three identical consecutive situations still stop the run.
+that state is set does not. Three identical consecutive situations are counted as a
+freeze. They do not stop the run.
 
 | Budget | Default | Rationale |
 |---|---|---|
 | `maxTurns` | 30 | Gold path is 10; 3× is generous but still bounded |
 | `maxHints` | 3 | Prevents unbounded flailing; hints are recorded and counted |
-| `maxOutputTokensPerTurn` | 500 | Bounds cost per turn |
+| `maxOutputTokensPerTurn` | 3,000 | The page game's. A model that reasons before it answers needs it (11.2) |
 | `maxTotalTokens` | 20 000 | Hard cost ceiling per run |
 | `maxWallClockMs` | 300 000 | Protects CI |
 | `maxTransientProviderErrors` | 3 | Then fail the run cleanly |
 | `maxParseErrors` | 10 | Then fail the run cleanly |
+| `maxRepeatedStates` | 3 | A streak this long is counted as a freeze. It ends nothing (11.2) |
 
 ### 11.3 Cost control (C3)
 

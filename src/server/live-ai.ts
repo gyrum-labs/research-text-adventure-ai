@@ -7,12 +7,13 @@ import { PROMPT_VERSION } from '../agents/llm/prompt.js';
 import { OpenAiProvider, redact, type LlmProvider, type LlmRequest } from '../agents/llm/provider.js';
 import { DEFAULT_BUDGETS, RunBudgetExceeded, type RunBudgets, type RunResumeState } from '../runner/run.js';
 import { PRICES } from '../runner/metrics.js';
+import { CUT_OFF_RETRIES } from '../agents/policy.js';
+import { PAGE_GAME_LIMITS, outputTokensForRequest } from '../runner/limits.js';
 import { Transcript } from '../runner/transcript.js';
 
 /** Server-owned maxima for an explicitly started model demo. */
 export const LIVE_AI_BUDGETS: Readonly<RunBudgets> = Object.freeze({
-  ...DEFAULT_BUDGETS, maxTurns: 20, maxTotalTokens: 30_000, maxOutputTokensPerTurn: 300,
-  maxWallClockMs: 120_000, maxTransientProviderErrors: 2, maxParseErrors: 3,
+  ...DEFAULT_BUDGETS, ...PAGE_GAME_LIMITS, maxTransientProviderErrors: 2, maxParseErrors: 3,
 });
 
 /** Private configuration; none of this object is serialized to the browser. */
@@ -87,7 +88,22 @@ function boundedBudgets(overrides: Partial<RunBudgets> = {}): RunBudgets {
   return budgets;
 }
 
-function guardedProvider(options: LiveAiOptions, signal: AbortSignal, limits: { maxPromptBytes: number; budgets: RunBudgets }, alreadyUsed = 0) {
+/**
+ * How many retries on a cut-off reply came before a request, as the policy
+ * says. Anything that is not a whole count is none, and no more are counted
+ * than the runner will make. So a request that says nothing is a first request.
+ */
+function retriesBefore(request: LlmRequest): number {
+  const said = request.cutOffRetry;
+  return typeof said === 'number' && Number.isInteger(said) ? Math.min(Math.max(said, 0), CUT_OFF_RETRIES) : 0;
+}
+
+/**
+ * The server's own guard around the model service. It is exported so that it
+ * can be tried as itself, with a request that asks for more than any policy
+ * would. A guard tried only through the policy is held up by the policy.
+ */
+export function guardedProvider(options: LiveAiOptions, signal: AbortSignal, limits: { maxPromptBytes: number; budgets: RunBudgets }, alreadyUsed = 0) {
   const remote = new OpenAiProvider({ apiKey: options.apiKey, model: options.model,
     baseUrl: 'https://openrouter.ai/api/v1' });
   let estimated = false;
@@ -99,17 +115,29 @@ function guardedProvider(options: LiveAiOptions, signal: AbortSignal, limits: { 
       if (bytes > limits.maxPromptBytes) throw new RunBudgetExceeded('The AI prompt exceeded the request-size limit.');
       // UTF-8 bytes conservatively bound text tokens; reserve extra chat framing.
       const inputAllowance = bytes + 1024;
-      const maxOutputTokens = Math.min(request.maxOutputTokens ?? 300, limits.budgets.maxOutputTokensPerTurn,
+      // A turn's first request gets the run's allowance. A retry on a cut-off
+      // reply gets twice the room of the request before it. The policy says
+      // which retry a request is, and a request that does not say is a first
+      // request. So the server holds a first request to the allowance without
+      // taking the policy's word for which it is. No request gets more than it
+      // asked for, or more than the run has left. The numbers come from the
+      // run's budgets and not from the page game's, so a server that lowers
+      // the allowance lowers the ceiling.
+      const due = outputTokensForRequest(limits.budgets.maxOutputTokensPerTurn, retriesBefore(request));
+      const maxOutputTokens = Math.min(request.maxOutputTokens ?? due, due,
         limits.budgets.maxTotalTokens - tokensUsed - inputAllowance);
       if (maxOutputTokens < 1) throw new RunBudgetExceeded('The next model request would exceed the token budget.');
+      // Which retry it was is for the guard alone, and is not sent on.
+      const { cutOffRetry: _said, ...askedFor } = request;
       try {
-        const response = await remote.complete({ ...request, signal, maxOutputTokens });
+        const response = await remote.complete({ ...askedFor, signal, maxOutputTokens });
         const text = redact(response.text, options.apiKey);
         estimated ||= response.usage?.inputTokens === undefined || response.usage.outputTokens === undefined;
         const usage = { inputTokens: response.usage?.inputTokens ?? inputAllowance,
           outputTokens: response.usage?.outputTokens ?? new TextEncoder().encode(text).length };
         tokensUsed += response.transientError === undefined ? usage.inputTokens + usage.outputTokens : inputAllowance + maxOutputTokens;
         return { text, usage,
+          finishReason: response.finishReason, reasoningTokens: response.reasoningTokens,
           ...(response.transientError === undefined ? {} : { transientError: redact(response.transientError, options.apiKey) }),
         };
       } catch {

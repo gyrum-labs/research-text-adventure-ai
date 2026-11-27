@@ -207,6 +207,22 @@ export function describeLedger(ledger: ReturnType<typeof openLedger>): string {
     `spend $${report.spentUsd.toFixed(6)}, unsettled holds ${report.unsettledHolds} worth $${report.unsettledUsd.toFixed(6)}`,
     `cost per solve ${report.costPerSolve === null ? 'not applicable: nothing was solved' : `$${report.costPerSolve.toFixed(6)}`}`,
   ];
+  // The solve rate stands first. Then the solved runs, fewest turns first.
+  // Then the runs that did not solve, each with why it ended.
+  const solved = report.solvedByTurns.map(run => `seed ${run.seed} of ${run.world} in ${run.turns} turns`).join(', ');
+  lines.push(`solved, fewest turns first: ${solved.length === 0 ? 'none' : solved}`);
+  if (report.solvedByTurns.length > 0) {
+    // The median: the middle solved run, or halfway between the two middle
+    // ones when an even number solved.
+    const turns = report.solvedByTurns.map(run => run.turns).sort((one, other) => one - other);
+    const upper = turns[Math.floor(turns.length / 2)]!;
+    const median = turns.length % 2 === 1 ? upper : (turns[Math.floor(turns.length / 2) - 1]! + upper) / 2;
+    lines.push(`turns to solve, the median of the solved runs: ${median}`);
+  }
+  for (const run of report.unsolved) {
+    const length = run.turns === undefined ? 'turns not recorded' : `${run.turns} turns`;
+    lines.push(`  seed ${run.seed} of ${run.world}: not solved, ${length}, because ${run.reason}`);
+  }
   for (const [reason, count] of Object.entries(report.failures)) {
     lines.push(`  ${count} × ${reason}`);
   }

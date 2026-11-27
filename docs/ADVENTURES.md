@@ -329,8 +329,9 @@ Before an adventure is accepted, every box must be ticked:
 - [ ] **A random policy cannot solve it.** (`SPEC.md` P1.4) If it can, the adventure is too easy.
 - [ ] **There is at least one recoverable failure** (wrong order, missing prerequisite) and at
       least one irreversible one. Or a deliberate, documented decision not to.
-- [ ] **No brute-force path exists** within the turn budget. A 4-digit code with 30 turns is safe;
-      a 2-digit code is not.
+- [ ] **No brute-force path exists** within the turn budget. A 4-digit code with 30 turns is safe.
+      That is the runner's default (`SPEC.md` §11.2.1), and the page game allows 25 (§11.2). A 2-digit
+      code is not safe.
 - [ ] **The adventure loads under Zod validation** and fails fast with a readable message if not.
 - [ ] **It contains no adventure-specific logic.** Only data.
 

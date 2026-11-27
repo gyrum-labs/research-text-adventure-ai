@@ -1,5 +1,9 @@
 # The notepad: what the freeze is, and what to tell the agent
 
+> Recorded under the limits as they were before 25 November 2026: 20 turns, 30,000 tokens and
+> 300 output tokens per request, with a guard that ended a run on its third unchanged turn.
+> Not to be pooled with any result recorded under the current limits (`SPEC.md` 11.2, warp#23474).
+
 Field notes for staff, 2026-11-25. Follows warp#23366 and warp#23409. Read from
 the record that survived, at revision `1480db6`, world 1.0.5.
 

@@ -1,5 +1,9 @@
 # Repeatability batch on the hotfix world with both corrections, 2026-11-14
 
+> Recorded under the limits as they were before 25 November 2026: 20 turns, 30,000 tokens and
+> 300 output tokens per request, with a guard that ended a run on its third unchanged turn.
+> Not to be pooled with any result recorded under the current limits (`SPEC.md` 11.2, warp#23474).
+
 The third run of the same experiment, now against a hotfix world whose release
 gate accepts the ticket by the name the world shows it. This is the run that
 answers the question the last two could not: is the mission solvable?

@@ -121,7 +121,11 @@ describe('the runner', () => {
     expect(result.turns).toBe(4);
   });
 
-  it('stops when the agent keeps doing the same thing', async () => {
+  it('keeps going when the agent keeps doing the same thing, and says for how long', async () => {
+    // Until 25 November 2026 the third turn in the same state ended the run
+    // (warp#23474). A look and a refused command leave the state as it was, so
+    // that gave an agent two quiet turns after every move. The turns are the
+    // limit now. The streak is counted, and reported.
     const result = await run({
       adventure,
       policy: {
@@ -132,8 +136,11 @@ describe('the runner', () => {
       },
       maxTurns: 20,
     });
-    expect(result.outcome).toBe('loop_detected');
-    expect(result.reason).toContain('same state');
+    expect(result.outcome).toBe('budget_exhausted');
+    expect(result.reason).toContain('all 20 turns');
+    expect(result.longestUnchangedTurns).toBe(20);
+    expect(result.freezes).toBe(1);
+    expect(result.events.some((event) => event.type === 'run_ended' && event.outcome === 'loop_detected')).toBe(false);
   });
 
   it('gives a hint and spends a credit', async () => {

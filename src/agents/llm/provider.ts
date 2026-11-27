@@ -23,6 +23,13 @@ export interface LlmRequest {
   system: string;
   messages: ChatMessage[];
   maxOutputTokens?: number;
+  /**
+   * Which retry on a cut-off reply this request is: 1 for the first, 2 for the
+   * second. A turn's first request leaves it out. A guard can then hold a first
+   * request to a smaller allowance than a retry, without trusting the policy
+   * for which is which.
+   */
+  cutOffRetry?: number;
   temperature?: number;
   /** Provider-specific extra body. */
   extra?: Record<string, unknown>;
@@ -31,9 +38,29 @@ export interface LlmRequest {
 export interface LlmResponse {
   text: string;
   usage?: { inputTokens?: number; outputTokens?: number };
+  /** How the reply ended, when the provider says. */
+  finishReason?: FinishReason;
+  /** Output tokens the model spent on reasoning it did not show, when the provider says. */
+  reasoningTokens?: number;
   raw?: unknown;
   /** Non-fatal provider error (rate limit, transient). */
   transientError?: string;
+}
+
+/** How a reply ended. `length` means the allowance cut it off before the model had finished. */
+export type FinishReason = 'stop' | 'length' | 'other';
+
+/**
+ * What a provider's own word for the end of a reply means here.
+ *
+ * Every provider has its own words. Only two matter to the runner: the reply
+ * was finished, or the allowance cut it off.
+ */
+function finishReasonOf(value: unknown): FinishReason | undefined {
+  if (value === 'stop' || value === 'length') return value;
+  if (value === 'end_turn' || value === 'stop_sequence') return 'stop';
+  if (value === 'max_tokens') return 'length';
+  return value === undefined || value === null ? undefined : 'other';
 }
 
 export interface LlmProvider {
@@ -53,6 +80,15 @@ export function redact(text: string, secret: string): string {
   return text.split(secret).join('[redacted]');
 }
 
+/** A scripted reply: its text, and how it ended when the script wants a reply cut off. */
+export interface MockReply {
+  text: string;
+  finishReason?: FinishReason;
+  reasoningTokens?: number;
+  /** A failure the script wants: the request did not succeed, and reports no tokens. */
+  transientError?: string;
+}
+
 /**
  * The mock provider: scripted responses, no network, no cost.
  *
@@ -69,11 +105,11 @@ export class MockProvider implements LlmProvider {
   /** How many times it was asked to complete. */
   calls = 0;
 
-  private readonly responses: string[];
+  private readonly responses: Array<string | MockReply>;
   private index = 0;
 
-  constructor(responses: string[] | string, model = 'mock-model') {
-    this.responses = typeof responses === 'string' ? [responses] : [...responses];
+  constructor(responses: string | MockReply | Array<string | MockReply>, model = 'mock-model') {
+    this.responses = Array.isArray(responses) ? [...responses] : [responses];
     this.model = model;
   }
 
@@ -88,8 +124,12 @@ export class MockProvider implements LlmProvider {
       };
     }
 
-    const text = this.responses[this.index]!;
+    const reply = this.responses[this.index]!;
     this.index += 1;
+    const text = typeof reply === 'string' ? reply : reply.text;
+    const finishReason = typeof reply === 'string' ? undefined : reply.finishReason;
+    const reasoningTokens = typeof reply === 'string' ? undefined : reply.reasoningTokens;
+    const transientError = typeof reply === 'string' ? undefined : reply.transientError;
 
     const input = estimateTokens(req.system) + req.messages.reduce(
       (total, message) => total + estimateTokens(message.content),
@@ -98,7 +138,10 @@ export class MockProvider implements LlmProvider {
 
     return {
       text,
-      usage: { inputTokens: input, outputTokens: estimateTokens(text) },
+      usage: { inputTokens: input, outputTokens: estimateTokens(text) + (reasoningTokens ?? 0) },
+      finishReason,
+      reasoningTokens,
+      transientError,
     };
   }
 }
@@ -162,6 +205,7 @@ export class AnthropicProvider implements LlmProvider {
 
     let payload: {
       content?: Array<{ type?: string; text?: string }>;
+      stop_reason?: string;
       usage?: { input_tokens?: number; output_tokens?: number };
     };
     try {
@@ -182,6 +226,7 @@ export class AnthropicProvider implements LlmProvider {
         inputTokens: payload.usage?.input_tokens,
         outputTokens: payload.usage?.output_tokens,
       },
+      finishReason: finishReasonOf(payload.stop_reason),
       raw: payload,
     };
   }
@@ -240,8 +285,12 @@ export class OpenAiProvider implements LlmProvider {
     }
 
     let payload: {
-      choices?: Array<{ message?: { content?: string } }>;
-      usage?: { prompt_tokens?: number; completion_tokens?: number };
+      choices?: Array<{ message?: { content?: string }; finish_reason?: string }>;
+      usage?: {
+        prompt_tokens?: number;
+        completion_tokens?: number;
+        completion_tokens_details?: { reasoning_tokens?: number };
+      };
     };
     try {
       payload = (await response.json()) as typeof payload;
@@ -258,6 +307,8 @@ export class OpenAiProvider implements LlmProvider {
         inputTokens: payload.usage?.prompt_tokens,
         outputTokens: payload.usage?.completion_tokens,
       },
+      finishReason: finishReasonOf(payload.choices?.[0]?.finish_reason),
+      reasoningTokens: payload.usage?.completion_tokens_details?.reasoning_tokens,
       raw: payload,
     };
   }
@@ -314,12 +365,14 @@ export class OllamaProvider implements LlmProvider {
 
     const payload = (await response.json()) as {
       message?: { content?: string };
+      done_reason?: string;
       prompt_eval_count?: number;
       eval_count?: number;
     };
 
     return {
       text: payload.message?.content ?? '',
+      finishReason: finishReasonOf(payload.done_reason),
       usage: {
         inputTokens: payload.prompt_eval_count,
         outputTokens: payload.eval_count,

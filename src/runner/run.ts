@@ -16,8 +16,9 @@ import { buildObservation, messagesFromEvents } from '../kernel/observation.js';
 import { canonicalJson, hashInitial, hashNext } from '../kernel/hash.js';
 import { parseCommand } from '../kernel/parser.js';
 import { reduce } from '../kernel/reduce.js';
-import { metricsOf, type AgentPolicy, type PolicyContext } from '../agents/policy.js';
+import { metricsOf, type AgentPolicy, type PolicyContext, type ReplyRecord } from '../agents/policy.js';
 import { legalCommands } from '../agents/legal-actions.js';
+import { PAGE_GAME_LIMITS } from './limits.js';
 import type { Transcript } from './transcript.js';
 
 export const DEFAULT_MAX_TURNS = 30;
@@ -28,15 +29,16 @@ export class RunBudgetExceeded extends Error {}
 /**
  * The budgets.
  *
- * Every one of them is overridable, and every one of them has a test that
- * proves the run stops with the right outcome.
+ * Every one of them is overridable, and every one that ends a run has a test
+ * that proves the run stops with the right outcome. One of them ends nothing:
+ * `maxRepeatedStates` is only counted.
  */
 export interface RunBudgets {
   /** Turns the agent may take. The gold path is 10. */
   maxTurns: number;
   /** Hint credits the agent may spend. */
   maxHints: number;
-  /** Tokens the model may produce on one turn. */
+  /** Tokens the model may produce on one request. A reply cut off by it is asked for again with the room doubled. */
   maxOutputTokensPerTurn: number;
   /** Tokens the whole run may cost. */
   maxTotalTokens: number;
@@ -54,14 +56,19 @@ export interface RunBudgets {
   providerRetryDelayMs: number;
   /** Unparsable answers the run tolerates before it stops. */
   maxParseErrors: number;
-  /** How many times the agent may return to the same situation. */
+  /**
+   * How many turns in a row without a change count as a freeze.
+   *
+   * It is counted and reported. It does not end the run: the turns are the
+   * limit, and an agent that looks before it acts is not going in circles.
+   */
   maxRepeatedStates: number;
 }
 
 export const DEFAULT_BUDGETS: RunBudgets = {
   maxTurns: DEFAULT_MAX_TURNS,
   maxHints: 3,
-  maxOutputTokensPerTurn: 500,
+  maxOutputTokensPerTurn: PAGE_GAME_LIMITS.maxOutputTokensPerTurn,
   maxTotalTokens: 20_000,
   maxWallClockMs: 300_000,
   maxTransientProviderErrors: 3,
@@ -131,8 +138,8 @@ export interface RunResumeState {
   events: Event[];
   /** What the agent was last told, so it does not read a stale view. */
   messages: string[];
-  /** The loop guard's reading of the run so far. */
-  loop: { lastSituation: string; repeats: number };
+  /** The loop guard's reading of the run so far. `freezeWritten` says the count the interrupted turn took had written its freeze record. */
+  loop: { lastSituation: string; repeats: number; freezeWritten?: boolean };
   /** The counters that cap attempts: errors, hints, and how turns were spent. */
   counters: {
     parseErrors: number;
@@ -141,6 +148,12 @@ export interface RunResumeState {
     transientErrors: number;
     unparsableResponses: number;
     extractionRoutes: Record<string, number>;
+    /** Counted since the limits changed. Absent in a run paused before that. */
+    cutOffReplies?: number;
+    retriedReplies?: number;
+    reasoningTokens?: number;
+    longestUnchangedTurns?: number;
+    freezes?: number;
   };
   /** What the policy itself remembers, when it keeps a ledger. */
   policyCommands?: Array<{ raw: string; observationIndex: number }>;
@@ -160,6 +173,16 @@ export interface RunResult {
   tokensUsed: number;
   /** Responses that held no command at all. */
   unparsableResponses: number;
+  /** Turns whose first reply was cut off by its allowance. */
+  cutOffReplies: number;
+  /** Turns that were asked for more than once, because the reply was cut off. */
+  retriedReplies: number;
+  /** Output tokens the model spent on reasoning it did not show, as far as the provider reported them. */
+  reasoningTokens: number;
+  /** The most turns in a row that left the world as they found it. */
+  longestUnchangedTurns: number;
+  /** Streaks of unchanged turns that reached the run's `maxRepeatedStates`. */
+  freezes: number;
   /** How many times each rung of the extraction ladder produced a command. */
   extractionRoutes: Record<string, number>;
   /** The hash of the prompt used on the last turn. */
@@ -177,10 +200,12 @@ export interface RunResult {
  * The turn counter alone never means progress. The search oracle's smaller
  * key omits examination state and cannot detect progress faithfully here.
  *
- * Only consecutive repeats count. An agent that is stuck in one place is in a
- * loop; an agent that wanders between two places is making a mess, and the
- * turn budget is the right thing to stop it. Counting every repeat would put
- * a three-room adventure out of reach of its own turn budget.
+ * It is counted, and it stops nothing. Until 25 November 2026 the third turn
+ * in the same situation ended the run (warp#23474 took that away). A look and
+ * a refused command leave the situation as it was, so the old rule gave an
+ * agent two quiet turns after every move, and it ended runs that the world
+ * had just told what to do. Now the turns are the limit, and the key only
+ * says how long an agent went without changing the world.
  */
 function situationKey(state: GameState): string {
   return canonicalJson({ ...state, turn: 0 });
@@ -208,8 +233,13 @@ export async function run(options: RunOptions): Promise<RunResult> {
   const events: Event[] = continueFrom ? [...continueFrom.events] : [];
   const commands: string[] = continueFrom ? [...continueFrom.commands] : [];
   const history: Observation[] = continueFrom ? [...continueFrom.history] : [];
-  let lastSituation = continueFrom?.loop.lastSituation ?? situationKey(state);
-  let repeats = continueFrom?.loop.repeats ?? 1;
+  // The situation at the start of the turn before. A fresh run has none, and
+  // an empty string is never a situation, so the first turn counts nothing: a
+  // streak begins with the first turn that leaves the world as it found it.
+  // A resumed run takes up the count the pause left, and the turn the pause
+  // interrupted is counted when it begins again, like any other.
+  let lastSituation: string = continueFrom?.loop.lastSituation ?? '';
+  let repeats = continueFrom?.loop.repeats ?? 0;
   let messages: string[] = continueFrom ? [...continueFrom.messages] : [];
   let parseErrors = continueFrom?.counters.parseErrors ?? 0;
   let invalidActions = continueFrom?.counters.invalidActions ?? 0;
@@ -222,6 +252,71 @@ export async function run(options: RunOptions): Promise<RunResult> {
   let tokensUsed = 0;
   let inputTokens = 0;
   let outputTokens = 0;
+  let cutOffReplies = continueFrom?.counters.cutOffReplies ?? 0;
+  let retriedReplies = continueFrom?.counters.retriedReplies ?? 0;
+  let reasoningTokens = continueFrom?.counters.reasoningTokens ?? 0;
+  let longestUnchangedTurns = continueFrom?.counters.longestUnchangedTurns ?? 0;
+  let freezes = continueFrom?.counters.freezes ?? 0;
+
+  /**
+   * The count of unchanged turns as it stood before the running turn began,
+   * and which turn that was.
+   *
+   * A turn's count is taken as the turn begins. A pause can arrive inside that
+   * turn, after its count was taken, and the turn is then taken again when the
+   * run resumes. The pause hands on what stood before, so that the turn is
+   * counted once.
+   */
+  let countedTurn = -1;
+  let countBefore = { lastSituation, repeats, freezes, longestUnchangedTurns, freezeWritten: false };
+
+  /**
+   * Note a freeze, on the turn where the streak of unchanged turns reached the
+   * run's threshold. It is written down, and it ends nothing. It is written
+   * once: a count that is taken again after a pause finds its record already
+   * in the transcript, and only counts.
+   */
+  const countFreeze = (turn: number, writtenBefore = false): void => {
+    if (repeats !== budgets.maxRepeatedStates) return;
+    freezes += 1;
+    if (writtenBefore) return;
+    countBefore.freezeWritten = true;
+    options.transcript?.write({ type: 'freeze', turn, streak: repeats });
+  };
+
+  /** The last reply written down, so that a failure on a later turn cannot write it twice. */
+  let recorded: ReplyRecord | undefined;
+
+  /**
+   * Write what the model sent back for a turn, attempt by attempt, and count
+   * it: whether the allowance cut the reply off, and how many tokens were
+   * reasoning and how many were the reply. A turn that ended with no command
+   * can never again be read as a turn that ran out.
+   */
+  const recordReply = (turn: number, reply: ReplyRecord, more: Record<string, unknown> = {}): void => {
+    options.transcript?.write({ type: 'reply', turn, data: reply, ...more });
+    recorded = reply;
+    cutOffReplies += reply.cutOff ? 1 : 0;
+    retriedReplies += reply.attempts.length > 1 ? 1 : 0;
+    reasoningTokens += reply.attempts.reduce((total, attempt) => total + (attempt.reasoningTokens ?? 0), 0);
+  };
+
+  /**
+   * Count the last turn, when it left the world as it found it.
+   *
+   * Every earlier turn was counted as the next one began. The last one has no
+   * next, so it is counted where the run is known to have spent it: at the
+   * turn limit, or on the parse error that ended the run. A run that ends
+   * because the agent declined to act, or the provider failed, or the clock
+   * ran out, did not spend that turn, and it is not counted.
+   */
+  const countLastTurn = (turn: number): void => {
+    if (situationKey(state) === lastSituation) {
+      repeats += 1;
+      countFreeze(turn);
+    }
+    longestUnchangedTurns = Math.max(longestUnchangedTurns, repeats);
+  };
 
   const finish = (outcome: RunOutcome, reason: string, turn: number): RunResult => {
     events.push({ type: 'run_ended', outcome, reason, turn });
@@ -238,6 +333,12 @@ export async function run(options: RunOptions): Promise<RunResult> {
         tokensUsed,
         inputTokens,
         outputTokens,
+        unparsableResponses,
+        cutOffReplies,
+        retriedReplies,
+        reasoningTokens,
+        longestUnchangedTurns,
+        freezes,
         wallClockMs: clock() - startedAt,
         hash,
       },
@@ -254,6 +355,11 @@ export async function run(options: RunOptions): Promise<RunResult> {
       invalidActions,
       tokensUsed,
       unparsableResponses,
+      cutOffReplies,
+      retriedReplies,
+      reasoningTokens,
+      longestUnchangedTurns,
+      freezes,
       extractionRoutes,
       promptHash,
     };
@@ -291,6 +397,11 @@ export async function run(options: RunOptions): Promise<RunResult> {
       invalidActions,
       tokensUsed,
       unparsableResponses,
+      cutOffReplies,
+      retriedReplies,
+      reasoningTokens,
+      longestUnchangedTurns,
+      freezes,
       extractionRoutes,
       promptHash,
       pause: {
@@ -298,10 +409,15 @@ export async function run(options: RunOptions): Promise<RunResult> {
         commands: [...commands],
         events: [...events],
         messages: [...messages],
-        loop: { lastSituation, repeats },
+        loop: countedTurn === turn
+          ? { lastSituation: countBefore.lastSituation, repeats: countBefore.repeats, freezeWritten: countBefore.freezeWritten }
+          : { lastSituation, repeats },
         counters: {
           parseErrors, invalidActions, hintsUsed, transientErrors, unparsableResponses,
           extractionRoutes: { ...extractionRoutes },
+          cutOffReplies, retriedReplies, reasoningTokens,
+          longestUnchangedTurns: countedTurn === turn ? countBefore.longestUnchangedTurns : longestUnchangedTurns,
+          freezes: countedTurn === turn ? countBefore.freezes : freezes,
         },
         ...(policyLedger() === undefined ? {} : { policyCommands: policyLedger() }),
       },
@@ -319,6 +435,23 @@ export async function run(options: RunOptions): Promise<RunResult> {
   for (let turn = startingTurn; turn < startingTurn + budgets.maxTurns && state.status === 'running'; turn += 1) {
     const stopped = interrupted(turn);
     if (stopped !== undefined) return stopped;
+
+    // Whether the last turn left the world as it found it. It is counted. It
+    // is never a reason to stop: the turns are the limit.
+    const situationAtStart = situationKey(state);
+    // A resumed run takes first the turn the pause interrupted. Its count was
+    // taken before the pause, so it is taken again here. If that count noted a
+    // freeze, the record of it is already in the transcript, and is not
+    // written again.
+    const retaken = turn === startingTurn && continueFrom?.loop.freezeWritten === true;
+    countBefore = { lastSituation, repeats, freezes, longestUnchangedTurns, freezeWritten: retaken };
+    repeats = situationAtStart === lastSituation ? repeats + 1 : 0;
+    // The count is taken as this turn begins, and covers the turns before it.
+    // So a streak that has just reached three did so on the turn before.
+    countFreeze(turn - 1, retaken);
+    lastSituation = situationAtStart;
+    longestUnchangedTurns = Math.max(longestUnchangedTurns, repeats);
+    countedTurn = turn;
 
     const before = metricsOf(policy);
     if (before !== undefined) {
@@ -368,6 +501,17 @@ export async function run(options: RunOptions): Promise<RunResult> {
     } catch (error) {
       const stopped = interrupted(turn);
       if (stopped !== undefined) return stopped;
+      // What the policy spent before it threw is spent. A reply cut off, and
+      // then a retry the run could not afford, comes here. The first attempt
+      // was real: its tokens are counted, its record is written, and the record
+      // says why nothing followed it.
+      const spent = metricsOf(policy);
+      if (spent?.lastReply !== undefined && spent.lastReply !== recorded && spent.lastReply.attempts.length > 0) {
+        tokensUsed = spent.tokensUsed;
+        inputTokens = spent.inputTokens;
+        outputTokens = spent.outputTokens;
+        recordReply(turn, spent.lastReply, { ended: error instanceof Error ? error.message : 'the policy threw' });
+      }
       if (error instanceof RunBudgetExceeded) return finish('budget_exhausted', error.message, turn);
       // A policy that throws is a provider failure, not a crash. It is
       // counted, retried, and the run stops cleanly when the budget is spent.
@@ -397,6 +541,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
     if (after !== undefined && after.lastResponse.length > 0) {
       options.transcript?.write({ type: 'response', turn, text: after.lastResponse });
     }
+    if (after?.lastReply !== undefined) recordReply(turn, after.lastReply);
     const interruptedAfterReply = interrupted(turn);
     if (interruptedAfterReply !== undefined) return interruptedAfterReply;
 
@@ -437,6 +582,7 @@ export async function run(options: RunOptions): Promise<RunResult> {
       options.onMessage?.(parsed.message);
 
       if (parseErrors >= budgets.maxParseErrors) {
+        countLastTurn(turn);
         return finish(
           'budget_exhausted',
           `The agent made ${parseErrors} parse errors and stopped being useful.`,
@@ -488,18 +634,9 @@ export async function run(options: RunOptions): Promise<RunResult> {
     });
     for (const message of messages) options.onMessage?.(message);
 
-    const situation = situationKey(state);
-    repeats = situation === lastSituation ? repeats + 1 : 1;
-    lastSituation = situation;
-    if (repeats >= budgets.maxRepeatedStates) {
-      return finish(
-        'loop_detected',
-        `The agent returned to the same state ${repeats} times in a row and stopped making progress.`,
-        turn + 1,
-      );
-    }
   }
 
+  if (countedTurn >= 0) countLastTurn(countedTurn);
   if (state.status === 'success') {
     return finish('success', 'Every objective was met.', state.turn);
   }
