@@ -59,13 +59,33 @@ function pathTable(adventureId: string): string {
   return ['| # | Command |', '|---|---|', ...rows].join('\n');
 }
 
-/** The verbs one world answers to, as a table. */
-function verbTable(adventure: (typeof ADVENTURES)[string]): string {
-  const rows = adventure.actions.map((action) => {
-    const synonyms = (action.synonyms ?? []).length === 0 ? '' : `, ${(action.synonyms ?? []).join(', ')}`;
-    const args = action.args.map((arg) => arg.name).join(', ');
-    return `| \`${action.verb}\` | ${synonyms} | ${args} |`;
-  });
+/** What the verb table reads of an action rule. */
+export interface VerbSource {
+  verb: string;
+  synonyms?: string[];
+  args: { name: string }[];
+}
+
+/** The verbs one world answers to, as a table: one row per verb, however
+ *  many movement rules share it. Synonyms and argument names are merged
+ *  across those rules in the order the author wrote them, with repeats and
+ *  empty entries dropped, so no cell opens with a stray comma. */
+export function verbTable(actions: VerbSource[]): string {
+  const byVerb = new Map<string, { synonyms: string[]; args: string[] }>();
+  for (const action of actions) {
+    const entry = byVerb.get(action.verb) ?? { synonyms: [], args: [] };
+    for (const synonym of action.synonyms ?? []) {
+      if (synonym && !entry.synonyms.includes(synonym)) entry.synonyms.push(synonym);
+    }
+    for (const arg of action.args) {
+      if (!entry.args.includes(arg.name)) entry.args.push(arg.name);
+    }
+    byVerb.set(action.verb, entry);
+  }
+  const rows = [...byVerb.entries()].map(
+    ([verb, { synonyms, args }]) => `| \`${verb}\` | ${synonyms.join(', ')} | ${args.join(', ')} |`,
+  );
+  // The header and separator are structure; the rows above are the only data.
   return ['| Verb | Also | Takes |', '|---|---|---|', ...rows].join('\n');
 }
 
@@ -184,10 +204,14 @@ export function buildMaps(root: string = process.cwd()): string {
 
   for (const adventure of Object.values(ADVENTURES)) {
     const path = goldPathFor(adventure.id);
+    // Several rules can share one verb (every `go` is its own rule), so the
+    // header counts the verbs the table will list and says how many rules
+    // stand behind them, rather than calling the rules verbs.
+    const verbs = new Set(adventure.actions.map((action) => action.verb)).size;
     parts.push(`## ${adventure.title}`);
     parts.push('');
     parts.push(
-      `\`${adventure.id}\` · ${Object.keys(adventure.rooms).length} rooms · ${Object.keys(adventure.objects).length} objects · ${Object.keys(adventure.doors).length} doors · ${adventure.actions.length} verbs · ${path.length}-command gold path`,
+      `\`${adventure.id}\` · ${Object.keys(adventure.rooms).length} rooms · ${Object.keys(adventure.objects).length} objects · ${Object.keys(adventure.doors).length} doors · ${verbs} verbs (${adventure.actions.length} rules) · ${path.length}-command gold path`,
     );
     parts.push('');
     parts.push(adventure.brief);
@@ -204,7 +228,7 @@ export function buildMaps(root: string = process.cwd()): string {
     parts.push('');
     parts.push('### The verbs');
     parts.push('');
-    parts.push(verbTable(adventure));
+    parts.push(verbTable(adventure.actions));
     parts.push('');
     parts.push('### The goals');
     parts.push('');

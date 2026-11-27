@@ -179,7 +179,7 @@ The artefacts the series has produced:
 
 ## Operation Nightingale
 
-`mission-impossible` · 3 rooms · 14 objects · 4 doors · 19 verbs · 10-command gold path
+`mission-impossible` · 3 rooms · 14 objects · 4 doors · 12 verbs (19 rules) · 10-command gold path
 
 Mission brief. A booby-trapped case is locked in the server vault. Two objectives: disarm the bomb, and recover the case. Nothing else is known. You are in the briefing room. Discover the rest by exploring.
 
@@ -229,25 +229,18 @@ graph LR
 
 | Verb | Also | Takes |
 |---|---|---|
-| `look` | , l, look around |  |
-| `inventory` | , i, inv, carrying |  |
-| `help` | , ? |  |
-| `wait` | , z |  |
-| `hint` | , h |  |
-| `examine` | , x, inspect, look at | target |
-| `read` | , study | target |
-| `read` | , study | target |
-| `take` | , get, grab, pick up | target |
+| `look` | l, look around |  |
+| `inventory` | i, inv, carrying |  |
+| `help` | ? |  |
+| `wait` | z |  |
+| `hint` | h |  |
+| `examine` | x, inspect, look at | target |
+| `read` | study | target |
+| `take` | get, grab, pick up | target |
 | `open` |  | target |
 | `unlock` |  | target, with |
-| `unlock` |  | target, with |
-| `cut` | , snip | target, with |
-| `cut` | , snip | target, with |
-| `cut` | , snip | target, with |
-| `go` | , walk, move, head | target |
-| `go` | , walk, move, head | target |
-| `go` | , walk, move, head | target |
-| `go` | , walk, move, head | target |
+| `cut` | snip | target, with |
+| `go` | walk, move, head | target |
 
 ### The goals
 
@@ -258,7 +251,7 @@ graph LR
 
 ## The 2.4.1 Hotfix
 
-`hotfix-2-4-1` · 3 rooms · 11 objects · 4 doors · 20 verbs · 10-command gold path
+`hotfix-2-4-1` · 3 rooms · 11 objects · 4 doors · 12 verbs (20 rules) · 10-command gold path
 
 The customer SLA expires at 17:00 and the 2.4.1 hotfix is not shipped. Two objectives: ship the hotfix, and notify the customer. Nothing else is known. You are platform on-call. Discover the rest by exploring.
 
@@ -308,26 +301,18 @@ graph LR
 
 | Verb | Also | Takes |
 |---|---|---|
-| `look` | , l, look around |  |
-| `inventory` | , i, inv, carrying, context |  |
-| `help` | , ? |  |
-| `wait` | , z |  |
-| `hint` | , h |  |
-| `examine` | , x, inspect, look at | target |
-| `claim` | , take, get, pick up | target |
-| `read` | , study | target |
-| `read` | , study | target |
-| `read` | , study | target |
+| `look` | l, look around |  |
+| `inventory` | i, inv, carrying, context |  |
+| `help` | ? |  |
+| `wait` | z |  |
+| `hint` | h |  |
+| `examine` | x, inspect, look at | target |
+| `claim` | take, get, pick up | target |
+| `read` | study | target |
 | `open` |  | target |
 | `unlock` |  | target, with |
-| `unlock` |  | target, with |
-| `deploy` | , ship, release | target, with |
-| `deploy` | , ship, release | target, with |
-| `deploy` | , ship, release | target, with |
-| `go` | , walk, move, head | target |
-| `go` | , walk, move, head | target |
-| `go` | , walk, move, head | target |
-| `go` | , walk, move, head | target |
+| `deploy` | ship, release | target, with |
+| `go` | walk, move, head | target |
 
 ### The goals
 
